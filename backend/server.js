@@ -7,7 +7,13 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'big-opportunity-secret-2026';
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://big-eosin.vercel.app',
+    'http://localhost:3000',
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 // ── In-memory user store (replace with DB in production) ──────────────────
