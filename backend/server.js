@@ -38,6 +38,8 @@ function auth(req, res, next) {
 }
 
 // ── Routes ─────────────────────────────────────────────────────────────────
+app.get('/', (req, res) => res.json({ status: 'ok', app: 'BIG backend' }));
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // Register
 app.post('/api/register', async (req, res) => {
@@ -107,4 +109,4 @@ app.get('/api/opportunity', auth, (req, res) => {
   res.json(opp);
 });
 
-app.listen(PORT, () => console.log(`BIG backend running on :${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));
