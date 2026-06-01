@@ -14,7 +14,14 @@ async function request(path, options = {}) {
       ...options.headers,
     },
   });
-  const data = await res.json();
+  const text = await res.text();
+  if (!text) throw new Error('No response from server — check your API URL configuration.');
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('Server returned an unexpected response. The backend may be unreachable.');
+  }
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
