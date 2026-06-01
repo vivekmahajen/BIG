@@ -4,12 +4,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'big-opportunity-secret-2026';
 
 app.use(cors({
   origin: [
     'https://big-eosin.vercel.app',
+    'https://big-production-e0d8.up.railway.app',
     'http://localhost:3000',
   ],
   credentials: true,
