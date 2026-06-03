@@ -6,7 +6,7 @@ import styles from './DashboardPage.module.css';
 
 // view: 'list' | 'detail' | 'generating' | 'generated'
 
-export default function DashboardPage({ user, onLogout }) {
+export default function DashboardPage({ user, onLogout, onNavigate }) {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
   const [zips, setZips] = useState([]);
@@ -97,6 +97,7 @@ export default function DashboardPage({ user, onLogout }) {
           <span className={styles.headerTitle}>Business Opportunity Intelligence</span>
         </div>
         <div className={styles.headerRight}>
+          <button className={styles.navBtn} onClick={() => onNavigate('competitive')}>⚔ Competitive Analysis</button>
           <span className={styles.userName}>{user.name}</span>
           <button className={styles.logoutBtn} onClick={onLogout}>Sign out</button>
         </div>

@@ -57,4 +57,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ businessName, sector, competitors }),
     }),
+
+  competitiveAnalysis: (payload) =>
+    request('/competitive-analysis', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
