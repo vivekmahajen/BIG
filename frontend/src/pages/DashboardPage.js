@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
+import Disclaimer from '../components/Disclaimer';
 import styles from './DashboardPage.module.css';
 
 // view: 'list' | 'detail' | 'generating' | 'generated'
@@ -100,6 +101,8 @@ export default function DashboardPage({ user, onLogout }) {
           <button className={styles.logoutBtn} onClick={onLogout}>Sign out</button>
         </div>
       </header>
+
+      <Disclaimer />
 
       <main className={styles.main}>
         {/* Filter panel */}
@@ -251,6 +254,7 @@ export default function DashboardPage({ user, onLogout }) {
 
         </div>
       </main>
+      <Disclaimer />
     </div>
   );
 }

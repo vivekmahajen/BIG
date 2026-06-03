@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../api';
+import Disclaimer from '../components/Disclaimer';
 import styles from './LoginPage.module.css';
 
 export default function LoginPage({ onLogin }) {
@@ -39,6 +40,8 @@ export default function LoginPage({ onLogin }) {
 
   return (
     <div className={styles.wrapper}>
+      <Disclaimer />
+      <div className={styles.inner}>
       <div className={styles.left}>
         <div className={styles.brand}>
           <span className={styles.logo}>BIG</span>
@@ -130,6 +133,8 @@ export default function LoginPage({ onLogin }) {
           </p>
         </div>
       </div>
+      </div>
+      <Disclaimer />
     </div>
   );
 }

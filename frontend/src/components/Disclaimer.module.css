@@ -1,0 +1,27 @@
+.bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(245, 158, 11, 0.07);
+  border-top: 2px solid rgba(245, 158, 11, 0.35);
+  border-bottom: 2px solid rgba(245, 158, 11, 0.35);
+  padding: 12px 32px;
+}
+
+.icon {
+  font-size: 16px;
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.text {
+  font-size: 11.5px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.text strong {
+  color: #cbd5e1;
+}
