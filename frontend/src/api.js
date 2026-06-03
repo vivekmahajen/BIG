@@ -45,4 +45,10 @@ export const api = {
     request(`/opportunity?zip=${encodeURIComponent(zip)}&sector=${encodeURIComponent(sector)}`),
   sectorOpportunities: (sector) =>
     request(`/sector-opportunities?sector=${encodeURIComponent(sector)}`),
+
+  generateIdea: (sector, zip, city, state) =>
+    request('/generate-idea', {
+      method: 'POST',
+      body: JSON.stringify({ sector, zip, city, state }),
+    }),
 };

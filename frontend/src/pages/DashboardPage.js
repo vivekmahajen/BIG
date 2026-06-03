@@ -17,6 +17,9 @@ export default function DashboardPage({ user, onLogout }) {
   const [opportunity, setOpportunity] = useState(null);
   const [sectorOpportunities, setSectorOpportunities] = useState([]);
   const [selectedOpp, setSelectedOpp] = useState(null);
+  const [generatedIdea, setGeneratedIdea] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -40,11 +43,26 @@ export default function DashboardPage({ user, onLogout }) {
   }, [selectedZip]);
 
   useEffect(() => {
-    if (!selectedSector) { setSectorOpportunities([]); setSelectedOpp(null); return; }
+    if (!selectedSector) { setSectorOpportunities([]); setSelectedOpp(null); setGeneratedIdea(null); return; }
     api.sectorOpportunities(selectedSector)
-      .then(data => { setSectorOpportunities(data); setSelectedOpp(null); })
+      .then(data => { setSectorOpportunities(data); setSelectedOpp(null); setGeneratedIdea(null); })
       .catch(() => setSectorOpportunities([]));
   }, [selectedSector]);
+
+  const handleGenerateIdea = async () => {
+    setGenerating(true);
+    setGenerateError('');
+    setGeneratedIdea(null);
+    setSelectedOpp(null);
+    try {
+      const idea = await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState);
+      setGeneratedIdea(idea);
+    } catch (err) {
+      setGenerateError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const loadOpportunity = useCallback(async () => {
     if (!selectedZip || !selectedSector) return;
@@ -180,11 +198,27 @@ export default function DashboardPage({ user, onLogout }) {
           )}
 
           {/* Ranked opportunity list */}
-          {selectedSector && sectorOpportunities.length > 0 && !selectedOpp && !loading && (
+          {selectedSector && sectorOpportunities.length > 0 && !selectedOpp && !loading && !generatedIdea && (
             <div className={styles.rankedList}>
               <div className={styles.rankedHeader}>
-                <h2 className={styles.rankedTitle}>Top 5 Opportunities — {selectedSector}</h2>
-                <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
+                <div className={styles.rankedHeaderTop}>
+                  <div>
+                    <h2 className={styles.rankedTitle}>Top 5 Opportunities — {selectedSector}</h2>
+                    <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
+                  </div>
+                  <button
+                    className={styles.generateBtn}
+                    onClick={handleGenerateIdea}
+                    disabled={generating}
+                  >
+                    {generating ? (
+                      <><span className={styles.generateSpinner} /> Generating…</>
+                    ) : (
+                      <>✦ Generate New Business Idea</>
+                    )}
+                  </button>
+                </div>
+                {generateError && <div className={styles.generateError}>{generateError}</div>}
               </div>
               {sectorOpportunities.map((opp, idx) => {
                 const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
@@ -213,6 +247,36 @@ export default function DashboardPage({ user, onLogout }) {
                   </button>
                 );
               })}
+            </div>
+          )}
+
+          {/* Generating spinner (when not showing list) */}
+          {generating && !selectedOpp && (
+            <div className={styles.loadingWrap}>
+              <div className={styles.spinner} />
+              <p>AI is crafting a new business idea for {selectedSector}…</p>
+            </div>
+          )}
+
+          {/* Generated AI idea */}
+          {generatedIdea && !generating && (
+            <div>
+              <div className={styles.generatedHeader}>
+                <div className={styles.generatedBadge}>✦ AI-Generated Idea</div>
+                <div className={styles.generatedActions}>
+                  <button className={styles.generateBtn} onClick={handleGenerateIdea} disabled={generating}>
+                    ✦ Generate Another
+                  </button>
+                  <button className={styles.backBtn} onClick={() => setGeneratedIdea(null)}>
+                    ← Back to rankings
+                  </button>
+                </div>
+              </div>
+              <OpportunityCard
+                opportunity={generatedIdea}
+                zip={selectedZip}
+                sector={selectedSector}
+              />
             </div>
           )}
 

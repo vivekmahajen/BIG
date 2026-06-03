@@ -118,4 +118,66 @@ app.get('/api/sector-opportunities', auth, (req, res) => {
   res.json(opps);
 });
 
+app.post('/api/generate-idea', auth, async (req, res) => {
+  const { sector, zip, city, state } = req.body;
+  if (!sector) return res.status(400).json({ error: 'sector required' });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });
+
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+
+  const locationCtx = [city, state, zip].filter(Boolean).join(', ');
+
+  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.
+
+Return ONLY a valid JSON object with exactly these fields (no markdown, no explanation, just raw JSON):
+
+{
+  "name": "Specific Business Name (4-7 words)",
+  "model": "Business model type (e.g. SaaS, B2B Services, Marketplace)",
+  "startupCost": "$XK–$YK",
+  "grossMargin": "XX–YY%",
+  "timeToProfit": "X–Y months",
+  "tam": "$XB or $XM",
+  "revenueYr1": "$XK–$YK",
+  "revenueYr3": "$XM–$YM",
+  "score": 8.5,
+  "exitVal": "$XM–$YM",
+  "whyItWorks": "2-3 sentence explanation of why this business makes money, specific market dynamics, and why now is the right time.",
+  "profitDrivers": ["driver 1", "driver 2", "driver 3"],
+  "greenSignals": ["positive market signal 1", "signal 2", "signal 3"],
+  "keyRisks": ["risk 1", "risk 2"],
+  "watchpoints": ["watchpoint 1", "watchpoint 2"],
+  "launchPlan": "Month 1–30: [action]. Month 31–60: [action]. Month 61–90: [action].",
+  "topCompetitors": ["Competitor A", "Competitor B", "Competitor C"],
+  "ltv_cac": "X:1",
+  "paybackMonths": 8,
+  "sam": "$XM (10% of TAM)",
+  "som": "$XM (1% of TAM)",
+  "bestZip": "${zip || '78701'}"
+}
+
+Make the idea genuinely different from common ideas. Be specific with numbers. Score should reflect real conviction (7.0–9.5 range).`;
+
+  try {
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const text = message.content[0].text.trim();
+    // Strip markdown code fences if present
+    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    const idea = JSON.parse(json);
+    idea.aiGenerated = true;
+    res.json(idea);
+  } catch (err) {
+    console.error('generate-idea error:', err.message);
+    res.status(500).json({ error: 'Failed to generate idea: ' + err.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));
