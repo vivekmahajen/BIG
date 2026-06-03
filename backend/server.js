@@ -180,4 +180,54 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
   }
 });
 
+app.post('/api/competitor-compare', auth, async (req, res) => {
+  const { businessName, sector, competitors } = req.body;
+  if (!businessName || !competitors || !competitors.length) {
+    return res.status(400).json({ error: 'businessName and competitors required' });
+  }
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });
+
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+
+  const prompt = `You are a competitive strategy analyst. For the business "${businessName}" in the "${sector}" sector, analyze what it takes to reach #1 market position against these competitors: ${competitors.join(', ')}.
+
+Return ONLY a valid JSON object (no markdown) with this exact structure:
+
+{
+  "capabilities": [
+    {
+      "name": "Capability name (5-8 words)",
+      "description": "Why this capability is critical to win (1 sentence)",
+      "importance": "critical" | "high" | "medium",
+      "competitors": {
+        "${competitors[0]}": { "status": "strong" | "partial" | "weak" | "none", "note": "1 short phrase" }
+        ${competitors.slice(1).map(c => `,"${c}": { "status": "strong" | "partial" | "weak" | "none", "note": "1 short phrase" }`).join('\n        ')}
+      },
+      "yourStatus": "none",
+      "toAchieve": "Specific action to build this capability (1 sentence)"
+    }
+  ],
+  "winningMove": "The single most important strategic move to reach #1 (2 sentences)",
+  "timelineToLead": "Estimated time to become market leader if executing well"
+}
+
+Include 6-8 capabilities that truly differentiate leaders in this market. Be specific and actionable.`;
+
+  try {
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const text = message.content[0].text.trim();
+    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    res.json(JSON.parse(json));
+  } catch (err) {
+    console.error('competitor-compare error:', err.message);
+    res.status(500).json({ error: 'Failed to generate comparison: ' + err.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));

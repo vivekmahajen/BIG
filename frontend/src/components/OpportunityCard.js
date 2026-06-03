@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { api } from '../api';
 import styles from './OpportunityCard.module.css';
 
 const LEGEND = [
@@ -19,6 +21,13 @@ const SCORE_GUIDE = [
   { range: '7.0 – 7.9', label: 'Viable Opportunity', color: '#94a3b8', desc: 'Solid fundamentals — requires more validation or has a narrower window.' },
 ];
 
+const STATUS_META = {
+  strong:  { label: 'Strong',  color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   icon: '●●●' },
+  partial: { label: 'Partial', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: '●●○' },
+  weak:    { label: 'Weak',    color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',icon: '●○○' },
+  none:    { label: 'None',    color: '#475569', bg: 'rgba(71,85,105,0.1)',   icon: '○○○' },
+};
+
 function ScoreBadge({ score }) {
   if (!score) return null;
   const color = score >= 9.0 ? '#10b981' : score >= 8.0 ? '#f59e0b' : '#94a3b8';
@@ -36,7 +45,6 @@ function Legend() {
         <span className={styles.legendIcon}>📖</span>
         <h3>Report Glossary</h3>
       </div>
-
       <div className={styles.legendGrid}>
         {LEGEND.map(item => (
           <div key={item.abbr} className={styles.legendItem}>
@@ -48,7 +56,6 @@ function Legend() {
           </div>
         ))}
       </div>
-
       <div className={styles.legendScoreTitle}>Opportunity Score Guide</div>
       <div className={styles.legendScores}>
         {SCORE_GUIDE.map(s => (
@@ -67,68 +74,75 @@ function Legend() {
   );
 }
 
+function listHtml(items, color = '#6366f1', icon = '→') {
+  if (!items || !items.length) return '<p style="color:#94a3b8;font-size:12px;">None listed.</p>';
+  return `<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">
+    ${items.map(i => `<li style="font-size:12px;padding:6px 12px 6px 28px;position:relative;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;">
+      <span style="position:absolute;left:10px;color:${color};font-weight:700;">${icon}</span>${i}
+    </li>`).join('')}
+  </ul>`;
+}
+
 function handlePrint(o, zip, sector) {
-  const printWindow = window.open('', '_blank');
+  const w = window.open('', '_blank');
   const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  printWindow.document.write(`
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>BIG Report — ${o.name}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; background: #fff; padding: 40px; font-size: 13px; line-height: 1.5; }
-    h1 { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
-    h2 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 24px 0 10px; border-bottom: 2px solid #6366f1; padding-bottom: 6px; }
-    h3 { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  const metrics = [
+    ['TAM', o.tam], ['Startup Cost', o.startupCost], ['Gross Margin', o.grossMargin],
+    ['Time to Profit', o.timeToProfit], ['Revenue Yr 1', o.revenueYr1], ['Revenue Yr 3', o.revenueYr3],
+    ...(o.ltv_cac ? [['LTV : CAC', o.ltv_cac]] : []),
+    ...(o.paybackMonths ? [['Payback Period', `${o.paybackMonths} months`]] : []),
+    ...(o.sam ? [['SAM', o.sam]] : []),
+    ...(o.exitVal ? [['Projected Exit', o.exitVal]] : []),
+  ].filter(([, v]) => v);
 
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 3px solid #6366f1; }
-    .brand { font-size: 28px; font-weight: 900; color: #6366f1; letter-spacing: -2px; }
-    .meta { text-align: right; font-size: 11px; color: #64748b; }
-
-    .hero { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-    .hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
-    .sector-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: #ede9fe; color: #6366f1; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 8px; }
-    .score { font-size: 18px; font-weight: 800; color: #10b981; }
-    .exit { text-align: right; }
-    .exit-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-    .exit-num { font-size: 18px; font-weight: 700; color: #10b981; display: block; }
-    .model { font-size: 12px; color: #64748b; margin-top: 4px; }
-
-    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-    .metric { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
-    .m-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .m-value { font-size: 15px; font-weight: 700; color: #0f172a; }
-
-    .tags { display: flex; flex-wrap: wrap; gap: 8px; }
-    .tag { background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
-
-    .verdict { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 13px; color: #92400e; line-height: 1.6; }
-    .verdict strong { color: #78350f; }
-
-    .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-    .legend-item { display: flex; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; }
-    .legend-abbr { font-size: 11px; font-weight: 800; color: #6366f1; min-width: 80px; padding-top: 1px; }
-    .legend-full { font-size: 11px; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
-    .legend-desc { font-size: 10px; color: #64748b; line-height: 1.4; }
-
-    .score-guide { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-    .score-item { border-radius: 6px; padding: 10px; border: 1px solid #e2e8f0; }
-    .score-range { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-    .score-label { font-size: 11px; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
-    .score-desc { font-size: 10px; color: #64748b; line-height: 1.4; }
-
-    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; }
-
-    @media print {
-      body { padding: 20px; }
-      @page { margin: 1cm; size: A4; }
-    }
-  </style>
-</head>
-<body>
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>BIG Report — ${o.name}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1e293b;background:#fff;padding:36px;font-size:13px;line-height:1.55;}
+  h1{font-size:21px;font-weight:800;color:#0f172a;margin-bottom:4px;}
+  h2{font-size:14px;font-weight:700;color:#1e293b;margin:22px 0 10px;border-bottom:2px solid #6366f1;padding-bottom:5px;}
+  h3{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+  p{margin:0;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:18px;border-bottom:3px solid #6366f1;}
+  .brand{font-size:26px;font-weight:900;color:#6366f1;letter-spacing:-2px;}
+  .meta{text-align:right;font-size:11px;color:#64748b;line-height:1.6;}
+  .disclaimer{background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:10.5px;color:#92400e;margin-bottom:20px;line-height:1.5;}
+  .hero{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:18px;margin-bottom:18px;}
+  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .sector-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#ede9fe;color:#6366f1;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;}
+  .score{font-size:17px;font-weight:800;color:#10b981;}
+  .exit-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-top:10px;display:block;}
+  .exit-num{font-size:17px;font-weight:700;color:#10b981;display:block;}
+  .model-txt{font-size:12px;color:#64748b;margin-top:4px;}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+  .metric{background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:12px;}
+  .m-label{font-size:9.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+  .m-value{font-size:14px;font-weight:700;color:#0f172a;}
+  .why-box{background:#f0f0ff;border-left:3px solid #6366f1;padding:12px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:#1e293b;line-height:1.6;margin-bottom:14px;}
+  .launch-box{background:#fffbeb;border-left:3px solid #f59e0b;padding:12px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:#1e293b;line-height:1.6;margin-bottom:14px;}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;}
+  .tag{background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;font-size:11px;font-weight:600;padding:4px 11px;border-radius:20px;}
+  .verdict{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px;margin:16px 0;font-size:12.5px;color:#92400e;line-height:1.6;}
+  .compare-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:14px;}
+  .compare-table th{background:#f1f5f9;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e2e8f0;}
+  .compare-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top;}
+  .compare-table tr:last-child td{border-bottom:none;}
+  .status-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;}
+  .you-badge{background:rgba(99,102,241,0.12);color:#6366f1;border:1px solid rgba(99,102,241,0.3);}
+  .winning-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:16px;}
+  .winning-label{font-size:10px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+  .legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+  .legend-item{display:flex;gap:9px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:9px;}
+  .legend-abbr{font-size:10.5px;font-weight:800;color:#6366f1;min-width:76px;padding-top:1px;}
+  .legend-full{font-size:10.5px;font-weight:600;color:#1e293b;margin-bottom:2px;}
+  .legend-desc{font-size:9.5px;color:#64748b;line-height:1.4;}
+  .score-guide{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:9px;}
+  .score-item{border-radius:6px;padding:9px;border:1px solid #e2e8f0;}
+  .footer{margin-top:28px;padding-top:14px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center;}
+  @media print{body{padding:16px;}@page{margin:.8cm;size:A4;}}
+</style></head><body>
 
 <div class="header">
   <div>
@@ -141,49 +155,83 @@ function handlePrint(o, zip, sector) {
   </div>
 </div>
 
+<div class="disclaimer">
+  <strong>⚠ Disclaimer:</strong> This report is for informational and entertainment purposes only. It does not constitute financial, legal, or investment advice.
+  BIG assumes no liability for any decision made based on this content. Conduct independent research and consult qualified advisors before investing.
+</div>
+
 <div class="hero">
   <div class="hero-top">
     <div>
       <div class="sector-tag">${sector}</div>
       <h1>${o.name}</h1>
-      <div class="model">${o.model}</div>
+      <div class="model-txt">${o.model || ''}</div>
     </div>
-    <div class="exit">
+    <div style="text-align:right;">
       <div class="score">★ ${o.score ? o.score.toFixed(1) : 'N/A'} / 10</div>
-      <div class="exit-label" style="margin-top:12px;">Projected Exit</div>
-      <div class="exit-num">${o.exitVal}</div>
+      ${o.exitVal ? `<span class="exit-label">Projected Exit</span><span class="exit-num">${o.exitVal}</span>` : ''}
     </div>
   </div>
 </div>
 
 <h2>Key Metrics</h2>
 <div class="metrics">
-  ${[
-    ['TAM', o.tam],
-    ['SAM', o.sam],
-    ['SOM (Yr 3)', o.som],
-    ['Gross Margin', o.grossMargin],
-    ['LTV : CAC', o.ltv_cac],
-    ['Payback Period', `${o.paybackMonths} months`],
-    ['Startup Cost', o.startupCost],
-    ['Best ZIP', o.bestZip],
-  ].map(([label, value]) => `
+  ${metrics.map(([label, value]) => `
     <div class="metric">
       <div class="m-label">${label}</div>
-      <div class="m-value">${value}</div>
-    </div>
-  `).join('')}
+      <div class="m-value">${value || '—'}</div>
+    </div>`).join('')}
 </div>
 
-<h2>Top Competitors</h2>
-<div class="tags" style="margin-bottom:20px;">
+${o.whyItWorks ? `<h2>💡 Why It Makes Money</h2><div class="why-box">${o.whyItWorks}</div>` : ''}
+
+${o.profitDrivers && o.profitDrivers.length ? `<h2>📈 Profit Drivers</h2>${listHtml(o.profitDrivers, '#6366f1', '→')}` : ''}
+
+${o.greenSignals && o.greenSignals.length ? `<h2 style="margin-top:16px;">🟢 Green Signals</h2>${listHtml(o.greenSignals, '#10b981', '✓')}` : ''}
+
+${o.keyRisks && o.keyRisks.length ? `<h2 style="margin-top:16px;">⚠️ Key Risks</h2>${listHtml(o.keyRisks, '#ef4444', '!')}` : ''}
+
+${o.watchpoints && o.watchpoints.length ? `<h2 style="margin-top:16px;">👁 Watchpoints</h2>${listHtml(o.watchpoints, '#f59e0b', '→')}` : ''}
+
+${o.launchPlan ? `<h2 style="margin-top:16px;">🚀 90-Day Launch Plan</h2><div class="launch-box">${o.launchPlan}</div>` : ''}
+
+${o.topCompetitors && o.topCompetitors.length ? `
+<h2>Competitors</h2>
+<div class="tags" style="margin-bottom:16px;">
   ${o.topCompetitors.map(c => `<span class="tag">${c}</span>`).join('')}
-</div>
+</div>` : ''}
 
-<h2>Investment Verdict</h2>
-<div class="verdict">
-  <strong>💡 Verdict: </strong>${o.verdict}
-</div>
+${o.compareData ? `
+<h2>Competitive Gap Analysis — Road to #1</h2>
+${o.compareData.winningMove ? `<div class="winning-box"><div class="winning-label">🏆 Winning Move</div><div style="font-size:12.5px;color:#065f46;line-height:1.6;">${o.compareData.winningMove}</div>${o.compareData.timelineToLead ? `<div style="font-size:11px;color:#059669;margin-top:8px;font-weight:600;">Timeline to Market Lead: ${o.compareData.timelineToLead}</div>` : ''}</div>` : ''}
+${o.compareData.capabilities && o.compareData.capabilities.length ? `
+<table class="compare-table">
+  <thead><tr>
+    <th style="width:22%;">Capability</th>
+    <th style="width:28%;">Why It Matters</th>
+    ${o.topCompetitors.map(c => `<th style="width:${Math.floor(35/o.topCompetitors.length)}%;">${c}</th>`).join('')}
+    <th>You</th>
+    <th style="width:18%;">How to Build It</th>
+  </tr></thead>
+  <tbody>
+    ${o.compareData.capabilities.map(cap => {
+      const imp = cap.importance === 'critical' ? '#ef4444' : cap.importance === 'high' ? '#f59e0b' : '#94a3b8';
+      return `<tr>
+        <td><strong>${cap.name}</strong><br/><span style="font-size:10px;color:${imp};font-weight:700;">${cap.importance?.toUpperCase() || ''}</span></td>
+        <td style="font-size:11px;color:#475569;">${cap.description || ''}</td>
+        ${o.topCompetitors.map(c => {
+          const cs = cap.competitors?.[c] || { status: 'none', note: '' };
+          const sm = STATUS_META[cs.status] || STATUS_META.none;
+          return `<td><span class="status-badge" style="background:${sm.bg};color:${sm.color};">${sm.icon} ${sm.label}</span><div style="font-size:10px;color:#64748b;margin-top:3px;">${cs.note || ''}</div></td>`;
+        }).join('')}
+        <td><span class="status-badge you-badge">○○○ Not yet</span></td>
+        <td style="font-size:11px;color:#475569;">${cap.toAchieve || ''}</td>
+      </tr>`;
+    }).join('')}
+  </tbody>
+</table>` : ''}` : ''}
+
+${o.verdict ? `<h2>Verdict</h2><div class="verdict"><strong>💡 </strong>${o.verdict}</div>` : ''}
 
 <h2>Report Glossary</h2>
 <div class="legend-grid">
@@ -194,36 +242,139 @@ function handlePrint(o, zip, sector) {
         <div class="legend-full">${item.full}</div>
         <div class="legend-desc">${item.desc}</div>
       </div>
-    </div>
-  `).join('')}
+    </div>`).join('')}
 </div>
 
-<h3 style="margin-top:16px;">Opportunity Score Guide</h3>
+<h3 style="margin-top:14px;">Opportunity Score Guide</h3>
 <div class="score-guide">
   ${SCORE_GUIDE.map(s => `
     <div class="score-item">
-      <div class="score-range" style="color:${s.color}">${s.range}</div>
-      <div class="score-label">${s.label}</div>
-      <div class="score-desc">${s.desc}</div>
-    </div>
-  `).join('')}
+      <div style="font-size:12px;font-weight:700;color:${s.color};margin-bottom:2px;">${s.range}</div>
+      <div style="font-size:11px;font-weight:600;color:#1e293b;margin-bottom:2px;">${s.label}</div>
+      <div style="font-size:9.5px;color:#64748b;line-height:1.4;">${s.desc}</div>
+    </div>`).join('')}
 </div>
 
 <div class="footer">
-  BIG — Business Opportunity Intelligence &nbsp;|&nbsp; All projections are estimates based on publicly available data. Not investment advice.
+  BIG — Business Opportunity Intelligence &nbsp;|&nbsp; For informational and entertainment purposes only. Not financial or investment advice.
 </div>
 
-<script>
-  window.onload = function() { window.print(); };
-</script>
-</body>
-</html>
-  `);
-  printWindow.document.close();
+<script>window.onload=function(){window.print();};</script>
+</body></html>`);
+  w.document.close();
+}
+
+function CompetitorCompare({ businessName, sector, competitors, onCompareReady }) {
+  const [compare, setCompare] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function run() {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await api.competitorCompare(businessName, sector, competitors);
+      setCompare(data);
+      if (onCompareReady) onCompareReady(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!compare && !loading) {
+    return (
+      <button className={styles.compareBtn} onClick={run}>
+        ⚔ Compare &amp; Gap Analysis — Road to #1
+      </button>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.compareLoading}>
+        <span className={styles.compareSpinner} />
+        Analysing competitors and building gap matrix…
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className={styles.compareError}>{error} <button onClick={run} className={styles.compareRetry}>Retry</button></div>;
+  }
+
+  const caps = compare.capabilities || [];
+
+  return (
+    <div className={styles.comparePanel}>
+      <div className={styles.compareHeader}>
+        <h3 className={styles.compareTitle}>⚔ Competitive Gap Analysis — Road to #1</h3>
+        <button className={styles.compareClose} onClick={() => setCompare(null)}>✕ Close</button>
+      </div>
+
+      {compare.winningMove && (
+        <div className={styles.winningMove}>
+          <div className={styles.winningLabel}>🏆 Single Most Important Move to Reach #1</div>
+          <p className={styles.winningText}>{compare.winningMove}</p>
+          {compare.timelineToLead && (
+            <div className={styles.winningTimeline}>⏱ Timeline to Market Lead: <strong>{compare.timelineToLead}</strong></div>
+          )}
+        </div>
+      )}
+
+      <div className={styles.compareTableWrap}>
+        <table className={styles.compareTable}>
+          <thead>
+            <tr>
+              <th className={styles.capCol}>Capability</th>
+              {competitors.map(c => <th key={c} className={styles.compCol}>{c}</th>)}
+              <th className={styles.youCol}>You</th>
+              <th className={styles.buildCol}>How to Build It</th>
+            </tr>
+          </thead>
+          <tbody>
+            {caps.map((cap, i) => {
+              const imp = cap.importance === 'critical' ? '#ef4444' : cap.importance === 'high' ? '#f59e0b' : '#94a3b8';
+              return (
+                <tr key={i} className={styles.capRow}>
+                  <td className={styles.capName}>
+                    <div className={styles.capNameText}>{cap.name}</div>
+                    <span className={styles.impBadge} style={{ color: imp, borderColor: imp + '44', background: imp + '11' }}>
+                      {cap.importance?.toUpperCase()}
+                    </span>
+                    {cap.description && <div className={styles.capDesc}>{cap.description}</div>}
+                  </td>
+                  {competitors.map(c => {
+                    const cs = cap.competitors?.[c] || { status: 'none', note: '' };
+                    const sm = STATUS_META[cs.status] || STATUS_META.none;
+                    return (
+                      <td key={c} className={styles.compCell}>
+                        <span className={styles.statusBadge} style={{ background: sm.bg, color: sm.color }}>
+                          {sm.icon} {sm.label}
+                        </span>
+                        {cs.note && <div className={styles.statusNote}>{cs.note}</div>}
+                      </td>
+                    );
+                  })}
+                  <td className={styles.youCell}>
+                    <span className={styles.youBadge}>○○○ Not yet</span>
+                    <div className={styles.statusNote}>Opportunity gap</div>
+                  </td>
+                  <td className={styles.buildCell}>{cap.toAchieve}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 export default function OpportunityCard({ opportunity: raw, zip, sector }) {
-  // Normalise: ensure arrays are arrays, score is a number
+  const [compareData, setCompareData] = useState(null);
+
   const o = {
     ...raw,
     score: typeof raw.score === 'string' ? parseFloat(raw.score) : (raw.score || 0),
@@ -232,7 +383,9 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
     keyRisks: Array.isArray(raw.keyRisks) ? raw.keyRisks : [],
     watchpoints: Array.isArray(raw.watchpoints) ? raw.watchpoints : [],
     topCompetitors: Array.isArray(raw.topCompetitors) ? raw.topCompetitors : [],
+    compareData,
   };
+
   return (
     <div>
       {/* Action bar */}
@@ -278,7 +431,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
             ...(o.paybackMonths ? [{ label: 'Payback Period', value: `${o.paybackMonths} months` }] : []),
             ...(o.sam ? [{ label: 'SAM', value: o.sam }] : []),
             ...(o.bestZip ? [{ label: 'Best ZIP', value: o.bestZip }] : []),
-          ].map(m => (
+          ].filter(m => m.value).map(m => (
             <div key={m.label} className={styles.metric}>
               <span className={styles.mLabel}>{m.label}</span>
               <span className={styles.mValue}>{m.value}</span>
@@ -286,7 +439,6 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           ))}
         </div>
 
-        {/* Why It Makes Money */}
         {o.whyItWorks && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>💡 Why It Makes Money</h3>
@@ -294,8 +446,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Profit Drivers */}
-        {o.profitDrivers && o.profitDrivers.length > 0 && (
+        {o.profitDrivers.length > 0 && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>📈 Profit Drivers</h3>
             <ul className={styles.bulletList}>
@@ -304,8 +455,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Green Signals */}
-        {o.greenSignals && o.greenSignals.length > 0 && (
+        {o.greenSignals.length > 0 && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>🟢 Green Signals</h3>
             <ul className={styles.greenList}>
@@ -314,8 +464,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Key Risks */}
-        {o.keyRisks && o.keyRisks.length > 0 && (
+        {o.keyRisks.length > 0 && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>⚠️ Key Risks</h3>
             <ul className={styles.riskList}>
@@ -324,8 +473,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Watchpoints */}
-        {o.watchpoints && o.watchpoints.length > 0 && (
+        {o.watchpoints.length > 0 && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>👁 Watchpoints</h3>
             <ul className={styles.bulletList}>
@@ -334,7 +482,6 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Launch Plan */}
         {o.launchPlan && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>🚀 90-Day Launch Plan</h3>
@@ -342,19 +489,24 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Competitors */}
-        {o.topCompetitors && o.topCompetitors.length > 0 && (
+        {/* Competitors + Compare */}
+        {o.topCompetitors.length > 0 && (
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Top Competitors</h3>
-            <div className={styles.tags}>
+            <h3 className={styles.sectionTitle}>🏢 Top Competitors</h3>
+            <div className={styles.competitorRow}>
               {o.topCompetitors.map(c => (
                 <span key={c} className={styles.tag}>{c}</span>
               ))}
             </div>
+            <CompetitorCompare
+              businessName={o.name}
+              sector={sector}
+              competitors={o.topCompetitors}
+              onCompareReady={setCompareData}
+            />
           </div>
         )}
 
-        {/* Verdict (for legacy geoData-based reports) */}
         {o.verdict && (
           <div className={styles.verdict}>
             <span className={styles.verdictIcon}>💡</span>
@@ -362,7 +514,6 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Legend */}
         <Legend />
       </div>
     </div>

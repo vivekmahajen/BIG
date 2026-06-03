@@ -51,4 +51,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ sector, zip, city, state }),
     }),
+
+  competitorCompare: (businessName, sector, competitors) =>
+    request('/competitor-compare', {
+      method: 'POST',
+      body: JSON.stringify({ businessName, sector, competitors }),
+    }),
 };
