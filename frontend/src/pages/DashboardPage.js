@@ -201,24 +201,8 @@ export default function DashboardPage({ user, onLogout }) {
           {selectedSector && sectorOpportunities.length > 0 && !selectedOpp && !loading && !generatedIdea && (
             <div className={styles.rankedList}>
               <div className={styles.rankedHeader}>
-                <div className={styles.rankedHeaderTop}>
-                  <div>
-                    <h2 className={styles.rankedTitle}>Top 5 Opportunities — {selectedSector}</h2>
-                    <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
-                  </div>
-                  <button
-                    className={styles.generateBtn}
-                    onClick={handleGenerateIdea}
-                    disabled={generating}
-                  >
-                    {generating ? (
-                      <><span className={styles.generateSpinner} /> Generating…</>
-                    ) : (
-                      <>✦ Generate New Business Idea</>
-                    )}
-                  </button>
-                </div>
-                {generateError && <div className={styles.generateError}>{generateError}</div>}
+                <h2 className={styles.rankedTitle}>Top 5 Opportunities — {selectedSector}</h2>
+                <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
               </div>
               {sectorOpportunities.map((opp, idx) => {
                 const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
@@ -250,8 +234,31 @@ export default function DashboardPage({ user, onLogout }) {
             </div>
           )}
 
-          {/* Generating spinner (when not showing list) */}
-          {generating && !selectedOpp && (
+          {/* Full report for selected opportunity */}
+          {selectedOpp && !loading && !generatedIdea && !generating && (
+            <div>
+              <div className={styles.generatedHeader}>
+                <button className={styles.backBtn} onClick={() => setSelectedOpp(null)}>
+                  ← Back to rankings
+                </button>
+                <button
+                  className={styles.generateBtn}
+                  onClick={handleGenerateIdea}
+                  disabled={generating}
+                >
+                  ✦ Generate New Business Idea
+                </button>
+              </div>
+              <OpportunityCard
+                opportunity={selectedOpp}
+                zip={selectedZip}
+                sector={selectedSector}
+              />
+            </div>
+          )}
+
+          {/* Generating spinner */}
+          {generating && (
             <div className={styles.loadingWrap}>
               <div className={styles.spinner} />
               <p>AI is crafting a new business idea for {selectedSector}…</p>
@@ -267,27 +274,14 @@ export default function DashboardPage({ user, onLogout }) {
                   <button className={styles.generateBtn} onClick={handleGenerateIdea} disabled={generating}>
                     ✦ Generate Another
                   </button>
-                  <button className={styles.backBtn} onClick={() => setGeneratedIdea(null)}>
+                  <button className={styles.backBtn} onClick={() => { setGeneratedIdea(null); }}>
                     ← Back to rankings
                   </button>
                 </div>
               </div>
+              {generateError && <div className={styles.generateError}>{generateError}</div>}
               <OpportunityCard
                 opportunity={generatedIdea}
-                zip={selectedZip}
-                sector={selectedSector}
-              />
-            </div>
-          )}
-
-          {/* Full report for selected opportunity */}
-          {selectedOpp && !loading && (
-            <div>
-              <button className={styles.backBtn} onClick={() => setSelectedOpp(null)}>
-                ← Back to rankings
-              </button>
-              <OpportunityCard
-                opportunity={selectedOpp}
                 zip={selectedZip}
                 sector={selectedSector}
               />
