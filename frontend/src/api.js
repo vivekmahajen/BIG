@@ -43,4 +43,6 @@ export const api = {
   sectors: (zip) => request(`/sectors?zip=${zip}`),
   opportunity: (zip, sector) =>
     request(`/opportunity?zip=${encodeURIComponent(zip)}&sector=${encodeURIComponent(sector)}`),
+  sectorOpportunities: (sector) =>
+    request(`/sector-opportunities?sector=${encodeURIComponent(sector)}`),
 };

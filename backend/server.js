@@ -109,4 +109,13 @@ app.get('/api/opportunity', auth, (req, res) => {
   res.json(opp);
 });
 
+app.get('/api/sector-opportunities', auth, (req, res) => {
+  const { sector } = req.query;
+  if (!sector) return res.status(400).json({ error: 'sector query param required' });
+  const { REPORT_DATA } = require('./reportData');
+  const opps = REPORT_DATA[sector];
+  if (!opps) return res.status(404).json({ error: 'Sector not found' });
+  res.json(opps);
+});
+
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));

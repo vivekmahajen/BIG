@@ -259,13 +259,15 @@ export default function OpportunityCard({ opportunity: o, zip, sector }) {
         <div className={styles.metrics}>
           {[
             { label: 'TAM', value: o.tam },
-            { label: 'SAM', value: o.sam },
-            { label: 'SOM (Yr 3)', value: o.som },
-            { label: 'Gross Margin', value: o.grossMargin },
-            { label: 'LTV : CAC', value: o.ltv_cac },
-            { label: 'Payback Period', value: `${o.paybackMonths} months` },
             { label: 'Startup Cost', value: o.startupCost },
-            { label: 'Best ZIP', value: o.bestZip },
+            { label: 'Gross Margin', value: o.grossMargin },
+            { label: 'Time to Profit', value: o.timeToProfit },
+            { label: 'Revenue Yr 1', value: o.revenueYr1 },
+            { label: 'Revenue Yr 3', value: o.revenueYr3 },
+            ...(o.ltv_cac ? [{ label: 'LTV : CAC', value: o.ltv_cac }] : []),
+            ...(o.paybackMonths ? [{ label: 'Payback Period', value: `${o.paybackMonths} months` }] : []),
+            ...(o.sam ? [{ label: 'SAM', value: o.sam }] : []),
+            ...(o.bestZip ? [{ label: 'Best ZIP', value: o.bestZip }] : []),
           ].map(m => (
             <div key={m.label} className={styles.metric}>
               <span className={styles.mLabel}>{m.label}</span>
@@ -274,21 +276,81 @@ export default function OpportunityCard({ opportunity: o, zip, sector }) {
           ))}
         </div>
 
-        {/* Competitors */}
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Top Competitors</h3>
-          <div className={styles.tags}>
-            {o.topCompetitors.map(c => (
-              <span key={c} className={styles.tag}>{c}</span>
-            ))}
+        {/* Why It Makes Money */}
+        {o.whyItWorks && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>💡 Why It Makes Money</h3>
+            <p className={styles.whyText}>{o.whyItWorks}</p>
           </div>
-        </div>
+        )}
 
-        {/* Verdict */}
-        <div className={styles.verdict}>
-          <span className={styles.verdictIcon}>💡</span>
-          <p><strong>Verdict: </strong>{o.verdict}</p>
-        </div>
+        {/* Profit Drivers */}
+        {o.profitDrivers && o.profitDrivers.length > 0 && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>📈 Profit Drivers</h3>
+            <ul className={styles.bulletList}>
+              {o.profitDrivers.map((d, i) => <li key={i}>{d}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {/* Green Signals */}
+        {o.greenSignals && o.greenSignals.length > 0 && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>🟢 Green Signals</h3>
+            <ul className={styles.greenList}>
+              {o.greenSignals.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {/* Key Risks */}
+        {o.keyRisks && o.keyRisks.length > 0 && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>⚠️ Key Risks</h3>
+            <ul className={styles.riskList}>
+              {o.keyRisks.map((r, i) => <li key={i}>{r}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {/* Watchpoints */}
+        {o.watchpoints && o.watchpoints.length > 0 && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>👁 Watchpoints</h3>
+            <ul className={styles.bulletList}>
+              {o.watchpoints.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {/* Launch Plan */}
+        {o.launchPlan && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>🚀 90-Day Launch Plan</h3>
+            <p className={styles.launchText}>{o.launchPlan}</p>
+          </div>
+        )}
+
+        {/* Competitors */}
+        {o.topCompetitors && o.topCompetitors.length > 0 && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Top Competitors</h3>
+            <div className={styles.tags}>
+              {o.topCompetitors.map(c => (
+                <span key={c} className={styles.tag}>{c}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Verdict (for legacy geoData-based reports) */}
+        {o.verdict && (
+          <div className={styles.verdict}>
+            <span className={styles.verdictIcon}>💡</span>
+            <p><strong>Verdict: </strong>{o.verdict}</p>
+          </div>
+        )}
 
         {/* Legend */}
         <Legend />

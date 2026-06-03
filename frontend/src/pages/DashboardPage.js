@@ -15,6 +15,8 @@ export default function DashboardPage({ user, onLogout }) {
   const [selectedSector, setSelectedSector] = useState('');
 
   const [opportunity, setOpportunity] = useState(null);
+  const [sectorOpportunities, setSectorOpportunities] = useState([]);
+  const [selectedOpp, setSelectedOpp] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -36,6 +38,13 @@ export default function DashboardPage({ user, onLogout }) {
     if (!selectedZip) { setSectors([]); setSelectedSector(''); return; }
     api.sectors(selectedZip).then(setSectors);
   }, [selectedZip]);
+
+  useEffect(() => {
+    if (!selectedSector) { setSectorOpportunities([]); setSelectedOpp(null); return; }
+    api.sectorOpportunities(selectedSector)
+      .then(data => { setSectorOpportunities(data); setSelectedOpp(null); })
+      .catch(() => setSectorOpportunities([]));
+  }, [selectedSector]);
 
   const loadOpportunity = useCallback(async () => {
     if (!selectedZip || !selectedSector) return;
@@ -169,7 +178,59 @@ export default function DashboardPage({ user, onLogout }) {
           {error && (
             <div className={styles.errorBox}>{error}</div>
           )}
-          {opportunity && !loading && (
+
+          {/* Ranked opportunity list */}
+          {selectedSector && sectorOpportunities.length > 0 && !selectedOpp && !loading && (
+            <div className={styles.rankedList}>
+              <div className={styles.rankedHeader}>
+                <h2 className={styles.rankedTitle}>Top 5 Opportunities — {selectedSector}</h2>
+                <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
+              </div>
+              {sectorOpportunities.map((opp, idx) => {
+                const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
+                return (
+                  <button
+                    key={opp.name}
+                    className={styles.rankedItem}
+                    onClick={() => setSelectedOpp(opp)}
+                  >
+                    <span className={styles.rankedRank}>#{idx + 1}</span>
+                    <div className={styles.rankedInfo}>
+                      <div className={styles.rankedName}>{opp.name}</div>
+                      <div className={styles.rankedMeta}>
+                        <span>{opp.model}</span>
+                        <span className={styles.rankedDot}>·</span>
+                        <span>Startup: {opp.startupCost}</span>
+                        <span className={styles.rankedDot}>·</span>
+                        <span>Margin: {opp.grossMargin}</span>
+                        <span className={styles.rankedDot}>·</span>
+                        <span>Yr1: {opp.revenueYr1}</span>
+                      </div>
+                    </div>
+                    <span className={styles.rankedScore} style={{ background: `${color}22`, color, borderColor: `${color}44` }}>
+                      ★ {opp.score.toFixed(1)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Full report for selected opportunity */}
+          {selectedOpp && !loading && (
+            <div>
+              <button className={styles.backBtn} onClick={() => setSelectedOpp(null)}>
+                ← Back to rankings
+              </button>
+              <OpportunityCard
+                opportunity={selectedOpp}
+                zip={selectedZip}
+                sector={selectedSector}
+              />
+            </div>
+          )}
+
+          {opportunity && !loading && !selectedOpp && sectorOpportunities.length === 0 && (
             <OpportunityCard
               opportunity={opportunity}
               zip={selectedZip}

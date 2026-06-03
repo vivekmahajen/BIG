@@ -173,3 +173,104 @@
   padding: 20px;
   font-size: 14px;
 }
+
+/* Ranked opportunity list */
+.rankedList {
+  padding: 0;
+}
+
+.rankedHeader {
+  margin-bottom: 20px;
+}
+
+.rankedTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+
+.rankedSub {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.rankedItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+
+.rankedItem:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.15);
+}
+
+.rankedRank {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--muted);
+  min-width: 36px;
+}
+
+.rankedInfo {
+  flex: 1;
+}
+
+.rankedName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.rankedMeta {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.rankedDot {
+  color: var(--border);
+}
+
+.rankedScore {
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.backBtn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+
+.backBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
