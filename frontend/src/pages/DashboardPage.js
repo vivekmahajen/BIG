@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
 import styles from './DashboardPage.module.css';
+
+// view: 'list' | 'detail' | 'generating' | 'generated'
 
 export default function DashboardPage({ user, onLogout }) {
   const [states, setStates] = useState([]);
@@ -14,14 +16,19 @@ export default function DashboardPage({ user, onLogout }) {
   const [selectedZip, setSelectedZip] = useState('');
   const [selectedSector, setSelectedSector] = useState('');
 
-  const [opportunity, setOpportunity] = useState(null);
   const [sectorOpportunities, setSectorOpportunities] = useState([]);
-  const [selectedOpp, setSelectedOpp] = useState(null);
-  const [generatedIdea, setGeneratedIdea] = useState(null);
-  const [generating, setGenerating] = useState(false);
+  const [view, setView] = useState('list');           // which screen to show
+  const [activeOpp, setActiveOpp] = useState(null);   // detail or generated idea
   const [generateError, setGenerateError] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const resultsRef = useRef(null);
+
+  function scrollToResults() {
+    if (resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   useEffect(() => {
     api.states().then(setStates).catch(() => {});
@@ -29,12 +36,16 @@ export default function DashboardPage({ user, onLogout }) {
 
   useEffect(() => {
     if (!selectedState) { setCities([]); setSelectedCity(''); return; }
-    api.cities(selectedState).then(data => { setCities(data); setSelectedCity(''); setSelectedZip(''); setSelectedSector(''); setOpportunity(null); });
+    api.cities(selectedState).then(data => {
+      setCities(data); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
+    });
   }, [selectedState]);
 
   useEffect(() => {
     if (!selectedState || !selectedCity) { setZips([]); setSelectedZip(''); return; }
-    api.zips(selectedState, selectedCity).then(data => { setZips(data); setSelectedZip(''); setSelectedSector(''); setOpportunity(null); });
+    api.zips(selectedState, selectedCity).then(data => {
+      setZips(data); setSelectedZip(''); setSelectedSector('');
+    });
   }, [selectedState, selectedCity]);
 
   useEffect(() => {
@@ -43,43 +54,38 @@ export default function DashboardPage({ user, onLogout }) {
   }, [selectedZip]);
 
   useEffect(() => {
-    if (!selectedSector) { setSectorOpportunities([]); setSelectedOpp(null); setGeneratedIdea(null); return; }
-    api.sectorOpportunities(selectedSector)
-      .then(data => { setSectorOpportunities(data); setSelectedOpp(null); setGeneratedIdea(null); })
-      .catch(() => setSectorOpportunities([]));
-  }, [selectedSector]);
-
-  const handleGenerateIdea = async () => {
-    setGenerating(true);
-    setGenerateError('');
-    setGeneratedIdea(null);
-    setSelectedOpp(null);
-    try {
-      const idea = await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState);
-      setGeneratedIdea(idea);
-    } catch (err) {
-      setGenerateError(err.message);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const loadOpportunity = useCallback(async () => {
-    if (!selectedZip || !selectedSector) return;
+    if (!selectedSector) { setSectorOpportunities([]); setView('list'); setActiveOpp(null); return; }
     setLoading(true);
     setError('');
-    setOpportunity(null);
-    try {
-      const data = await api.opportunity(selectedZip, selectedSector);
-      setOpportunity(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedZip, selectedSector]);
+    api.sectorOpportunities(selectedSector)
+      .then(data => { setSectorOpportunities(data); setView('list'); setActiveOpp(null); })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [selectedSector]);
 
-  useEffect(() => { loadOpportunity(); }, [loadOpportunity]);
+  const openDetail = useCallback((opp) => {
+    setActiveOpp(opp);
+    setView('detail');
+    setGenerateError('');
+    scrollToResults();
+  }, []);
+
+  const handleGenerateIdea = useCallback(async () => {
+    setView('generating');
+    setGenerateError('');
+    setActiveOpp(null);
+    scrollToResults();
+    try {
+      const idea = await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState);
+      setActiveOpp(idea);
+      setView('generated');
+    } catch (err) {
+      setGenerateError(err.message);
+      setView('detail'); // go back to where we were (activeOpp still set from before? no — cleared above)
+      // just go back to list
+      setView('list');
+    }
+  }, [selectedSector, selectedZip, selectedCity, selectedState]);
 
   return (
     <div className={styles.page}>
@@ -102,65 +108,40 @@ export default function DashboardPage({ user, onLogout }) {
           <p className={styles.filterSub}>Select a location and sector to generate your business intelligence report.</p>
 
           <div className={styles.filters}>
-            {/* State */}
             <div className={styles.filterGroup}>
               <label>State</label>
               <div className={styles.selectWrap}>
-                <select
-                  value={selectedState}
-                  onChange={e => setSelectedState(e.target.value)}
-                >
+                <select value={selectedState} onChange={e => setSelectedState(e.target.value)}>
                   <option value="">— Select state —</option>
-                  {states.map(s => (
-                    <option key={s.code} value={s.code}>{s.name}</option>
-                  ))}
+                  {states.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
                 </select>
               </div>
             </div>
 
-            {/* City */}
             <div className={styles.filterGroup}>
               <label>City</label>
               <div className={styles.selectWrap}>
-                <select
-                  value={selectedCity}
-                  onChange={e => setSelectedCity(e.target.value)}
-                  disabled={!cities.length}
-                >
+                <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} disabled={!cities.length}>
                   <option value="">— Select city —</option>
-                  {cities.map(c => (
-                    <option key={c.name} value={c.name}>{c.name}</option>
-                  ))}
+                  {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
             </div>
 
-            {/* ZIP */}
             <div className={styles.filterGroup}>
               <label>ZIP Code</label>
               <div className={styles.selectWrap}>
-                <select
-                  value={selectedZip}
-                  onChange={e => setSelectedZip(e.target.value)}
-                  disabled={!zips.length}
-                >
+                <select value={selectedZip} onChange={e => setSelectedZip(e.target.value)} disabled={!zips.length}>
                   <option value="">— Select ZIP —</option>
-                  {zips.map(z => (
-                    <option key={z} value={z}>{z}</option>
-                  ))}
+                  {zips.map(z => <option key={z} value={z}>{z}</option>)}
                 </select>
               </div>
             </div>
 
-            {/* Sector */}
             <div className={styles.filterGroup}>
               <label>Industry Sector</label>
               <div className={styles.selectWrap}>
-                <select
-                  value={selectedSector}
-                  onChange={e => setSelectedSector(e.target.value)}
-                  disabled={!sectors.length}
-                >
+                <select value={selectedSector} onChange={e => setSelectedSector(e.target.value)} disabled={!sectors.length}>
                   <option value="">— Select sector —</option>
                   {sectors.map(s => (
                     <option key={s.name} value={s.name}>
@@ -174,31 +155,26 @@ export default function DashboardPage({ user, onLogout }) {
         </div>
 
         {/* Results */}
-        <div className={styles.results}>
-          {!selectedState && (
-            <EmptyState message="Select a state to get started." icon="🗺️" />
-          )}
-          {selectedState && !selectedCity && (
-            <EmptyState message="Now select a city." icon="🏙️" />
-          )}
-          {selectedCity && !selectedZip && (
-            <EmptyState message="Choose a ZIP code." icon="📍" />
-          )}
-          {selectedZip && !selectedSector && (
-            <EmptyState message="Select an industry sector to see the opportunity analysis." icon="🏭" />
-          )}
+        <div className={styles.results} ref={resultsRef}>
+
+          {/* Empty states */}
+          {!selectedState && <EmptyState message="Select a state to get started." icon="🗺️" />}
+          {selectedState && !selectedCity && <EmptyState message="Now select a city." icon="🏙️" />}
+          {selectedCity && !selectedZip && <EmptyState message="Choose a ZIP code." icon="📍" />}
+          {selectedZip && !selectedSector && <EmptyState message="Select an industry sector to see the opportunity analysis." icon="🏭" />}
+
+          {/* Loading sector list */}
           {loading && (
             <div className={styles.loadingWrap}>
               <div className={styles.spinner} />
-              <p>Generating intelligence report…</p>
+              <p>Loading opportunities…</p>
             </div>
           )}
-          {error && (
-            <div className={styles.errorBox}>{error}</div>
-          )}
 
-          {/* Ranked opportunity list */}
-          {selectedSector && sectorOpportunities.length > 0 && !selectedOpp && !loading && !generatedIdea && (
+          {error && <div className={styles.errorBox}>{error}</div>}
+
+          {/* ── SCREEN: ranked list ── */}
+          {!loading && view === 'list' && sectorOpportunities.length > 0 && (
             <div className={styles.rankedList}>
               <div className={styles.rankedHeader}>
                 <h2 className={styles.rankedTitle}>Top 5 Opportunities — {selectedSector}</h2>
@@ -207,11 +183,7 @@ export default function DashboardPage({ user, onLogout }) {
               {sectorOpportunities.map((opp, idx) => {
                 const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
                 return (
-                  <button
-                    key={opp.name}
-                    className={styles.rankedItem}
-                    onClick={() => setSelectedOpp(opp)}
-                  >
+                  <button key={opp.name} className={styles.rankedItem} onClick={() => openDetail(opp)}>
                     <span className={styles.rankedRank}>#{idx + 1}</span>
                     <div className={styles.rankedInfo}>
                       <div className={styles.rankedName}>{opp.name}</div>
@@ -234,67 +206,49 @@ export default function DashboardPage({ user, onLogout }) {
             </div>
           )}
 
-          {/* Full report for selected opportunity */}
-          {selectedOpp && !loading && !generatedIdea && !generating && (
+          {/* ── SCREEN: detail (curated) ── */}
+          {view === 'detail' && activeOpp && (
             <div>
-              <div className={styles.generatedHeader}>
-                <button className={styles.backBtn} onClick={() => setSelectedOpp(null)}>
+              <div className={styles.screenBar}>
+                <button className={styles.backBtn} onClick={() => { setView('list'); setActiveOpp(null); }}>
                   ← Back to rankings
                 </button>
-                <button
-                  className={styles.generateBtn}
-                  onClick={handleGenerateIdea}
-                  disabled={generating}
-                >
+                <button className={styles.generateBtn} onClick={handleGenerateIdea}>
                   ✦ Generate New Business Idea
                 </button>
               </div>
-              <OpportunityCard
-                opportunity={selectedOpp}
-                zip={selectedZip}
-                sector={selectedSector}
-              />
+              {generateError && <div className={styles.generateError}>{generateError}</div>}
+              <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
             </div>
           )}
 
-          {/* Generating spinner */}
-          {generating && (
-            <div className={styles.loadingWrap}>
-              <div className={styles.spinner} />
-              <p>AI is crafting a new business idea for {selectedSector}…</p>
+          {/* ── SCREEN: generating ── */}
+          {view === 'generating' && (
+            <div className={styles.generatingScreen}>
+              <div className={styles.generatingSpinner} />
+              <h3 className={styles.generatingTitle}>Crafting a new business idea…</h3>
+              <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}` : ''} and building a full opportunity report.</p>
             </div>
           )}
 
-          {/* Generated AI idea */}
-          {generatedIdea && !generating && (
+          {/* ── SCREEN: generated idea ── */}
+          {view === 'generated' && activeOpp && (
             <div>
-              <div className={styles.generatedHeader}>
-                <div className={styles.generatedBadge}>✦ AI-Generated Idea</div>
+              <div className={styles.screenBar}>
+                <button className={styles.backBtn} onClick={() => { setView('list'); setActiveOpp(null); }}>
+                  ← Back to rankings
+                </button>
                 <div className={styles.generatedActions}>
-                  <button className={styles.generateBtn} onClick={handleGenerateIdea} disabled={generating}>
+                  <span className={styles.generatedBadge}>✦ AI-Generated</span>
+                  <button className={styles.generateBtn} onClick={handleGenerateIdea}>
                     ✦ Generate Another
-                  </button>
-                  <button className={styles.backBtn} onClick={() => { setGeneratedIdea(null); }}>
-                    ← Back to rankings
                   </button>
                 </div>
               </div>
-              {generateError && <div className={styles.generateError}>{generateError}</div>}
-              <OpportunityCard
-                opportunity={generatedIdea}
-                zip={selectedZip}
-                sector={selectedSector}
-              />
+              <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
             </div>
           )}
 
-          {opportunity && !loading && !selectedOpp && sectorOpportunities.length === 0 && (
-            <OpportunityCard
-              opportunity={opportunity}
-              zip={selectedZip}
-              sector={selectedSector}
-            />
-          )}
         </div>
       </main>
     </div>

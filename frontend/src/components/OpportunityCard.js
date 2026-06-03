@@ -222,7 +222,17 @@ function handlePrint(o, zip, sector) {
   printWindow.document.close();
 }
 
-export default function OpportunityCard({ opportunity: o, zip, sector }) {
+export default function OpportunityCard({ opportunity: raw, zip, sector }) {
+  // Normalise: ensure arrays are arrays, score is a number
+  const o = {
+    ...raw,
+    score: typeof raw.score === 'string' ? parseFloat(raw.score) : (raw.score || 0),
+    profitDrivers: Array.isArray(raw.profitDrivers) ? raw.profitDrivers : [],
+    greenSignals: Array.isArray(raw.greenSignals) ? raw.greenSignals : [],
+    keyRisks: Array.isArray(raw.keyRisks) ? raw.keyRisks : [],
+    watchpoints: Array.isArray(raw.watchpoints) ? raw.watchpoints : [],
+    topCompetitors: Array.isArray(raw.topCompetitors) ? raw.topCompetitors : [],
+  };
   return (
     <div>
       {/* Action bar */}
