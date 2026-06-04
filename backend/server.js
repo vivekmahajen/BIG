@@ -74,6 +74,46 @@ function auth(req, res, next) {
   }
 }
 
+// Parse the upper bound of a startup cost string like "$25K–$75K" → 75000
+function parseStartupCostMax(str) {
+  if (!str) return Infinity;
+  const upper = str.split(/[–\-]/).pop();
+  const m = upper.replace(/,/g, '').match(/\$?([\d.]+)\s*([KMB]?)/i);
+  if (!m) return Infinity;
+  const n = parseFloat(m[1]);
+  const u = m[2].toUpperCase();
+  return u === 'M' ? n * 1e6 : u === 'B' ? n * 1e9 : u === 'K' ? n * 1e3 : n;
+}
+
+// Call Claude and parse JSON; retries once if budget constraint is violated
+async function callClaude(client, prompt, budget, retryPrefix = '') {
+  async function attempt(p) {
+    const msg = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: p }],
+    });
+    const text = msg.content[0].text.trim();
+    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    try { return JSON.parse(json); } catch {
+      return JSON.parse(json.replace(/,\s*$/, '') + '}');
+    }
+  }
+
+  let idea = await attempt(prompt);
+
+  if (budget) {
+    const costMax = parseStartupCostMax(idea.startupCost);
+    if (costMax > budget.max || costMax < budget.min) {
+      // Retry with an even more explicit budget instruction prepended
+      const strict = `YOUR PREVIOUS RESPONSE HAD A STARTUP COST OF "${idea.startupCost}" WHICH IS OUTSIDE THE REQUIRED RANGE OF $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()}. YOU MUST CORRECT THIS.\n\n${retryPrefix}${prompt}`;
+      idea = await attempt(strict);
+    }
+  }
+
+  return idea;
+}
+
 // Deduct credits; returns false if insufficient
 function deductCredits(user, action) {
   refreshCreditsIfNeeded(user);
@@ -311,22 +351,7 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
 Make the idea genuinely different from common ideas. Be specific with numbers. Score should reflect real conviction (7.0–9.5 range).`;
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const text = message.content[0].text.trim();
-    // Strip markdown code fences if present
-    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-    let idea;
-    try {
-      idea = JSON.parse(json);
-    } catch {
-      const fixed = json.replace(/,\s*$/, '') + '}';
-      idea = JSON.parse(fixed);
-    }
+    const idea = await callClaude(client, prompt, budget);
     idea.aiGenerated = true;
     res.json(idea);
   } catch (err) {
@@ -399,20 +424,7 @@ Return ONLY a valid JSON object (no markdown, no explanation):
 The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values concise — under 40 words each. Be specific with dollar numbers.`;
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    const text = message.content[0].text.trim();
-    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-    let idea;
-    try {
-      idea = JSON.parse(json);
-    } catch {
-      const fixed = json.replace(/,\s*$/, '') + (json.includes('"topCompetitors"') ? '}' : ',"topCompetitors":[]}');
-      idea = JSON.parse(fixed);
-    }
+    const idea = await callClaude(client, prompt, budget);
     idea.aiGenerated = true;
     idea.blueOcean = true;
     idea.topCompetitors = [];
