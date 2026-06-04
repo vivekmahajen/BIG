@@ -134,6 +134,32 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     setSavedReports(saveReport(report));
   }, [selectedSector, selectedZip]);
 
+  const [liveStep, setLiveStep] = useState(0); // 0=idle, 1-4=loading steps
+
+  const handleLiveAnalysis = useCallback(async () => {
+    if (!selectedState || !selectedCity || !selectedZip || !selectedSector) return;
+    setLiveStep(1);
+    setGenerateError('');
+    setActiveOpp(null);
+    scrollToResults();
+    try {
+      // Animate through loading steps
+      const steps = [1, 2, 3, 4];
+      const timer1 = setTimeout(() => setLiveStep(2), 1800);
+      const timer2 = setTimeout(() => setLiveStep(3), 3600);
+      const timer3 = setTimeout(() => setLiveStep(4), 5400);
+      const card = await api.liveCard(selectedState, selectedCity, selectedZip, selectedSector);
+      clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
+      setLiveStep(0);
+      openDetail(card, true);
+    } catch (err) {
+      setLiveStep(0);
+      const msg = err.message || 'Live analysis failed. Please try again.';
+      setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" to top up.' : msg);
+      setView('list');
+    }
+  }, [selectedState, selectedCity, selectedZip, selectedSector, openDetail]);
+
   const handleGenerateIdea = useCallback(async (blueOcean = false) => {
     setView('generating');
     setGenerateError('');
@@ -305,6 +331,23 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
             </div>
           )}
 
+          {liveStep > 0 && (
+            <div className={styles.liveLoadingOverlay}>
+              <div className={styles.liveLoadingBox}>
+                <div className={styles.liveSpinner} />
+                <div className={styles.liveSteps}>
+                  {['Fetching Census business data…', 'Loading BLS employment data…', 'Checking Google Trends signals…', 'Generating AI analysis…'].map((label, i) => (
+                    <div key={i} className={`${styles.liveStep} ${liveStep > i ? styles.liveStepDone : ''} ${liveStep === i + 1 ? styles.liveStepActive : ''}`}>
+                      <span className={styles.liveStepDot} />
+                      {label}
+                    </div>
+                  ))}
+                </div>
+                <p className={styles.liveNote}>Live analysis takes 4–8 seconds. Worth the wait.</p>
+              </div>
+            </div>
+          )}
+
           {/* ── SCREEN: detail (curated) ── */}
           {view === 'detail' && activeOpp && (
             <div>
@@ -313,6 +356,9 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                   ← Back to rankings
                 </button>
                 <div className={styles.generateGroup}>
+                  <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                    🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                  </button>
                   <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
                     ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
                   </button>
@@ -350,6 +396,9 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                     : <span className={styles.generatedBadge}>✦ AI-Generated</span>
                   }
                   <div className={styles.generateGroup}>
+                    <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                      🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                    </button>
                     <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
                       ✦ Generate Another <span className={styles.creditTag}>3 credits</span>
                     </button>

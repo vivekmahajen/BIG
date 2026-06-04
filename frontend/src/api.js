@@ -74,6 +74,9 @@ export const api = {
   pricing: () => request('/pricing'),
   buyPack: (packId) => request('/buy-pack', { method: 'POST', body: JSON.stringify({ packId }) }),
 
+  liveCard: (state, city, zip, sector) =>
+    request('/live-card', { method: 'POST', body: JSON.stringify({ state, city, zip, sector }) }),
+
   resetRequest: (email) =>
     request('/reset-request', { method: 'POST', body: JSON.stringify({ email }) }),
   resetValidate: (token) =>

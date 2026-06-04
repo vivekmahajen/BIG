@@ -602,4 +602,32 @@ Deliver as a ${outputFormat || 'full structured report with tables, scorecards, 
   }
 });
 
+// ── Live AI Card (Census + BLS + Trends + Claude) ─────────────────────────
+app.post('/api/live-card', auth, async (req, res) => {
+  const { state, city, zip, sector } = req.body;
+  if (!state || !city || !zip || !sector)
+    return res.status(400).json({ error: 'state, city, zip, sector required' });
+  if (!/^\d{5}$/.test(zip))
+    return res.status(400).json({ error: 'ZIP must be 5 digits' });
+
+  // Charge 3 credits (same as generate-idea — live card uses Claude Sonnet)
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'generate-idea')) {
+    return res.status(402).json({
+      error: `Not enough credits. Live analysis costs ${CREDIT_COSTS['generate-idea']} credits.`,
+      creditsRequired: CREDIT_COSTS['generate-idea'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
+
+  try {
+    const { generateLiveCard } = require('./services/opportunityService');
+    const card = await generateLiveCard(state, city, zip, sector);
+    res.json(card);
+  } catch (err) {
+    console.error('[BIG live-card]', err.message);
+    res.status(500).json({ error: 'Live analysis failed: ' + err.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));
