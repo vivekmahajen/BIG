@@ -106,13 +106,15 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     setSavedReports(saveReport(report));
   }, [selectedSector, selectedZip]);
 
-  const handleGenerateIdea = useCallback(async () => {
+  const handleGenerateIdea = useCallback(async (blueOcean = false) => {
     setView('generating');
     setGenerateError('');
     setActiveOpp(null);
     scrollToResults();
     try {
-      const idea = await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState);
+      const idea = blueOcean
+        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState)
+        : await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState);
       try {
         openDetail(idea, true);
       } catch {
@@ -258,9 +260,14 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                 <button className={styles.backBtn} onClick={() => { setView('list'); setActiveOpp(null); }}>
                   ← Back to rankings
                 </button>
-                <button className={styles.generateBtn} onClick={handleGenerateIdea}>
-                  ✦ Generate New Business Idea
-                </button>
+                <div className={styles.generateGroup}>
+                  <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
+                    ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
+                  </button>
+                  <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
+                    ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
+                  </button>
+                </div>
               </div>
               {generateError && <div className={styles.generateError}>{generateError}</div>}
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
@@ -286,10 +293,18 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                   ← Back to rankings
                 </button>
                 <div className={styles.generatedActions}>
-                  <span className={styles.generatedBadge}>✦ AI-Generated</span>
-                  <button className={styles.generateBtn} onClick={handleGenerateIdea}>
-                    ✦ Generate Another
-                  </button>
+                  {activeOpp.blueOcean
+                    ? <span className={styles.blueOceanBadge}>◎ Blue Ocean — No Competitors</span>
+                    : <span className={styles.generatedBadge}>✦ AI-Generated</span>
+                  }
+                  <div className={styles.generateGroup}>
+                    <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
+                      ✦ Generate Another <span className={styles.creditTag}>3 credits</span>
+                    </button>
+                    <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
+                      ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
+                    </button>
+                  </div>
                 </div>
               </div>
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>

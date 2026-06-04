@@ -4,6 +4,7 @@ import styles from './PricingPage.module.css';
 
 const CREDIT_ACTION_LABELS = {
   'generate-idea': { label: 'Generate New Business Idea', icon: '✦' },
+  'generate-blue-ocean': { label: 'Blue Ocean Idea (zero competitors)', icon: '◎' },
   'competitor-compare': { label: 'Competitor Gap Analysis', icon: '⚔' },
   'competitive-analysis': { label: 'Full Competitive Analysis Roadmap', icon: '📊' },
 };

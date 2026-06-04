@@ -1,9 +1,10 @@
 // Credit costs per action
 const CREDIT_COSTS = {
-  'sector-opportunities': 0,   // browsing is free
-  'generate-idea': 3,          // complex AI generation
-  'competitor-compare': 2,     // AI analysis
-  'competitive-analysis': 5,   // deep AI roadmap
+  'sector-opportunities': 0,    // browsing is free
+  'generate-idea': 3,           // complex AI generation
+  'generate-blue-ocean': 8,     // blue ocean (no competitors) — 3 base + 5 premium
+  'competitor-compare': 2,      // AI analysis
+  'competitive-analysis': 5,    // deep AI roadmap
 };
 
 // Subscription tiers

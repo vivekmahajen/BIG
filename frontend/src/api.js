@@ -52,6 +52,12 @@ export const api = {
       body: JSON.stringify({ sector, zip, city, state }),
     }),
 
+  generateBlueOcean: (sector, zip, city, state) =>
+    request('/generate-blue-ocean', {
+      method: 'POST',
+      body: JSON.stringify({ sector, zip, city, state }),
+    }),
+
   competitorCompare: (businessName, sector, competitors) =>
     request('/competitor-compare', {
       method: 'POST',

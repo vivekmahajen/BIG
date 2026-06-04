@@ -326,6 +326,85 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
   }
 });
 
+app.post('/api/generate-blue-ocean', auth, async (req, res) => {
+  const { sector, zip, city, state } = req.body;
+  if (!sector) return res.status(400).json({ error: 'sector required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'generate-blue-ocean')) {
+    return res.status(402).json({
+      error: `Not enough credits. Blue Ocean ideas cost ${CREDIT_COSTS['generate-blue-ocean']} credits (3 base + 5 premium).`,
+      creditsRequired: CREDIT_COSTS['generate-blue-ocean'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });
+
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+  const locationCtx = [city, state, zip].filter(Boolean).join(', ');
+
+  const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
+
+CRITICAL REQUIREMENTS:
+- The idea must serve a customer need that is currently UNMET or UNDERSERVED with zero established competition
+- It must NOT be a "better version" of an existing business — it must create a NEW category or market
+- Explain specifically WHY no competitors exist yet (timing, technology gap, overlooked segment, regulatory change, etc.)
+- The idea must be genuinely viable and profit-making, not a gimmick
+
+Return ONLY a valid JSON object (no markdown, no explanation):
+
+{
+  "name": "Specific Business Name (4-7 words)",
+  "model": "Business model type",
+  "startupCost": "$XK–$YK",
+  "grossMargin": "XX–YY%",
+  "timeToProfit": "X–Y months",
+  "tam": "$XB or $XM",
+  "revenueYr1": "$XK–$YK",
+  "revenueYr3": "$XM–$YM",
+  "score": 9.0,
+  "exitVal": "$XM–$YM",
+  "whyItWorks": "2-3 sentences: the unmet need, why it's profitable, and why NOW is the right time to enter.",
+  "blueOceanReason": "Specific explanation of why NO competitors exist: what gap in the market, technology, regulation, or customer insight makes this space completely empty.",
+  "firstMoverAdvantage": "Concrete advantages of being first: network effects, switching costs, brand, data, regulatory moat, etc.",
+  "profitDrivers": ["driver 1", "driver 2", "driver 3"],
+  "greenSignals": ["signal confirming zero competition 1", "signal 2", "signal 3"],
+  "keyRisks": ["risk of being too early 1", "risk 2"],
+  "watchpoints": ["watchpoint 1", "watchpoint 2"],
+  "launchPlan": "Month 1–30: [action]. Month 31–60: [action]. Month 61–90: [action].",
+  "topCompetitors": [],
+  "ltv_cac": "X:1",
+  "paybackMonths": 8,
+  "sam": "$XM",
+  "som": "$XM",
+  "bestZip": "${zip || '78701'}",
+  "blueOcean": true
+}
+
+The topCompetitors array MUST be empty — that is the definition of a blue ocean idea. Score should be 8.5–9.5 to reflect the first-mover premium. Be bold and specific.`;
+
+  try {
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1536,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const text = message.content[0].text.trim();
+    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    const idea = JSON.parse(json);
+    idea.aiGenerated = true;
+    idea.blueOcean = true;
+    idea.topCompetitors = [];
+    res.json(idea);
+  } catch (err) {
+    console.error('generate-blue-ocean error:', err.message);
+    res.status(500).json({ error: 'Failed to generate blue ocean idea: ' + err.message });
+  }
+});
+
 app.post('/api/competitor-compare', auth, async (req, res) => {
   const { businessName, sector, competitors } = req.body;
   if (!businessName || !competitors || !competitors.length) {

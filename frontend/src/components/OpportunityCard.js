@@ -499,8 +499,33 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Competitors + Auto Gap Analysis */}
-        {o.topCompetitors.length > 0 && (
+        {/* Blue Ocean exclusive sections */}
+        {o.blueOcean && (
+          <>
+            <div className={styles.blueOceanBanner}>
+              <span className={styles.blueOceanIcon}>◎</span>
+              <div>
+                <div className={styles.blueOceanTitle}>Blue Ocean — Uncontested Market Space</div>
+                <div className={styles.blueOceanSub}>This idea operates in a market with no direct competitors. First-mover advantage is your primary asset.</div>
+              </div>
+            </div>
+            {o.blueOceanReason && (
+              <div className={styles.section}>
+                <h3 className={styles.sectionTitle}>🌊 Why There Are No Competitors</h3>
+                <p className={styles.whyText}>{o.blueOceanReason}</p>
+              </div>
+            )}
+            {o.firstMoverAdvantage && (
+              <div className={styles.section}>
+                <h3 className={styles.sectionTitle}>🏆 First-Mover Advantage</h3>
+                <p className={styles.whyText}>{o.firstMoverAdvantage}</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Competitors + Auto Gap Analysis (only for non-blue-ocean ideas) */}
+        {!o.blueOcean && o.topCompetitors.length > 0 && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>🏢 Competitors You're Entering Against</h3>
             <div className={styles.competitorRow}>
