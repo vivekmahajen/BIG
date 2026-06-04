@@ -269,7 +269,12 @@ function CompetitorCompare({ businessName, sector, competitors, onCompareReady }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Auto-run on mount
+  // eslint-disable-next-line
+  useEffect(() => { run(); }, []);
+
   async function run() {
+    setCompare(null);
     setLoading(true);
     setError('');
     try {
@@ -283,34 +288,39 @@ function CompetitorCompare({ businessName, sector, competitors, onCompareReady }
     }
   }
 
-  if (!compare && !loading) {
-    return (
-      <button className={styles.compareBtn} onClick={run}>
-        ⚔ Compare &amp; Gap Analysis — Road to #1
-      </button>
-    );
-  }
-
   if (loading) {
     return (
       <div className={styles.compareLoading}>
         <span className={styles.compareSpinner} />
-        Analysing competitors and building gap matrix…
+        <div>
+          <div className={styles.compareLoadingTitle}>Analysing competitive landscape…</div>
+          <div className={styles.compareLoadingText}>Building your gap matrix vs. {competitors.join(', ')}</div>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className={styles.compareError}>{error} <button onClick={run} className={styles.compareRetry}>Retry</button></div>;
+    return (
+      <div className={styles.compareError}>
+        <span>⚠ {error}</span>
+        <button onClick={run} className={styles.compareRetry}>Retry</button>
+      </div>
+    );
   }
+
+  if (!compare) return null;
 
   const caps = compare.capabilities || [];
 
   return (
     <div className={styles.comparePanel}>
       <div className={styles.compareHeader}>
-        <h3 className={styles.compareTitle}>⚔ Competitive Gap Analysis — Road to #1</h3>
-        <button className={styles.compareClose} onClick={() => setCompare(null)}>✕ Close</button>
+        <div>
+          <h3 className={styles.compareTitle}>⚔ Competitive Gap Analysis — Road to #1</h3>
+          <p className={styles.compareSubtitle}>What you must build to beat {competitors.join(', ')} and become the market leader</p>
+        </div>
+        <button onClick={run} className={styles.compareRefresh} title="Regenerate analysis">↻ Refresh</button>
       </div>
 
       {compare.winningMove && (
@@ -489,10 +499,10 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
-        {/* Competitors + Compare */}
+        {/* Competitors + Auto Gap Analysis */}
         {o.topCompetitors.length > 0 && (
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>🏢 Top Competitors</h3>
+            <h3 className={styles.sectionTitle}>🏢 Competitors You're Entering Against</h3>
             <div className={styles.competitorRow}>
               {o.topCompetitors.map(c => (
                 <span key={c} className={styles.tag}>{c}</span>
