@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Component } from 'react';
 import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
 import Disclaimer from '../components/Disclaimer';
@@ -6,6 +6,25 @@ import { saveReport, loadReports, deleteReport, makeId } from '../savedReports';
 import styles from './DashboardPage.module.css';
 
 // view: 'list' | 'detail' | 'generating' | 'generated'
+
+class CardErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(err) { return { error: err }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: '32px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#991b1b', margin: '16px 0' }}>
+          <strong>Unable to render this report.</strong>
+          <p style={{ marginTop: 8, fontSize: 13 }}>{this.state.error.message}</p>
+          <button onClick={this.props.onReset} style={{ marginTop: 12, padding: '6px 16px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+            ← Back to list
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function DashboardPage({ user, onLogout, onNavigate }) {
   const [states, setStates] = useState([]);
@@ -194,6 +213,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
           )}
 
           {error && <div className={styles.errorBox}>{error}</div>}
+          {generateError && view === 'list' && <div className={styles.generateError}>{generateError}</div>}
 
           {/* ── SCREEN: ranked list ── */}
           {!loading && view === 'list' && sectorOpportunities.length > 0 && (
@@ -240,7 +260,9 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                 </button>
               </div>
               {generateError && <div className={styles.generateError}>{generateError}</div>}
-              <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+              <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
+                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+              </CardErrorBoundary>
             </div>
           )}
 
@@ -267,7 +289,9 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                   </button>
                 </div>
               </div>
-              <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+              <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
+                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+              </CardErrorBoundary>
             </div>
           )}
 
