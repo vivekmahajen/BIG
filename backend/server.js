@@ -213,17 +213,29 @@ Return ONLY a valid JSON object (no markdown) with this exact structure:
   "timelineToLead": "Estimated time to become market leader if executing well"
 }
 
-Include 6-8 capabilities that truly differentiate leaders in this market. Be specific and actionable.`;
+Include exactly 5 capabilities that truly differentiate leaders in this market. Be specific and actionable. Keep each "note" field under 8 words and "toAchieve" under 15 words.`;
 
   try {
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2048,
+      max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
     });
     const text = message.content[0].text.trim();
     const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-    res.json(JSON.parse(json));
+    // Attempt parse; if truncated, try to salvage by closing open structures
+    let parsed;
+    try {
+      parsed = JSON.parse(json);
+    } catch {
+      // Close any unterminated JSON and retry
+      const fixed = json
+        .replace(/,\s*$/, '')
+        .replace(/([^}])\s*$/, '$1}')
+        + ']}';
+      parsed = JSON.parse(fixed);
+    }
+    res.json(parsed);
   } catch (err) {
     console.error('competitor-compare error:', err.message);
     res.status(500).json({ error: 'Failed to generate comparison: ' + err.message });
