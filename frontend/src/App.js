@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CompetitiveAnalysisPage from './pages/CompetitiveAnalysisPage';
+import PricingPage from './pages/PricingPage';
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
-  const [page, setPage] = useState('dashboard'); // 'dashboard' | 'competitive'
+  const [page, setPage] = useState('dashboard'); // 'dashboard' | 'competitive' | 'pricing'
 
   useEffect(() => {
     const token = localStorage.getItem('big_token');
@@ -30,11 +31,21 @@ export default function App() {
     setPage('dashboard');
   }
 
+  function handleCreditsUpdated(updated) {
+    const merged = { ...user, ...updated };
+    setUser(merged);
+    localStorage.setItem('big_user', JSON.stringify(merged));
+  }
+
   if (checking) return null;
   if (!user) return <LoginPage onLogin={handleLogin} />;
 
   if (page === 'competitive') {
-    return <CompetitiveAnalysisPage user={user} onBack={() => setPage('dashboard')} onLogout={handleLogout} />;
+    return <CompetitiveAnalysisPage user={user} onBack={() => setPage('dashboard')} onLogout={handleLogout} onNavigate={setPage} />;
+  }
+
+  if (page === 'pricing') {
+    return <PricingPage user={user} onBack={() => setPage('dashboard')} onCreditsUpdated={handleCreditsUpdated} />;
   }
 
   return <DashboardPage user={user} onLogout={handleLogout} onNavigate={setPage} />;

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { CREDIT_COSTS, TIERS, CREDIT_PACKS } = require('./credits');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,8 +22,44 @@ app.use(express.json());
 const users = [];
 // Seed a demo account
 bcrypt.hash('demo1234', 10).then(hash => {
-  users.push({ id: 1, email: 'demo@big.com', name: 'Demo User', passwordHash: hash });
+  users.push({
+    id: 1, email: 'demo@big.com', name: 'Demo User', passwordHash: hash,
+    tier: 'free', credits: 10, packCredits: 0,
+    creditsResetAt: nextMonthStart(),
+  });
 });
+
+function nextMonthStart() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+}
+
+function getUser(id) {
+  return users.find(u => u.id === id);
+}
+
+function refreshCreditsIfNeeded(user) {
+  if (Date.now() >= user.creditsResetAt) {
+    const tier = TIERS[user.tier] || TIERS.free;
+    const rollover = Math.min(user.credits, tier.rolloverMax || 0);
+    user.credits = tier.monthlyCredits + rollover;
+    user.creditsResetAt = nextMonthStart();
+  }
+}
+
+function userPublic(user) {
+  refreshCreditsIfNeeded(user);
+  const tier = TIERS[user.tier] || TIERS.free;
+  return {
+    id: user.id, email: user.email, name: user.name,
+    tier: user.tier, tierName: tier.name,
+    credits: user.credits + (user.packCredits || 0),
+    subscriptionCredits: user.credits,
+    packCredits: user.packCredits || 0,
+    monthlyAllowance: tier.monthlyCredits,
+    creditsResetAt: user.creditsResetAt,
+  };
+}
 
 // ── Auth middleware ────────────────────────────────────────────────────────
 function auth(req, res, next) {
@@ -37,6 +74,22 @@ function auth(req, res, next) {
   }
 }
 
+// Deduct credits; returns false if insufficient
+function deductCredits(user, action) {
+  refreshCreditsIfNeeded(user);
+  const cost = CREDIT_COSTS[action] || 0;
+  if (cost === 0) return true;
+  const total = user.credits + (user.packCredits || 0);
+  if (total < cost) return false;
+  // Deduct from subscription credits first, then pack credits
+  let remaining = cost;
+  const fromSub = Math.min(user.credits, remaining);
+  user.credits -= fromSub;
+  remaining -= fromSub;
+  if (remaining > 0) user.packCredits = (user.packCredits || 0) - remaining;
+  return true;
+}
+
 // ── Routes ─────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({ status: 'ok', app: 'BIG backend' }));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -49,10 +102,14 @@ app.post('/api/register', async (req, res) => {
   if (users.find(u => u.email === email))
     return res.status(409).json({ error: 'Email already registered' });
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = { id: users.length + 1, email, name, passwordHash };
+  const user = {
+    id: users.length + 1, email, name, passwordHash,
+    tier: 'free', credits: 10, packCredits: 0,
+    creditsResetAt: nextMonthStart(),
+  };
   users.push(user);
   const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+  res.json({ token, user: userPublic(user) });
 });
 
 // Login
@@ -63,12 +120,37 @@ app.post('/api/login', async (req, res) => {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
   const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+  res.json({ token, user: userPublic(user) });
 });
 
 // Me
 app.get('/api/me', auth, (req, res) => {
-  res.json({ user: req.user });
+  const user = getUser(req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json({ user: userPublic(user) });
+});
+
+// Credits info
+app.get('/api/credits', auth, (req, res) => {
+  const user = getUser(req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json(userPublic(user));
+});
+
+// Credit packs and tiers info (public)
+app.get('/api/pricing', (req, res) => {
+  res.json({ tiers: TIERS, packs: CREDIT_PACKS, costs: CREDIT_COSTS });
+});
+
+// Simulate buying a credit pack (in production, wire to Stripe)
+app.post('/api/buy-pack', auth, (req, res) => {
+  const { packId } = req.body;
+  const pack = CREDIT_PACKS.find(p => p.id === packId);
+  if (!pack) return res.status(400).json({ error: 'Unknown pack' });
+  const user = getUser(req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  user.packCredits = (user.packCredits || 0) + pack.credits;
+  res.json({ success: true, added: pack.credits, user: userPublic(user) });
 });
 
 // Geo data
@@ -121,6 +203,15 @@ app.get('/api/sector-opportunities', auth, (req, res) => {
 app.post('/api/generate-idea', auth, async (req, res) => {
   const { sector, zip, city, state } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'generate-idea')) {
+    return res.status(402).json({
+      error: `Not enough credits. Generating a business idea costs ${CREDIT_COSTS['generate-idea']} credits.`,
+      creditsRequired: CREDIT_COSTS['generate-idea'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });
@@ -185,6 +276,16 @@ app.post('/api/competitor-compare', auth, async (req, res) => {
   if (!businessName || !competitors || !competitors.length) {
     return res.status(400).json({ error: 'businessName and competitors required' });
   }
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'competitor-compare')) {
+    return res.status(402).json({
+      error: `Not enough credits. Competitor analysis costs ${CREDIT_COSTS['competitor-compare']} credits.`,
+      creditsRequired: CREDIT_COSTS['competitor-compare'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });
 
@@ -245,6 +346,15 @@ Include exactly 5 capabilities that truly differentiate leaders in this market. 
 app.post('/api/competitive-analysis', auth, async (req, res) => {
   const { business, competitors, functions: fns, scoring, horizon, priorityFocus, outputFormat, context } = req.body;
   if (!business || !business.name) return res.status(400).json({ error: 'business.name required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'competitive-analysis')) {
+    return res.status(402).json({
+      error: `Not enough credits. Full competitive analysis costs ${CREDIT_COSTS['competitive-analysis']} credits.`,
+      creditsRequired: CREDIT_COSTS['competitive-analysis'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });

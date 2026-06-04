@@ -63,4 +63,8 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  credits: () => request('/credits'),
+  pricing: () => request('/pricing'),
+  buyPack: (packId) => request('/buy-pack', { method: 'POST', body: JSON.stringify({ packId }) }),
 };

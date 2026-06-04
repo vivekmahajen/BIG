@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, Component } from 'react';
 import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
 import Disclaimer from '../components/Disclaimer';
+import CreditsDisplay from '../components/CreditsDisplay';
 import { saveReport, loadReports, deleteReport, makeId } from '../savedReports';
 import styles from './DashboardPage.module.css';
 
@@ -119,7 +120,8 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
         setView('generated');
       }
     } catch (err) {
-      setGenerateError(err.message || 'Failed to generate idea. Please try again.');
+      const msg = err.message || 'Failed to generate idea. Please try again.';
+      setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" in the header to top up.' : msg);
       setView('list');
     }
   }, [selectedSector, selectedZip, selectedCity, selectedState, openDetail]);
@@ -134,6 +136,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
         </div>
         <div className={styles.headerRight}>
           <button className={styles.navBtn} onClick={() => onNavigate('competitive')}>⚔ Competitive Analysis</button>
+          <CreditsDisplay user={user} onBuyCredits={() => onNavigate('pricing')} />
           <span className={styles.userName}>{user.name}</span>
           <button className={styles.logoutBtn} onClick={onLogout}>Sign out</button>
         </div>
