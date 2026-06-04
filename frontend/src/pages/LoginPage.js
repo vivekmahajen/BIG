@@ -50,8 +50,8 @@ export default function LoginPage({ onLogin }) {
         <div className={styles.stats}>
           {[
             { label: 'Sectors Analyzed', value: '16' },
-            { label: 'U.S. Markets', value: '100+' },
-            { label: 'Opportunities', value: '32+' },
+            { label: 'U.S. Markets', value: '200+' },
+            { label: 'Curated Ideas', value: '80' },
             { label: 'Avg Exit Multiple', value: '10×' },
           ].map(s => (
             <div key={s.label} className={styles.stat}>

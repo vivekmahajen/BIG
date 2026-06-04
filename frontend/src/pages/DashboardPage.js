@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
 import Disclaimer from '../components/Disclaimer';
+import { saveReport, loadReports, deleteReport, makeId } from '../savedReports';
 import styles from './DashboardPage.module.css';
 
 // view: 'list' | 'detail' | 'generating' | 'generated'
@@ -21,6 +22,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   const [view, setView] = useState('list');           // which screen to show
   const [activeOpp, setActiveOpp] = useState(null);   // detail or generated idea
   const [generateError, setGenerateError] = useState('');
+  const [savedReports, setSavedReports] = useState(() => loadReports());
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -64,12 +66,25 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
       .finally(() => setLoading(false));
   }, [selectedSector]);
 
-  const openDetail = useCallback((opp) => {
+  const openDetail = useCallback((opp, isGenerated = false) => {
     setActiveOpp(opp);
-    setView('detail');
+    setView(isGenerated ? 'generated' : 'detail');
     setGenerateError('');
     scrollToResults();
-  }, []);
+    // Auto-save report
+    const report = {
+      id: opp._savedId || makeId(),
+      type: isGenerated ? 'generated' : 'curated',
+      name: opp.name,
+      sector: selectedSector,
+      zip: selectedZip,
+      score: opp.score,
+      timestamp: Date.now(),
+      data: opp,
+    };
+    if (!opp._savedId) opp._savedId = report.id;
+    setSavedReports(saveReport(report));
+  }, [selectedSector, selectedZip]);
 
   const handleGenerateIdea = useCallback(async () => {
     setView('generating');
@@ -78,15 +93,12 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     scrollToResults();
     try {
       const idea = await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState);
-      setActiveOpp(idea);
-      setView('generated');
+      openDetail(idea, true);
     } catch (err) {
       setGenerateError(err.message);
-      setView('detail'); // go back to where we were (activeOpp still set from before? no — cleared above)
-      // just go back to list
       setView('list');
     }
-  }, [selectedSector, selectedZip, selectedCity, selectedState]);
+  }, [selectedSector, selectedZip, selectedCity, selectedState, openDetail]);
 
   return (
     <div className={styles.page}>
@@ -158,6 +170,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
           </div>
         </div>
 
+        <div className={styles.mainColumns}>
         {/* Results */}
         <div className={styles.results} ref={resultsRef}>
 
@@ -254,10 +267,61 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
           )}
 
         </div>
+
+        {/* Saved Reports Sidebar */}
+        <div className={styles.sidebar}>
+          <div className={styles.sidebarHeader}>
+            <span className={styles.sidebarTitle}>📁 Recent Reports</span>
+            {savedReports.length > 0 && (
+              <span className={styles.sidebarCount}>{savedReports.length}</span>
+            )}
+          </div>
+          {savedReports.length === 0 ? (
+            <p className={styles.sidebarEmpty}>Reports you view will be saved here automatically.</p>
+          ) : (
+            <div className={styles.sidebarList}>
+              {savedReports.map(r => {
+                const color = r.score >= 9.0 ? '#10b981' : r.score >= 8.0 ? '#f59e0b' : '#94a3b8';
+                const timeAgo = getTimeAgo(r.timestamp);
+                return (
+                  <div key={r.id} className={styles.sidebarItem}>
+                    <button className={styles.sidebarItemBtn} onClick={() => openDetail(r.data, r.type === 'generated')}>
+                      <div className={styles.sidebarItemTop}>
+                        <span className={styles.sidebarItemName}>{r.name}</span>
+                        {r.score > 0 && (
+                          <span className={styles.sidebarScore} style={{ color }}>★ {r.score.toFixed(1)}</span>
+                        )}
+                      </div>
+                      <div className={styles.sidebarItemMeta}>
+                        {r.type === 'generated' && <span className={styles.aiBadge}>AI</span>}
+                        <span>{r.sector}</span>
+                        {r.zip && <><span className={styles.rankedDot}>·</span><span>{r.zip}</span></>}
+                        <span className={styles.rankedDot}>·</span>
+                        <span>{timeAgo}</span>
+                      </div>
+                    </button>
+                    <button className={styles.sidebarDelete} onClick={() => setSavedReports(deleteReport(r.id))} title="Remove">✕</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        </div>
       </main>
       <Disclaimer />
     </div>
   );
+}
+
+function getTimeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 function EmptyState({ message, icon }) {

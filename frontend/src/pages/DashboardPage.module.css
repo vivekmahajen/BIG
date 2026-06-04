@@ -424,3 +424,156 @@
   background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.25));
   border-color: rgba(99,102,241,0.7);
 }
+
+/* Two-column layout */
+.mainColumns {
+  display: flex;
+  gap: 0;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.results {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Saved reports sidebar */
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  padding: 24px 20px;
+  min-height: 400px;
+  background: var(--surface);
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sidebarTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.sidebarCount {
+  background: rgba(99,102,241,.15);
+  color: #a5b4fc;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.sidebarEmpty {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.sidebarList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.sidebarItemBtn {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .2s;
+  min-width: 0;
+}
+
+.sidebarItemBtn:hover {
+  border-color: var(--accent);
+}
+
+.sidebarItemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.sidebarItemName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.sidebarScore {
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.sidebarItemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.aiBadge {
+  background: rgba(99,102,241,.15);
+  color: #a5b4fc;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.sidebarDelete {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity .2s, color .2s;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.sidebarItem:hover .sidebarDelete {
+  opacity: 1;
+}
+
+.sidebarDelete:hover {
+  color: #ef4444;
+}
+
+@media (max-width: 900px) {
+  .mainColumns { flex-direction: column; }
+  .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+}

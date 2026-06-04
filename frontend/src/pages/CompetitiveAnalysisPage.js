@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api';
 import Disclaimer from '../components/Disclaimer';
+import { saveReport, makeId } from '../savedReports';
 import styles from './CompetitiveAnalysisPage.module.css';
 
 const FUNCTION_OPTIONS = [
@@ -252,6 +253,7 @@ export default function CompetitiveAnalysisPage({ user, onBack, onLogout }) {
     setGenerating(true);
     setError('');
     try {
+      const id = makeId();
       const data = await api.competitiveAnalysis({
         business,
         competitors: competitors.filter(c => c.name.trim()),
@@ -263,6 +265,7 @@ export default function CompetitiveAnalysisPage({ user, onBack, onLogout }) {
         context: context.trim() || undefined,
       });
       setResult(data);
+      saveReport({ id, type: 'competitive', name: `${business.name} — Competitive Analysis`, sector: business.industry, zip: '', score: 0, timestamp: Date.now(), data });
     } catch (err) {
       setError(err.message);
     } finally {
