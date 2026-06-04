@@ -320,7 +320,13 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
     const text = message.content[0].text.trim();
     // Strip markdown code fences if present
     const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-    const idea = JSON.parse(json);
+    let idea;
+    try {
+      idea = JSON.parse(json);
+    } catch {
+      const fixed = json.replace(/,\s*$/, '') + '}';
+      idea = JSON.parse(fixed);
+    }
     idea.aiGenerated = true;
     res.json(idea);
   } catch (err) {
@@ -390,17 +396,23 @@ Return ONLY a valid JSON object (no markdown, no explanation):
   "blueOcean": true
 }
 
-The topCompetitors array MUST be empty — that is the definition of a blue ocean idea. Score should be 8.5–9.5 to reflect the first-mover premium. Be bold and specific.`;
+The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values concise — under 40 words each. Be specific with dollar numbers.`;
 
   try {
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1536,
+      max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
     });
     const text = message.content[0].text.trim();
     const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-    const idea = JSON.parse(json);
+    let idea;
+    try {
+      idea = JSON.parse(json);
+    } catch {
+      const fixed = json.replace(/,\s*$/, '') + (json.includes('"topCompetitors"') ? '}' : ',"topCompetitors":[]}');
+      idea = JSON.parse(fixed);
+    }
     idea.aiGenerated = true;
     idea.blueOcean = true;
     idea.topCompetitors = [];
