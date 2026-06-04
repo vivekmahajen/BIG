@@ -549,6 +549,27 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           </div>
         )}
 
+        {o.liveGenerated && o._meta && (
+          <div className={styles.dataFreshness}>
+            <span className={styles.freshnessDot} />
+            <span className={styles.freshnessLabel}>
+              Live analysis · Generated {new Date(o._meta.generatedAt).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              })}
+            </span>
+            {o._meta.dataQuality?.censusDataAvailable && (
+              <span className={styles.dataBadge}>Census data</span>
+            )}
+            {o._meta.dataQuality?.blsDataAvailable && (
+              <span className={styles.dataBadge}>BLS data</span>
+            )}
+            {o._meta.dataQuality?.trendsDataAvailable && (
+              <span className={styles.dataBadge}>Trends data</span>
+            )}
+          </div>
+        )}
+
         <Legend />
       </div>
     </div>

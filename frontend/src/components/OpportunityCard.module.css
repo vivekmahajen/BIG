@@ -647,3 +647,37 @@
   border-color: rgba(99,102,241,0.6);
   color: #a5b4fc;
 }
+
+.dataFreshness {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #6b7280;
+  padding: 10px 0 4px;
+  border-top: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.freshnessDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.freshnessLabel { color: #6b7280; }
+.dataBadge {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 500;
+}

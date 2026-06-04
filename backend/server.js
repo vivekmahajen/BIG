@@ -295,6 +295,36 @@ app.get('/api/sector-opportunities', auth, (req, res) => {
   res.json(opps);
 });
 
+// Live AI-generated opportunity card with real Census + BLS + Trends data
+app.post('/api/generate-live-card', auth, async (req, res) => {
+  const { state, city, zip, sector } = req.body;
+
+  if (!state || !city || !zip || !sector) {
+    return res.status(400).json({ error: 'state, city, zip, and sector are required' });
+  }
+  if (!/^\d{5}$/.test(zip)) {
+    return res.status(400).json({ error: 'zip must be a 5-digit number' });
+  }
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'generate-idea')) {
+    return res.status(402).json({
+      error: `Not enough credits. Live card generation costs ${CREDIT_COSTS['generate-idea']} credits.`,
+      creditsRequired: CREDIT_COSTS['generate-idea'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
+
+  try {
+    const { generateLiveCard } = require('./services/opportunityService');
+    const card = await generateLiveCard(state, city, zip, sector);
+    res.json(card);
+  } catch (err) {
+    console.error('[BIG Live] /generate-live-card error:', err.message);
+    res.status(500).json({ error: 'Failed to generate live card: ' + err.message });
+  }
+});
+
 app.post('/api/generate-idea', auth, async (req, res) => {
   const { sector, zip, city, state, budget } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });

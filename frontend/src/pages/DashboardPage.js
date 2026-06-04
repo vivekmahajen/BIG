@@ -134,6 +134,21 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     setSavedReports(saveReport(report));
   }, [selectedSector, selectedZip]);
 
+  const handleGenerateLiveCard = useCallback(async () => {
+    setView('generating');
+    setGenerateError('');
+    setActiveOpp(null);
+    scrollToResults();
+    try {
+      const card = await api.generateLiveCard(selectedSector, selectedZip, selectedCity, selectedState);
+      openDetail(card, true);
+    } catch (err) {
+      const msg = err.message || 'Failed to generate live analysis. Please try again.';
+      setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" in the header to top up.' : msg);
+      setView('list');
+    }
+  }, [selectedSector, selectedZip, selectedCity, selectedState, openDetail]);
+
   const handleGenerateIdea = useCallback(async (blueOcean = false) => {
     setView('generating');
     setGenerateError('');
@@ -278,6 +293,11 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                   {selectedBudget ? `${filteredOpportunities.length} Opportunit${filteredOpportunities.length === 1 ? 'y' : 'ies'}` : 'Top 5 Opportunities'} — {selectedSector}
                 </h2>
                 <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
+                {selectedZip && selectedCity && selectedState && (
+                  <button className={styles.liveCardBtn} onClick={handleGenerateLiveCard} title="Generate a live AI analysis using real Census, BLS, and Google Trends data for this exact location">
+                    ⚡ Live Analysis <span className={styles.creditTag}>3 credits</span>
+                  </button>
+                )}
               </div>
               {filteredOpportunities.map((opp, idx) => {
                 const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
@@ -313,6 +333,9 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                   ← Back to rankings
                 </button>
                 <div className={styles.generateGroup}>
+                  <button className={styles.liveCardBtn} onClick={handleGenerateLiveCard} title="Generate a live AI analysis using real Census, BLS, and Google Trends data">
+                    ⚡ Live Analysis <span className={styles.creditTag}>3 credits</span>
+                  </button>
                   <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
                     ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
                   </button>

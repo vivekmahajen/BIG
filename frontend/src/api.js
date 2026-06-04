@@ -46,6 +46,12 @@ export const api = {
   sectorOpportunities: (sector) =>
     request(`/sector-opportunities?sector=${encodeURIComponent(sector)}`),
 
+  generateLiveCard: (sector, zip, city, state) =>
+    request('/generate-live-card', {
+      method: 'POST',
+      body: JSON.stringify({ sector, zip, city, state }),
+    }),
+
   generateIdea: (sector, zip, city, state, budget) =>
     request('/generate-idea', {
       method: 'POST',
