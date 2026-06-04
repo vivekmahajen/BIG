@@ -67,4 +67,11 @@ export const api = {
   credits: () => request('/credits'),
   pricing: () => request('/pricing'),
   buyPack: (packId) => request('/buy-pack', { method: 'POST', body: JSON.stringify({ packId }) }),
+
+  resetRequest: (email) =>
+    request('/reset-request', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetValidate: (token) =>
+    request(`/reset-validate?token=${encodeURIComponent(token)}`),
+  resetPassword: (token, password) =>
+    request('/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
 };

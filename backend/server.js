@@ -94,6 +94,61 @@ function deductCredits(user, action) {
 app.get('/', (req, res) => res.json({ status: 'ok', app: 'BIG backend' }));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// ── Password reset token store (in-memory; expires in 1 hour) ─────────────
+const resetTokens = new Map(); // token -> { userId, expiresAt }
+
+function makeResetToken() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+// Request password reset
+app.post('/api/reset-request', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'email required' });
+  const user = users.find(u => u.email === email.toLowerCase().trim());
+  // Always respond success so we don't leak whether an email exists
+  if (!user) return res.json({ message: 'If that email is registered, a reset link has been sent.' });
+
+  const token = makeResetToken();
+  resetTokens.set(token, { userId: user.id, expiresAt: Date.now() + 60 * 60 * 1000 });
+
+  // In production send an email here. For demo we return the token directly.
+  const isDev = !process.env.SMTP_HOST;
+  res.json({
+    message: 'If that email is registered, a reset link has been sent.',
+    ...(isDev ? { devToken: token, devNote: 'Token returned in dev mode — use it at /reset-password' } : {}),
+  });
+});
+
+// Validate reset token (used to pre-check before showing the new-password form)
+app.get('/api/reset-validate', (req, res) => {
+  const { token } = req.query;
+  const entry = resetTokens.get(token);
+  if (!entry || Date.now() > entry.expiresAt) {
+    return res.status(400).json({ error: 'Reset link is invalid or has expired.' });
+  }
+  res.json({ valid: true });
+});
+
+// Perform the reset
+app.post('/api/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'token and password required' });
+  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+  const entry = resetTokens.get(token);
+  if (!entry || Date.now() > entry.expiresAt) {
+    return res.status(400).json({ error: 'Reset link is invalid or has expired. Please request a new one.' });
+  }
+
+  const user = getUser(entry.userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  user.passwordHash = await bcrypt.hash(password, 10);
+  resetTokens.delete(token);
+  res.json({ message: 'Password updated successfully. You can now sign in.' });
+});
+
 // Register
 app.post('/api/register', async (req, res) => {
   const { email, name, password } = req.body;
