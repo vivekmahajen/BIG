@@ -256,7 +256,7 @@ app.get('/api/sector-opportunities', auth, (req, res) => {
 });
 
 app.post('/api/generate-idea', auth, async (req, res) => {
-  const { sector, zip, city, state } = req.body;
+  const { sector, zip, city, state, budget } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });
 
   const user = getUser(req.user.id);
@@ -275,8 +275,11 @@ app.post('/api/generate-idea', auth, async (req, res) => {
   const client = new Anthropic({ apiKey });
 
   const locationCtx = [city, state, zip].filter(Boolean).join(', ');
+  const budgetCtx = budget
+    ? `\n\nCRITICAL BUDGET CONSTRAINT: The total startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field must fall within this range. Design the entire business model around this budget — choose a lean, capital-efficient approach that is genuinely viable at this funding level.`
+    : '';
 
-  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.
+  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}
 
 Return ONLY a valid JSON object with exactly these fields (no markdown, no explanation, just raw JSON):
 
@@ -327,7 +330,7 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
 });
 
 app.post('/api/generate-blue-ocean', auth, async (req, res) => {
-  const { sector, zip, city, state } = req.body;
+  const { sector, zip, city, state, budget } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });
 
   const user = getUser(req.user.id);
@@ -345,10 +348,13 @@ app.post('/api/generate-blue-ocean', auth, async (req, res) => {
   const Anthropic = require('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey });
   const locationCtx = [city, state, zip].filter(Boolean).join(', ');
+  const budgetCtx = budget
+    ? `\n- BUDGET CONSTRAINT: Startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field must be within this range. Design for this exact funding level.`
+    : '';
 
   const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
 
-CRITICAL REQUIREMENTS:
+CRITICAL REQUIREMENTS:${budgetCtx}
 - The idea must serve a customer need that is currently UNMET or UNDERSERVED with zero established competition
 - It must NOT be a "better version" of an existing business — it must create a NEW category or market
 - Explain specifically WHY no competitors exist yet (timing, technology gap, overlooked segment, regulatory change, etc.)

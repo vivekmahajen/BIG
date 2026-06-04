@@ -89,6 +89,39 @@
   margin-bottom: 24px;
 }
 
+.budgetBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #fbbf24;
+}
+
+.budgetNoMatch {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.budgetClear {
+  margin-left: auto;
+  background: none;
+  border: 1px solid rgba(245,158,11,0.35);
+  color: #fbbf24;
+  border-radius: 5px;
+  padding: 2px 9px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.budgetClear:hover { background: rgba(245,158,11,0.12); }
+
 .filters {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

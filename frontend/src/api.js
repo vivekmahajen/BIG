@@ -46,16 +46,16 @@ export const api = {
   sectorOpportunities: (sector) =>
     request(`/sector-opportunities?sector=${encodeURIComponent(sector)}`),
 
-  generateIdea: (sector, zip, city, state) =>
+  generateIdea: (sector, zip, city, state, budget) =>
     request('/generate-idea', {
       method: 'POST',
-      body: JSON.stringify({ sector, zip, city, state }),
+      body: JSON.stringify({ sector, zip, city, state, budget }),
     }),
 
-  generateBlueOcean: (sector, zip, city, state) =>
+  generateBlueOcean: (sector, zip, city, state, budget) =>
     request('/generate-blue-ocean', {
       method: 'POST',
-      body: JSON.stringify({ sector, zip, city, state }),
+      body: JSON.stringify({ sector, zip, city, state, budget }),
     }),
 
   competitorCompare: (businessName, sector, competitors) =>

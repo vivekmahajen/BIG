@@ -39,6 +39,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   const [selectedSector, setSelectedSector] = useState('');
 
   const [sectorOpportunities, setSectorOpportunities] = useState([]);
+  const [selectedBudget, setSelectedBudget] = useState('');  // startup cost tier filter
   const [view, setView] = useState('list');           // which screen to show
   const [activeOpp, setActiveOpp] = useState(null);   // detail or generated idea
   const [generateError, setGenerateError] = useState('');
@@ -86,6 +87,33 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
       .finally(() => setLoading(false));
   }, [selectedSector]);
 
+  // Parse a startup cost string like "$25K–$75K" or "$1.2M" into a max dollar value
+  function parseStartupCostMax(str) {
+    if (!str) return Infinity;
+    const upper = str.split(/[–-]/).pop();   // take the upper bound
+    const m = upper.replace(/,/g, '').match(/\$?([\d.]+)\s*([KMB]?)/i);
+    if (!m) return Infinity;
+    const num = parseFloat(m[1]);
+    const unit = m[2].toUpperCase();
+    return unit === 'M' ? num * 1_000_000 : unit === 'B' ? num * 1_000_000_000 : unit === 'K' ? num * 1_000 : num;
+  }
+
+  const BUDGET_TIERS = [
+    { value: '',           label: '— Any startup cost —',       min: 0,      max: Infinity },
+    { value: '100-1000',   label: '$100 – $1,000  (Bootstrap)',  min: 100,    max: 1_000 },
+    { value: '1k-10k',     label: '$1,001 – $10,000  (Lean)',    min: 1_001,  max: 10_000 },
+    { value: '10k-50k',    label: '$10,001 – $50,000  (Funded)', min: 10_001, max: 50_000 },
+    { value: '50k-100k',   label: '$50,001 – $100,000  (Scale)', min: 50_001, max: 100_000 },
+  ];
+
+  const activeBudget = BUDGET_TIERS.find(t => t.value === selectedBudget) || BUDGET_TIERS[0];
+
+  const filteredOpportunities = sectorOpportunities.filter(opp => {
+    if (!selectedBudget) return true;
+    const max = parseStartupCostMax(opp.startupCost);
+    return max >= activeBudget.min && max <= activeBudget.max;
+  });
+
   const openDetail = useCallback((opp, isGenerated = false) => {
     const savedId = opp._savedId || makeId();
     const oppWithId = { ...opp, _savedId: savedId };
@@ -111,10 +139,11 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     setGenerateError('');
     setActiveOpp(null);
     scrollToResults();
+    const budgetRange = selectedBudget ? { min: activeBudget.min, max: activeBudget.max, label: activeBudget.label } : null;
     try {
       const idea = blueOcean
-        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState)
-        : await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState);
+        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState, budgetRange)
+        : await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState, budgetRange);
       try {
         openDetail(idea, true);
       } catch {
@@ -196,7 +225,28 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                 </select>
               </div>
             </div>
+
+            <div className={styles.filterGroup}>
+              <label>Startup Budget</label>
+              <div className={styles.selectWrap}>
+                <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)}>
+                  {BUDGET_TIERS.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
+
+          {selectedBudget && (
+            <div className={styles.budgetBadge}>
+              💰 Showing opportunities with startup cost up to <strong>${activeBudget.max.toLocaleString()}</strong>
+              {filteredOpportunities.length === 0 && sectorOpportunities.length > 0 && (
+                <span className={styles.budgetNoMatch}> — no curated matches, but you can still generate an AI idea within this budget</span>
+              )}
+              <button className={styles.budgetClear} onClick={() => setSelectedBudget('')}>✕ Clear</button>
+            </div>
+          )}
         </div>
 
         <div className={styles.mainColumns}>
@@ -221,13 +271,15 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
           {generateError && view === 'list' && <div className={styles.generateError}>{generateError}</div>}
 
           {/* ── SCREEN: ranked list ── */}
-          {!loading && view === 'list' && sectorOpportunities.length > 0 && (
+          {!loading && view === 'list' && filteredOpportunities.length > 0 && (
             <div className={styles.rankedList}>
               <div className={styles.rankedHeader}>
-                <h2 className={styles.rankedTitle}>Top 5 Opportunities — {selectedSector}</h2>
+                <h2 className={styles.rankedTitle}>
+                  {selectedBudget ? `${filteredOpportunities.length} Opportunit${filteredOpportunities.length === 1 ? 'y' : 'ies'}` : 'Top 5 Opportunities'} — {selectedSector}
+                </h2>
                 <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
               </div>
-              {sectorOpportunities.map((opp, idx) => {
+              {filteredOpportunities.map((opp, idx) => {
                 const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
                 return (
                   <button key={opp.name} className={styles.rankedItem} onClick={() => openDetail(opp)}>
@@ -281,7 +333,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
             <div className={styles.generatingScreen}>
               <div className={styles.generatingSpinner} />
               <h3 className={styles.generatingTitle}>Crafting a new business idea…</h3>
-              <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}` : ''} and building a full opportunity report.</p>
+              <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
             </div>
           )}
 
