@@ -67,22 +67,22 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   }, [selectedSector]);
 
   const openDetail = useCallback((opp, isGenerated = false) => {
-    setActiveOpp(opp);
+    const savedId = opp._savedId || makeId();
+    const oppWithId = { ...opp, _savedId: savedId };
+    setActiveOpp(oppWithId);
     setView(isGenerated ? 'generated' : 'detail');
     setGenerateError('');
     scrollToResults();
-    // Auto-save report
     const report = {
-      id: opp._savedId || makeId(),
+      id: savedId,
       type: isGenerated ? 'generated' : 'curated',
       name: opp.name,
       sector: selectedSector,
       zip: selectedZip,
-      score: opp.score,
+      score: typeof opp.score === 'string' ? parseFloat(opp.score) : (opp.score || 0),
       timestamp: Date.now(),
-      data: opp,
+      data: oppWithId,
     };
-    if (!opp._savedId) opp._savedId = report.id;
     setSavedReports(saveReport(report));
   }, [selectedSector, selectedZip]);
 
@@ -93,9 +93,14 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     scrollToResults();
     try {
       const idea = await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState);
-      openDetail(idea, true);
+      try {
+        openDetail(idea, true);
+      } catch {
+        setActiveOpp(idea);
+        setView('generated');
+      }
     } catch (err) {
-      setGenerateError(err.message);
+      setGenerateError(err.message || 'Failed to generate idea. Please try again.');
       setView('list');
     }
   }, [selectedSector, selectedZip, selectedCity, selectedState, openDetail]);
