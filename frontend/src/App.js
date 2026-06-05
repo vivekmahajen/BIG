@@ -41,6 +41,10 @@ export default function App() {
   if (checking) return null;
   if (!user) return <LoginPage onLogin={handleLogin} />;
 
+  if (page === 'saved') {
+    return <SavedDashboard onNavigate={setPage} />;
+  }
+
   if (page === 'competitive') {
     return <CompetitiveAnalysisPage user={user} onBack={() => setPage('dashboard')} onLogout={handleLogout} onNavigate={setPage} />;
   }

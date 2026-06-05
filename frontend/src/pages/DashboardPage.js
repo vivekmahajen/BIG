@@ -193,6 +193,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
           <span className={styles.headerTitle}>Business Opportunity Intelligence</span>
         </div>
         <div className={styles.headerRight}>
+          <button className={styles.navBtn} onClick={() => onNavigate('saved')}>📊 My Saved</button>
           <button className={styles.navBtn} onClick={() => onNavigate('competitive')}>⚔ Competitive Analysis</button>
           <button className={styles.navBtn} onClick={() => onNavigate('saved')}>📁 My Dashboard</button>
           <CreditsDisplay user={user} onBuyCredits={() => onNavigate('pricing')} />
@@ -380,7 +381,15 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
               </div>
               {generateError && <div className={styles.generateError}>{generateError}</div>}
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
-                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+                <OpportunityCard
+                  opportunity={activeOpp}
+                  zip={selectedZip}
+                  sector={selectedSector}
+                  state={states.find(s => s.code === selectedState)?.name || selectedState}
+                  city={selectedCity}
+                  sectorLabel={selectedSector}
+                  onNavigate={onNavigate}
+                />
               </CardErrorBoundary>
             </div>
           )}
@@ -429,7 +438,15 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                 </div>
               </div>
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
-                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+                <OpportunityCard
+                  opportunity={activeOpp}
+                  zip={selectedZip}
+                  sector={selectedSector}
+                  state={states.find(s => s.code === selectedState)?.name || selectedState}
+                  city={selectedCity}
+                  sectorLabel={selectedSector}
+                  onNavigate={onNavigate}
+                />
               </CardErrorBoundary>
             </div>
           )}

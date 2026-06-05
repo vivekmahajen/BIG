@@ -1,4 +1,4 @@
-const BASE = process.env.REACT_APP_API_URL || '/api';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('big_token');
@@ -9,16 +9,13 @@ function getAuthHeaders() {
 }
 
 async function handleResponse(res) {
-  const text = await res.text();
-  if (!text) throw new Error('Empty response from server');
-  let data;
-  try { data = JSON.parse(text); } catch { throw new Error('Invalid server response'); }
+  const data = await res.json();
   if (!res.ok) throw new Error(data.error || data.detail || `HTTP ${res.status}`);
   return data;
 }
 
 export async function saveOpportunity({ state, city, zip, sector, sectorLabel, cardData }) {
-  const res = await fetch(`${BASE}/saved-opportunities`, {
+  const res = await fetch(`${BASE_URL}/api/saved-opportunities`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ state, city, zip, sector, sectorLabel, cardData }),
@@ -28,18 +25,20 @@ export async function saveOpportunity({ state, city, zip, sector, sectorLabel, c
 
 export async function getSavedOpportunities(params = {}) {
   const query = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') query.set(k, v); });
-  const res = await fetch(`${BASE}/saved-opportunities?${query}`, { headers: getAuthHeaders() });
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== '') query.set(k, v);
+  });
+  const res = await fetch(`${BASE_URL}/api/saved-opportunities?${query}`, { headers: getAuthHeaders() });
   return handleResponse(res);
 }
 
 export async function getOpportunityById(id) {
-  const res = await fetch(`${BASE}/saved-opportunities/${id}`, { headers: getAuthHeaders() });
+  const res = await fetch(`${BASE_URL}/api/saved-opportunities/${id}`, { headers: getAuthHeaders() });
   return handleResponse(res);
 }
 
 export async function toggleWatchlist(id) {
-  const res = await fetch(`${BASE}/saved-opportunities/${id}/watchlist`, {
+  const res = await fetch(`${BASE_URL}/api/saved-opportunities/${id}/watchlist`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
   });
@@ -47,7 +46,7 @@ export async function toggleWatchlist(id) {
 }
 
 export async function updateNotes(id, notes) {
-  const res = await fetch(`${BASE}/saved-opportunities/${id}/notes`, {
+  const res = await fetch(`${BASE_URL}/api/saved-opportunities/${id}/notes`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
     body: JSON.stringify({ notes }),
@@ -56,7 +55,7 @@ export async function updateNotes(id, notes) {
 }
 
 export async function updateTags(id, tags) {
-  const res = await fetch(`${BASE}/saved-opportunities/${id}/tags`, {
+  const res = await fetch(`${BASE_URL}/api/saved-opportunities/${id}/tags`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
     body: JSON.stringify({ tags }),
@@ -65,7 +64,7 @@ export async function updateTags(id, tags) {
 }
 
 export async function deleteOpportunity(id) {
-  const res = await fetch(`${BASE}/saved-opportunities/${id}`, {
+  const res = await fetch(`${BASE_URL}/api/saved-opportunities/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });

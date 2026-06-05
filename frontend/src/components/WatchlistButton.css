@@ -8,7 +8,7 @@
   transition: transform 0.15s ease, opacity 0.15s;
   line-height: 1;
 }
-.watchlist-btn:hover { transform: scale(1.25); }
+.watchlist-btn:hover   { transform: scale(1.25); }
 .watchlist-btn:disabled { opacity: 0.5; cursor: default; }
-.watchlist-inactive { opacity: 0.45; }
-.watchlist-active   { opacity: 1; }
+.watchlist-inactive    { opacity: 0.5; }
+.watchlist-active      { opacity: 1; }

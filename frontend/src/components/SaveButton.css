@@ -1,5 +1,5 @@
 .save-button-group {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
@@ -33,8 +33,10 @@
   align-items: center;
   gap: 6px;
 }
-.save-msg-saved, .save-msg-duplicate { color: #065f46; }
-.save-msg-error { color: #b91c1c; }
+.save-msg-saved     { color: #065f46; }
+.save-msg-duplicate { color: #065f46; }
+.save-msg-error     { color: #b91c1c; }
+
 .save-msg-link {
   background: none;
   border: none;
