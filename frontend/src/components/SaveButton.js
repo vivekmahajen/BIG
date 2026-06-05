@@ -46,7 +46,7 @@ export default function SaveButton({ cardData, state, city, zip, sector, sectorL
     } catch (err) {
       console.error('Save failed:', err.message);
       setStatus('error');
-      setMessage(err.message.includes('401') ? 'Sign in to save' : 'Save failed — try again');
+      setMessage(err.message.includes('401') ? 'Sign in to save' : `Save failed: ${err.message}`);
       setTimeout(() => setStatus('idle'), 3000);
     }
   }
