@@ -37,6 +37,7 @@ export default function SaveButton({ cardData, state, city, zip, sector, sectorL
         setStatus('duplicate');
         setSavedId(result.id);
         setMessage('Already in your dashboard');
+        if (onSaved) onSaved(result.id);
       } else {
         setStatus('saved');
         setSavedId(result.id);
