@@ -647,7 +647,15 @@ app.post('/api/live-card', auth, async (req, res) => {
 
   try {
     const { generateLiveCard } = require('./services/opportunityService');
-    const card = await generateLiveCard(state, city, zip, sector, { force: true });
+
+    // Hard 25-second timeout — prevents hanging when BLS/Census/Claude stall
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Analysis timed out after 25s — please try again')), 25000)
+    );
+    const card = await Promise.race([
+      generateLiveCard(state, city, zip, sector, { force: true }),
+      timeout,
+    ]);
     res.json(card);
   } catch (err) {
     console.error('[BIG live-card]', err.message);
