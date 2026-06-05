@@ -1,4 +1,5 @@
-const BASE = process.env.REACT_APP_API_URL || 'https://big-hm1k.onrender.com/api';
+const _ROOT = (process.env.REACT_APP_API_URL || 'https://big-hm1k.onrender.com').replace(/\/$/, '');
+const BASE = _ROOT.endsWith('/api') ? _ROOT : `${_ROOT}/api`;
 
 function getToken() {
   return localStorage.getItem('big_token');
