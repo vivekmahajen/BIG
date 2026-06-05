@@ -61,8 +61,8 @@ function MetricGrid({ data }) {
 
 function GatedSection({ referralCode, publicId }) {
   const signupUrl = referralCode
-    ? `/?ref=${referralCode}`
-    : '/';
+    ? `/?signup=1&ref=${referralCode}`
+    : '/?signup=1';
 
   return (
     <div style={{ position: 'relative', marginTop: 24 }}>

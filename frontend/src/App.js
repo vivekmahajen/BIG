@@ -32,6 +32,13 @@ function AuthenticatedApp() {
   const [preselect] = useState(getUrlPreselect);
 
   useEffect(() => {
+    // ?signup=1 from public page CTAs — force login screen even if logged in
+    if (new URLSearchParams(window.location.search).get('signup') === '1') {
+      localStorage.removeItem('big_token');
+      localStorage.removeItem('big_user');
+      setChecking(false);
+      return;
+    }
     const token = localStorage.getItem('big_token');
     const stored = localStorage.getItem('big_user');
     if (token && stored) {
