@@ -361,7 +361,7 @@ export default function SavedDashboard({ user, onBack, onLogout }) {
 
       {dbMissing && (
         <div className="sdash-db-notice">
-          ⚠️ Database not connected. To enable saving, set the <code>DATABASE_URL</code> environment variable on Railway and run the migration script.
+          ⚠️ Database not connected. To enable saving, set the <code>DATABASE_URL</code> environment variable on Render (your backend service → Environment tab).
         </div>
       )}
 
