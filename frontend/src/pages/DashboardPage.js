@@ -55,53 +55,71 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     if (resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  useEffect(() => {
-    api.states().then(setStates).catch(() => {});
-  }, []);
-
-  // Auto-select state from URL param once states are loaded
-  useEffect(() => {
-    if (preselect.state && states.length > 0 && !selectedState) {
-      const match = states.find(s => s.code === preselect.state || s.code.toLowerCase() === preselect.state.toLowerCase());
-      if (match) setSelectedState(match.code);
-    }
-  }, [preselect.state, states]);
+  const skipReactive = useRef(false);
 
   useEffect(() => {
+    api.states().then(stateList => {
+      setStates(stateList);
+      if (!preselect.state) return;
+      const normalize = str => str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      const stateMatch = stateList.find(s => s.code.toLowerCase() === preselect.state.toLowerCase());
+      if (!stateMatch) return;
+
+      skipReactive.current = true;
+      setSelectedState(stateMatch.code);
+
+      api.cities(stateMatch.code).then(cityList => {
+        setCities(cityList);
+        if (!preselect.city) { skipReactive.current = false; return; }
+        const cityMatch = cityList.find(c => c.name.toLowerCase() === preselect.city.toLowerCase());
+        if (!cityMatch) { skipReactive.current = false; return; }
+        setSelectedCity(cityMatch.name);
+
+        api.zips(stateMatch.code, cityMatch.name).then(zipList => {
+          setZips(zipList);
+          if (!zipList.length) { skipReactive.current = false; return; }
+          const zip = zipList[0];
+          setSelectedZip(zip);
+
+          api.sectors(zip).then(sectorList => {
+            setSectors(sectorList);
+            skipReactive.current = false;
+            if (!preselect.sector) return;
+            const sectorMatch = sectorList.find(s =>
+              s.name === preselect.sector || normalize(s.name) === normalize(preselect.sector)
+            );
+            if (sectorMatch) setSelectedSector(sectorMatch.name);
+          }).catch(() => { skipReactive.current = false; });
+        }).catch(() => { skipReactive.current = false; });
+      }).catch(() => { skipReactive.current = false; });
+    }).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (skipReactive.current) return;
     if (!selectedState) { setCities([]); setSelectedCity(''); return; }
     api.cities(selectedState).then(data => {
       setCities(data);
-      // auto-select city from URL param
-      if (preselect.city) {
-        const match = data.find(c => c.name === preselect.city || c.name.toLowerCase() === preselect.city.toLowerCase());
-        if (match) { setSelectedCity(match.name); return; }
-      }
       setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState]); 
+  }, [selectedState]);
 
   useEffect(() => {
+    if (skipReactive.current) return;
     if (!selectedState || !selectedCity) { setZips([]); setSelectedZip(''); return; }
     api.zips(selectedState, selectedCity).then(data => {
       setZips(data);
-      // auto-select first zip (zip isn't passed from SEO pages)
-      if (data.length > 0 && preselect.city) { setSelectedZip(data[0]); return; }
       setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState, selectedCity]); 
+  }, [selectedState, selectedCity]);
 
   useEffect(() => {
+    if (skipReactive.current) return;
     if (!selectedZip) { setSectors([]); setSelectedSector(''); return; }
     api.sectors(selectedZip).then(data => {
       setSectors(data);
-      // auto-select sector from URL param
-      if (preselect.sector) {
-        const normalize = str => str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-        const match = data.find(s => s.name === preselect.sector || normalize(s.name) === normalize(preselect.sector));
-        if (match) { setSelectedSector(match.name); return; }
-      }
     });
-  }, [selectedZip]); 
+  }, [selectedZip]);
 
   useEffect(() => {
     if (!selectedSector) { setSectorOpportunities([]); setView('list'); setActiveOpp(null); return; }
