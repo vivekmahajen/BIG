@@ -62,10 +62,10 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   // Auto-select state from URL param once states are loaded
   useEffect(() => {
     if (preselect.state && states.length > 0 && !selectedState) {
-      const match = states.find(s => s === preselect.state || s.toLowerCase() === preselect.state.toLowerCase());
-      if (match) setSelectedState(match);
+      const match = states.find(s => s.code === preselect.state || s.code.toLowerCase() === preselect.state.toLowerCase());
+      if (match) setSelectedState(match.code);
     }
-  }, [preselect.state, states]); 
+  }, [preselect.state, states]);
 
   useEffect(() => {
     if (!selectedState) { setCities([]); setSelectedCity(''); return; }
@@ -73,8 +73,8 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       setCities(data);
       // auto-select city from URL param
       if (preselect.city) {
-        const match = data.find(c => c === preselect.city || c.toLowerCase() === preselect.city.toLowerCase());
-        if (match) { setSelectedCity(match); return; }
+        const match = data.find(c => c.name === preselect.city || c.name.toLowerCase() === preselect.city.toLowerCase());
+        if (match) { setSelectedCity(match.name); return; }
       }
       setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
@@ -96,8 +96,8 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       setSectors(data);
       // auto-select sector from URL param
       if (preselect.sector) {
-        const match = data.find(s => s === preselect.sector || s.toLowerCase().replace(/\s+/g, '_') === preselect.sector.toLowerCase());
-        if (match) { setSelectedSector(match); return; }
+        const match = data.find(s => s.name === preselect.sector || s.name.toLowerCase().replace(/\s+/g, '_') === preselect.sector.toLowerCase());
+        if (match) { setSelectedSector(match.name); return; }
       }
     });
   }, [selectedZip]); 
