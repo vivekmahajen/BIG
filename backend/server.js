@@ -630,4 +630,14 @@ app.post('/api/live-card', auth, async (req, res) => {
   }
 });
 
+// Saved opportunities (requires DATABASE_URL env var)
+if (process.env.DATABASE_URL) {
+  const savedOpportunitiesRoutes = require('./routes/savedOpportunities');
+  app.use('/api/saved-opportunities', savedOpportunitiesRoutes);
+} else {
+  app.use('/api/saved-opportunities', (req, res) =>
+    res.status(503).json({ error: 'Database not configured — set DATABASE_URL to enable saved opportunities' })
+  );
+}
+
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));
