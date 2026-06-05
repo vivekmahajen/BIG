@@ -1,0 +1,5 @@
+.btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px; border-radius: 6px; transition: transform 0.15s; line-height: 1; }
+.btn:hover { transform: scale(1.25); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.inactive { opacity: 0.4; }
+.active   { opacity: 1; }

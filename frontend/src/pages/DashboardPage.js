@@ -181,6 +181,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
           <span className={styles.headerTitle}>Business Opportunity Intelligence</span>
         </div>
         <div className={styles.headerRight}>
+          <button className={styles.navBtn} onClick={() => onNavigate('saved')}>📊 My Dashboard</button>
           <button className={styles.navBtn} onClick={() => onNavigate('competitive')}>⚔ Competitive Analysis</button>
           <CreditsDisplay user={user} onBuyCredits={() => onNavigate('pricing')} />
           <span className={styles.userName}>{user.name}</span>
@@ -346,7 +347,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
               </div>
               {generateError && <div className={styles.generateError}>{generateError}</div>}
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
-                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} state={selectedState} city={selectedCity} onNavigate={onNavigate} />
               </CardErrorBoundary>
             </div>
           )}
@@ -383,7 +384,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                 </div>
               </div>
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
-                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} state={selectedState} city={selectedCity} onNavigate={onNavigate} />
               </CardErrorBoundary>
             </div>
           )}

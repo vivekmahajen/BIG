@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
+import SaveButton from './SaveButton';
 import styles from './OpportunityCard.module.css';
 
 const LEGEND = [
@@ -382,7 +383,7 @@ function CompetitorCompare({ businessName, sector, competitors, onCompareReady }
   );
 }
 
-export default function OpportunityCard({ opportunity: raw, zip, sector }) {
+export default function OpportunityCard({ opportunity: raw, zip, sector, state, city, onNavigate }) {
   const [compareData, setCompareData] = useState(null);
 
   const o = {
@@ -546,6 +547,20 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
           <div className={styles.verdict}>
             <span className={styles.verdictIcon}>💡</span>
             <p><strong>Verdict: </strong>{o.verdict}</p>
+          </div>
+        )}
+
+        {(state && city && zip && sector) && (
+          <div className={styles.cardActions}>
+            <SaveButton
+              cardData={o}
+              state={state}
+              city={city}
+              zip={zip}
+              sector={sector}
+              sectorLabel={sector}
+              onNavigate={onNavigate}
+            />
           </div>
         )}
 

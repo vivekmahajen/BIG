@@ -645,3 +645,100 @@ Deliver as a ${outputFormat || 'full structured report with tables, scorecards, 
 });
 
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));
+
+// ── Saved Opportunities (requires DATABASE_URL) ────────────────────────────
+
+const repo = require('./repositories/opportunitiesRepo');
+
+// POST /api/saved-opportunities — save a card
+app.post('/api/saved-opportunities', auth, async (req, res) => {
+  const { state, city, zip, sector, sectorLabel, cardData } = req.body;
+  if (!state || !city || !zip || !sector || !cardData)
+    return res.status(400).json({ error: 'state, city, zip, sector, cardData required' });
+  if (typeof cardData !== 'object' || Array.isArray(cardData))
+    return res.status(400).json({ error: 'cardData must be a JSON object' });
+
+  const userId = req.user.id;
+  try {
+    const existing = await repo.findExistingSave({ userId, state, city, zip, sector });
+    if (existing) {
+      return res.json({ success: true, alreadySaved: true, id: existing.id, isWatchlisted: existing.is_watchlisted, message: 'Already in your dashboard.' });
+    }
+    const saved = await repo.saveOpportunity({ userId, state, city, zip, sector, sectorLabel, cardData });
+    return res.status(201).json({ success: true, alreadySaved: false, id: saved.id, score: saved.score, createdAt: saved.created_at, message: 'Saved to your dashboard!' });
+  } catch (err) {
+    console.error('[saved-opps] save error:', err.message);
+    res.status(500).json({ error: 'Failed to save', detail: err.message });
+  }
+});
+
+// GET /api/saved-opportunities — list with filters
+app.get('/api/saved-opportunities', auth, async (req, res) => {
+  const userId = req.user.id;
+  const { sortBy = 'score', sortDir = 'DESC', watchlistOnly = '', search = '', limit = '50', offset = '0' } = req.query;
+  const options = {
+    sortBy, sortDir,
+    watchlistOnly: watchlistOnly === 'true',
+    search: search || null,
+    limit: Math.min(parseInt(limit) || 50, 100),
+    offset: parseInt(offset) || 0,
+  };
+  try {
+    const [opportunities, total, stats] = await Promise.all([
+      repo.getUserOpportunities(userId, options),
+      repo.getUserOpportunityCount(userId, options),
+      repo.getUserStats(userId),
+    ]);
+    res.json({ success: true, total, count: opportunities.length, opportunities, stats });
+  } catch (err) {
+    console.error('[saved-opps] list error:', err.message);
+    res.status(500).json({ error: 'Failed to load saved opportunities', detail: err.message });
+  }
+});
+
+// GET /api/saved-opportunities/:id — full card data
+app.get('/api/saved-opportunities/:id', auth, async (req, res) => {
+  try {
+    const opp = await repo.getOpportunityById(req.params.id, req.user.id);
+    if (!opp) return res.status(404).json({ error: 'Not found' });
+    res.json({ success: true, opportunity: opp });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/saved-opportunities/:id/watchlist — toggle
+app.patch('/api/saved-opportunities/:id/watchlist', auth, async (req, res) => {
+  try {
+    const updated = await repo.toggleWatchlist(req.params.id, req.user.id);
+    if (!updated) return res.status(404).json({ error: 'Not found' });
+    res.json({ success: true, id: updated.id, isWatchlisted: updated.is_watchlisted });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/saved-opportunities/:id/notes — update notes
+app.patch('/api/saved-opportunities/:id/notes', auth, async (req, res) => {
+  const { notes } = req.body;
+  if (typeof notes !== 'string' || notes.length > 5000)
+    return res.status(400).json({ error: 'notes must be a string under 5000 chars' });
+  try {
+    const updated = await repo.updateNotes(req.params.id, req.user.id, notes);
+    if (!updated) return res.status(404).json({ error: 'Not found' });
+    res.json({ success: true, id: updated.id, notes: updated.notes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/saved-opportunities/:id — soft delete
+app.delete('/api/saved-opportunities/:id', auth, async (req, res) => {
+  try {
+    const deleted = await repo.deleteOpportunity(req.params.id, req.user.id);
+    if (!deleted) return res.status(404).json({ error: 'Not found' });
+    res.json({ success: true, id: deleted.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

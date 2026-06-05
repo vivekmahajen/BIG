@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import SavedDashboard from './pages/SavedDashboard';
 import CompetitiveAnalysisPage from './pages/CompetitiveAnalysisPage';
 import PricingPage from './pages/PricingPage';
 
@@ -46,6 +47,10 @@ export default function App() {
 
   if (page === 'pricing') {
     return <PricingPage user={user} onBack={() => setPage('dashboard')} onCreditsUpdated={handleCreditsUpdated} />;
+  }
+
+  if (page === 'saved') {
+    return <SavedDashboard onNavigate={setPage} />;
   }
 
   return <DashboardPage user={user} onLogout={handleLogout} onNavigate={setPage} />;

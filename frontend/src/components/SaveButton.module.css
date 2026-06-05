@@ -1,0 +1,15 @@
+.wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: 8px; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.idle  { background: #1d4ed8; color: #fff; }
+.idle:hover  { background: #1e40af; transform: translateY(-1px); }
+.saving { background: #6b7280; color: #fff; cursor: not-allowed; }
+.saved  { background: #065f46; color: #fff; }
+.saved:hover { background: #047857; }
+.error  { background: #b91c1c; color: #fff; }
+.msg { font-size: 12px; color: #065f46; display: flex; align-items: center; gap: 6px; }
+.link { background: none; border: none; color: inherit; text-decoration: underline; cursor: pointer; font-size: 12px; padding: 0; }
