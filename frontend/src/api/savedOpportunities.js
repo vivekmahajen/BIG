@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+const BASE_URL = process.env.REACT_APP_API_URL || '';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('big_token');

@@ -96,7 +96,8 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       setSectors(data);
       // auto-select sector from URL param
       if (preselect.sector) {
-        const match = data.find(s => s.name === preselect.sector || s.name.toLowerCase().replace(/\s+/g, '_') === preselect.sector.toLowerCase());
+        const normalize = str => str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+        const match = data.find(s => s.name === preselect.sector || normalize(s.name) === normalize(preselect.sector));
         if (match) { setSelectedSector(match.name); return; }
       }
     });
