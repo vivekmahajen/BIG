@@ -10,7 +10,7 @@ function getAuthHeaders() {
 
 async function handleResponse(res) {
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || data.detail || `HTTP ${res.status}`);
+  if (!res.ok) throw new Error(data.detail || data.error || `HTTP ${res.status}`);
   return data;
 }
 
