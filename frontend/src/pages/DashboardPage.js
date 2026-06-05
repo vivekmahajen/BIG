@@ -65,7 +65,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       const match = states.find(s => s === preselect.state || s.toLowerCase() === preselect.state.toLowerCase());
       if (match) setSelectedState(match);
     }
-  }, [preselect.state, states]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [preselect.state, states]); 
 
   useEffect(() => {
     if (!selectedState) { setCities([]); setSelectedCity(''); return; }
@@ -78,7 +78,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       }
       setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedState]); 
 
   useEffect(() => {
     if (!selectedState || !selectedCity) { setZips([]); setSelectedZip(''); return; }
@@ -88,7 +88,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       if (data.length > 0 && preselect.city) { setSelectedZip(data[0]); return; }
       setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState, selectedCity]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedState, selectedCity]); 
 
   useEffect(() => {
     if (!selectedZip) { setSectors([]); setSelectedSector(''); return; }
@@ -100,7 +100,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
         if (match) { setSelectedSector(match); return; }
       }
     });
-  }, [selectedZip]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedZip]); 
 
   useEffect(() => {
     if (!selectedSector) { setSectorOpportunities([]); setView('list'); setActiveOpp(null); return; }
