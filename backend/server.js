@@ -9,11 +9,23 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'big-opportunity-secret-2026';
 
 app.use(cors({
-  origin: [
-    'https://big-eosin.vercel.app',
-    'https://big-production-e0d8.up.railway.app',
-    'http://localhost:3000',
-  ],
+  origin: (origin, cb) => {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return cb(null, true);
+    const allowed = (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+    const defaults = [
+      'https://big-eosin.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ];
+    if ([...defaults, ...allowed].includes(origin)) return cb(null, true);
+    // Allow any *.vercel.app or *.onrender.com subdomain
+    if (/\.vercel\.app$/.test(origin) || /\.onrender\.com$/.test(origin)) return cb(null, true);
+    cb(new Error(`CORS blocked: ${origin}`));
+  },
   credentials: true,
 }));
 app.use(express.json());
