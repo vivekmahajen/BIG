@@ -93,7 +93,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
         }).catch(() => { skipReactive.current = false; });
       }).catch(() => { skipReactive.current = false; });
     }).catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (skipReactive.current) return;
