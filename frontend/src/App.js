@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CompetitiveAnalysisPage from './pages/CompetitiveAnalysisPage';
 import PricingPage from './pages/PricingPage';
+import SavedDashboard from './pages/SavedDashboard';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -46,6 +47,10 @@ export default function App() {
 
   if (page === 'pricing') {
     return <PricingPage user={user} onBack={() => setPage('dashboard')} onCreditsUpdated={handleCreditsUpdated} />;
+  }
+
+  if (page === 'saved') {
+    return <SavedDashboard user={user} onBack={() => setPage('dashboard')} onLogout={handleLogout} />;
   }
 
   return <DashboardPage user={user} onLogout={handleLogout} onNavigate={setPage} />;

@@ -3,6 +3,7 @@ import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
 import Disclaimer from '../components/Disclaimer';
 import CreditsDisplay from '../components/CreditsDisplay';
+import SaveButton from '../components/SaveButton';
 import { saveReport, loadReports, deleteReport, makeId } from '../savedReports';
 import styles from './DashboardPage.module.css';
 
@@ -193,6 +194,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
         </div>
         <div className={styles.headerRight}>
           <button className={styles.navBtn} onClick={() => onNavigate('competitive')}>⚔ Competitive Analysis</button>
+          <button className={styles.navBtn} onClick={() => onNavigate('saved')}>📁 My Dashboard</button>
           <CreditsDisplay user={user} onBuyCredits={() => onNavigate('pricing')} />
           <span className={styles.userName}>{user.name}</span>
           <button className={styles.logoutBtn} onClick={onLogout}>Sign out</button>
@@ -365,6 +367,15 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                   <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
                     ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
                   </button>
+                  <SaveButton
+                    cardData={activeOpp}
+                    state={states.find(s => s.code === selectedState)?.name || selectedState}
+                    city={selectedCity}
+                    zip={selectedZip}
+                    sector={selectedSector}
+                    sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
+                    onNavigateDashboard={() => onNavigate('saved')}
+                  />
                 </div>
               </div>
               {generateError && <div className={styles.generateError}>{generateError}</div>}
@@ -405,6 +416,15 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                     <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
                       ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
                     </button>
+                    <SaveButton
+                      cardData={activeOpp}
+                      state={states.find(s => s.code === selectedState)?.name || selectedState}
+                      city={selectedCity}
+                      zip={selectedZip}
+                      sector={selectedSector}
+                      sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
+                      onNavigateDashboard={() => onNavigate('saved')}
+                    />
                   </div>
                 </div>
               </div>

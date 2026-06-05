@@ -1,0 +1,46 @@
+.save-button-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.save-btn-idle    { background: #1d4ed8; color: #fff; }
+.save-btn-idle:hover { background: #1e40af; transform: translateY(-1px); }
+.save-btn-saving  { background: #6b7280; color: #fff; cursor: not-allowed; }
+.save-btn-saved   { background: #065f46; color: #fff; }
+.save-btn-saved:hover { background: #047857; }
+.save-btn-error   { background: #b91c1c; color: #fff; }
+.save-btn-error:hover { background: #991b1b; }
+
+.save-msg {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.save-msg-saved, .save-msg-duplicate { color: #065f46; }
+.save-msg-error { color: #b91c1c; }
+.save-msg-link {
+  background: none;
+  border: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
