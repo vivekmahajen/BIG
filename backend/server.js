@@ -8,6 +8,31 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'big-opportunity-secret-2026';
 
+// Auto-run migrations on startup when DATABASE_URL is set
+if (process.env.DATABASE_URL) {
+  const { Pool } = require('pg');
+  const fs = require('fs');
+  const path = require('path');
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  const migrationsDir = path.join(__dirname, 'migrations');
+  const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+  (async () => {
+    for (const file of files) {
+      try {
+        const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+        await pool.query(sql);
+        console.log(`✅ Migration applied: ${file}`);
+      } catch (err) {
+        console.error(`❌ Migration failed (${file}):`, err.message);
+      }
+    }
+    await pool.end();
+  })();
+}
+
 app.use(cors({
   origin: [
     'https://big-eosin.vercel.app',
