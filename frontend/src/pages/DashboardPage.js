@@ -183,6 +183,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     const savedId = opp._savedId || makeId();
     const oppWithId = { ...opp, _savedId: savedId };
     setActiveOpp(oppWithId);
+    setSavedOpportunityId(null); // reset until user explicitly saves via SaveButton
     setView(isGenerated ? 'generated' : 'detail');
     setGenerateError('');
     scrollToResults();
@@ -199,6 +200,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     setSavedReports(saveReport(report));
   }, [selectedSector, selectedZip]);
 
+  const [savedOpportunityId, setSavedOpportunityId] = useState(null); // DB UUID after save, for ShareButton
   const [liveStep, setLiveStep] = useState(0); // 0=idle, 1-4=loading steps
 
   const handleLiveAnalysis = useCallback(async () => {
@@ -440,6 +442,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                     sector={selectedSector}
                     sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
                     onNavigateDashboard={() => onNavigate('saved')}
+                    onSaved={setSavedOpportunityId}
                   />
                 </div>
               </div>
@@ -453,6 +456,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   city={selectedCity}
                   sectorLabel={selectedSector}
                   onNavigate={onNavigate}
+                  savedOpportunityId={savedOpportunityId}
                 />
               </CardErrorBoundary>
             </div>
@@ -497,6 +501,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                       sector={selectedSector}
                       sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
                       onNavigateDashboard={() => onNavigate('saved')}
+                      onSaved={setSavedOpportunityId}
                     />
                   </div>
                 </div>
@@ -510,6 +515,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   city={selectedCity}
                   sectorLabel={selectedSector}
                   onNavigate={onNavigate}
+                  savedOpportunityId={savedOpportunityId}
                 />
               </CardErrorBoundary>
             </div>

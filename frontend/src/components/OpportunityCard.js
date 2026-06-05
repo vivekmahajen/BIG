@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../api';
 import styles from './OpportunityCard.module.css';
 import SaveButton from './SaveButton';
+import ShareButton from './ShareButton';
 
 const LEGEND = [
   { abbr: 'TAM', full: 'Total Addressable Market', desc: 'The entire revenue opportunity if 100% market share were captured.' },
@@ -383,7 +384,7 @@ function CompetitorCompare({ businessName, sector, competitors, onCompareReady }
   );
 }
 
-export default function OpportunityCard({ opportunity: raw, zip, sector, state, city, sectorLabel, onNavigate }) {
+export default function OpportunityCard({ opportunity: raw, zip, sector, state, city, sectorLabel, onNavigate, savedOpportunityId }) {
   const [compareData, setCompareData] = useState(null);
 
   const o = {
@@ -407,6 +408,10 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
         <button className={styles.pdfBtn} onClick={() => handlePrint(o, zip, sector)}>
           ⬇ Download PDF
         </button>
+        <ShareButton
+          opportunityId={savedOpportunityId || null}
+          opportunityName={o.name}
+        />
         <SaveButton
           cardData={raw}
           state={state}
