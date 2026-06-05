@@ -5,10 +5,20 @@ import CompetitiveAnalysisPage from './pages/CompetitiveAnalysisPage';
 import PricingPage from './pages/PricingPage';
 import SavedDashboard from './pages/SavedDashboard';
 
+function getUrlPreselect() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    state: p.get('state') || '',
+    city: p.get('city') || '',
+    sector: p.get('sector') || '',
+  };
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
   const [page, setPage] = useState('dashboard'); // 'dashboard' | 'competitive' | 'pricing'
+  const [preselect] = useState(getUrlPreselect);
 
   useEffect(() => {
     const token = localStorage.getItem('big_token');
@@ -57,5 +67,5 @@ export default function App() {
     return <SavedDashboard user={user} onBack={() => setPage('dashboard')} onLogout={handleLogout} />;
   }
 
-  return <DashboardPage user={user} onLogout={handleLogout} onNavigate={setPage} />;
+  return <DashboardPage user={user} onLogout={handleLogout} onNavigate={setPage} preselect={preselect} />;
 }

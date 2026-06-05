@@ -28,7 +28,7 @@ class CardErrorBoundary extends Component {
   }
 }
 
-export default function DashboardPage({ user, onLogout, onNavigate }) {
+export default function DashboardPage({ user, onLogout, onNavigate, preselect = {} }) {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
   const [zips, setZips] = useState([]);
@@ -59,24 +59,48 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     api.states().then(setStates).catch(() => {});
   }, []);
 
+  // Auto-select state from URL param once states are loaded
+  useEffect(() => {
+    if (preselect.state && states.length > 0 && !selectedState) {
+      const match = states.find(s => s === preselect.state || s.toLowerCase() === preselect.state.toLowerCase());
+      if (match) setSelectedState(match);
+    }
+  }, [preselect.state, states]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!selectedState) { setCities([]); setSelectedCity(''); return; }
     api.cities(selectedState).then(data => {
-      setCities(data); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
+      setCities(data);
+      // auto-select city from URL param
+      if (preselect.city) {
+        const match = data.find(c => c === preselect.city || c.toLowerCase() === preselect.city.toLowerCase());
+        if (match) { setSelectedCity(match); return; }
+      }
+      setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState]);
+  }, [selectedState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!selectedState || !selectedCity) { setZips([]); setSelectedZip(''); return; }
     api.zips(selectedState, selectedCity).then(data => {
-      setZips(data); setSelectedZip(''); setSelectedSector('');
+      setZips(data);
+      // auto-select first zip (zip isn't passed from SEO pages)
+      if (data.length > 0 && preselect.city) { setSelectedZip(data[0]); return; }
+      setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState, selectedCity]);
+  }, [selectedState, selectedCity]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!selectedZip) { setSectors([]); setSelectedSector(''); return; }
-    api.sectors(selectedZip).then(setSectors);
-  }, [selectedZip]);
+    api.sectors(selectedZip).then(data => {
+      setSectors(data);
+      // auto-select sector from URL param
+      if (preselect.sector) {
+        const match = data.find(s => s === preselect.sector || s.toLowerCase().replace(/\s+/g, '_') === preselect.sector.toLowerCase());
+        if (match) { setSelectedSector(match); return; }
+      }
+    });
+  }, [selectedZip]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!selectedSector) { setSectorOpportunities([]); setView('list'); setActiveOpp(null); return; }
