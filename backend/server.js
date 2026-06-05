@@ -647,7 +647,7 @@ app.post('/api/live-card', auth, async (req, res) => {
 
   try {
     const { generateLiveCard } = require('./services/opportunityService');
-    const card = await generateLiveCard(state, city, zip, sector);
+    const card = await generateLiveCard(state, city, zip, sector, { force: true });
     res.json(card);
   } catch (err) {
     console.error('[BIG live-card]', err.message);
