@@ -51,6 +51,7 @@ bcrypt.hash('demo1234', 10).then(hash => {
     id: 1, email: 'demo@big.com', name: 'Demo User', passwordHash: hash,
     tier: 'free', credits: 10, packCredits: 0,
     creditsResetAt: nextMonthStart(),
+    referral_code: 'DEMO1234',
   });
 });
 
@@ -83,6 +84,7 @@ function userPublic(user) {
     packCredits: user.packCredits || 0,
     monthlyAllowance: tier.monthlyCredits,
     creditsResetAt: user.creditsResetAt,
+    referral_code: user.referral_code || null,
   };
 }
 
@@ -222,10 +224,24 @@ app.post('/api/register', async (req, res) => {
   if (users.find(u => u.email === email))
     return res.status(409).json({ error: 'Email already registered' });
   const passwordHash = await bcrypt.hash(password, 10);
+  // Generate a unique referral code for this user
+  function genReferralCode() {
+    return (
+      Math.random().toString(36).substring(2, 6).toUpperCase() +
+      Math.random().toString(36).substring(2, 6).toUpperCase()
+    );
+  }
+  let referralCode = genReferralCode();
+  // Ensure uniqueness
+  while (users.find(u => u.referral_code === referralCode)) {
+    referralCode = genReferralCode();
+  }
+
   const user = {
     id: users.length + 1, email, name, passwordHash,
     tier: 'free', credits: 10, packCredits: 0,
     creditsResetAt: nextMonthStart(),
+    referral_code: referralCode,
   };
   users.push(user);
   const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
@@ -673,5 +689,11 @@ if (process.env.DATABASE_URL) {
     res.status(503).json({ error: 'Database not configured. Set DATABASE_URL to enable saving.' })
   );
 }
+
+// ── Share & Referral Routes ────────────────────────────────────────────────
+const makeShareRouter = require('./routes/share');
+const makeReferralsRouter = require('./routes/referrals');
+app.use('/api/share', makeShareRouter(users, auth));
+app.use('/api/referrals', makeReferralsRouter(users, auth));
 
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));
