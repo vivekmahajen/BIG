@@ -1,4 +1,4 @@
-const BASE = process.env.REACT_APP_API_URL || '/api';
+const BASE = process.env.REACT_APP_API_URL || 'https://big-hm1k.onrender.com/api';
 
 function getToken() {
   return localStorage.getItem('big_token');
