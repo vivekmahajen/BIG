@@ -26,7 +26,7 @@ async function getBusinessDensity(zip, state, naicsCode) {
     }
   } catch {}
 
-  // County fallback
+  // State-level fallback (sum all counties — clearly labelled as statewide)
   try {
     const fips = STATE_FIPS[state];
     if (!fips) throw new Error('no fips');
@@ -35,7 +35,7 @@ async function getBusinessDensity(zip, state, naicsCode) {
     if (data && data.length > 1) {
       let estab = 0, emp = 0, payann = 0;
       for (let i = 1; i < data.length; i++) { estab += parseInt(data[i][0])||0; emp += parseInt(data[i][1])||0; payann += parseInt(data[i][2])||0; }
-      const result = { estab, emp, payann, source: `Census CBP (${state})`, year };
+      const result = { estab, emp, payann, source: `Census CBP (${state} statewide — ZIP-level data unavailable)`, year, statewide: true };
       cache.set(cacheKey, result);
       return result;
     }
