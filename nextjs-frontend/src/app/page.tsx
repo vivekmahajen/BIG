@@ -1,5 +1,8 @@
 import { STATES } from '@/lib/geography';
 import { SECTORS } from '@/lib/sectors';
+import { INTL_GEO } from '@/lib/intlGeography';
+
+const COUNTRY_FLAGS: Record<string, string> = { CA: '🇨🇦', GB: '🇬🇧', AU: '🇦🇺' };
 
 export default function HomePage() {
   return (
@@ -9,11 +12,11 @@ export default function HomePage() {
           Business Opportunity Intelligence
         </h1>
         <p style={{ fontSize: '20px', color: '#6b7280', maxWidth: 600, margin: '0 auto 32px' }}>
-          AI-powered market analysis for every city, state, and industry sector in the U.S.
+          AI-powered market analysis for every city, region, and industry sector worldwide.
         </p>
       </div>
 
-      <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>Explore by State</h2>
+      <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>🇺🇸 Explore by U.S. State</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '64px' }}>
         {STATES.map(state => (
           <a key={state.slug} href={`/opportunity/${state.slug}`}
@@ -24,6 +27,25 @@ export default function HomePage() {
           </a>
         ))}
       </div>
+
+      {Object.values(INTL_GEO).map(country => (
+        <div key={country.code} style={{ marginBottom: '64px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>
+            {COUNTRY_FLAGS[country.code]} Explore by {country.name} Region
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+            {country.regions.map(region => (
+              <a key={region.slug}
+                href={`/opportunity/${country.code.toLowerCase()}/${region.slug}/${region.cities[0]?.slug ?? 'city'}/${SECTORS[0].id}`}
+                style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '12px', textDecoration: 'none', color: '#111827', display: 'block' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280' }}>{region.code}</div>
+                <div style={{ fontWeight: 600 }}>{region.name}</div>
+                <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>{region.cities.length} cities</div>
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
 
       <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>Explore by Sector</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
