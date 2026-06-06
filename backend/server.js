@@ -110,7 +110,7 @@ function parseStartupCostMax(str) {
   return u === 'M' ? n * 1e6 : u === 'B' ? n * 1e9 : u === 'K' ? n * 1e3 : n;
 }
 
-// Call Claude and parse JSON; retries once if budget constraint is violated
+// Call Claude and parse JSON; retries up to 2 times if budget constraint is violated
 async function callClaude(client, prompt, budget, retryPrefix = '') {
   async function attempt(p) {
     const msg = await client.messages.create({
@@ -128,10 +128,10 @@ async function callClaude(client, prompt, budget, retryPrefix = '') {
   let idea = await attempt(prompt);
 
   if (budget) {
-    const costMax = parseStartupCostMax(idea.startupCost);
-    if (costMax > budget.max || costMax < budget.min) {
-      // Retry with an even more explicit budget instruction prepended
-      const strict = `YOUR PREVIOUS RESPONSE HAD A STARTUP COST OF "${idea.startupCost}" WHICH IS OUTSIDE THE REQUIRED RANGE OF $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()}. YOU MUST CORRECT THIS.\n\n${retryPrefix}${prompt}`;
+    for (let retry = 1; retry <= 2; retry++) {
+      const costMax = parseStartupCostMax(idea.startupCost);
+      if (costMax <= budget.max && costMax >= budget.min) break;
+      const strict = `CRITICAL ERROR: Your previous response had startupCost "${idea.startupCost}" (max=$${costMax.toLocaleString()}) which VIOLATES the required range of $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Choose a completely different, simpler, lower-cost business concept that genuinely fits this budget. Do NOT scale down the same idea — pick a new one.\n\n${retryPrefix}${prompt}`;
       idea = await attempt(strict);
     }
   }
@@ -341,8 +341,12 @@ app.post('/api/generate-idea', auth, async (req, res) => {
 
   const locationCtx = [city, state, zip].filter(Boolean).join(', ');
   const budgetCtx = budget
-    ? `\n\nCRITICAL BUDGET CONSTRAINT: The total startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field must fall within this range. Design the entire business model around this budget — choose a lean, capital-efficient approach that is genuinely viable at this funding level.`
+    ? `\n\nCRITICAL BUDGET CONSTRAINT: The total startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design the entire business model around this budget — choose a lean, capital-efficient approach that is genuinely viable at this funding level. Do NOT suggest a business that requires more capital than this.`
     : '';
+
+  const startupCostExample = budget
+    ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+    : '"$XK–$YK"';
 
   const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}
 
@@ -351,7 +355,7 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
 {
   "name": "Specific Business Name (4-7 words)",
   "model": "Business model type (e.g. SaaS, B2B Services, Marketplace)",
-  "startupCost": "$XK–$YK",
+  "startupCost": ${startupCostExample},
   "grossMargin": "XX–YY%",
   "timeToProfit": "X–Y months",
   "tam": "$XB or $XM",
@@ -405,8 +409,12 @@ app.post('/api/generate-blue-ocean', auth, async (req, res) => {
   const client = new Anthropic({ apiKey });
   const locationCtx = [city, state, zip].filter(Boolean).join(', ');
   const budgetCtx = budget
-    ? `\n- BUDGET CONSTRAINT: Startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field must be within this range. Design for this exact funding level.`
+    ? `\n- CRITICAL BUDGET CONSTRAINT: Startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design for this exact funding level — choose a genuinely low-cost approach.`
     : '';
+
+  const blueOceanStartupCostExample = budget
+    ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+    : '"$XK–$YK"';
 
   const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
 
@@ -421,7 +429,7 @@ Return ONLY a valid JSON object (no markdown, no explanation):
 {
   "name": "Specific Business Name (4-7 words)",
   "model": "Business model type",
-  "startupCost": "$XK–$YK",
+  "startupCost": ${blueOceanStartupCostExample},
   "grossMargin": "XX–YY%",
   "timeToProfit": "X–Y months",
   "tam": "$XB or $XM",
