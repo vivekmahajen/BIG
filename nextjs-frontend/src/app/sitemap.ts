@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { STATES } from '@/lib/geography';
 import { SECTORS } from '@/lib/sectors';
+import { INTL_GEO } from '@/lib/intlGeography';
 
 const SITE_URL = process.env.SITE_URL || 'https://getbig.io';
 
@@ -36,6 +37,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
           changeFrequency: 'daily',
           priority: 0.6,
         });
+      }
+    }
+  }
+
+  // International pages — CA, GB, AU
+  for (const [countrySlug, country] of Object.entries(INTL_GEO)) {
+    const cc = countrySlug.toLowerCase();
+    for (const region of country.regions) {
+      for (const city of region.cities) {
+        for (const sector of SECTORS) {
+          urls.push({
+            url: `${SITE_URL}/opportunity/${cc}/${region.slug}/${city.slug}/${sector.id}`,
+            lastModified: now,
+            changeFrequency: 'daily',
+            priority: 0.6,
+          });
+        }
       }
     }
   }
