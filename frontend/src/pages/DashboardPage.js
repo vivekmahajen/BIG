@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Component } from 'react';
 import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
+import IntlIdeaCard from '../components/IntlIdeaCard';
 import Disclaimer from '../components/Disclaimer';
 import CreditsDisplay from '../components/CreditsDisplay';
 import SaveButton from '../components/SaveButton';
@@ -27,6 +28,22 @@ const SEO_SECTOR_MAP = {
   government: 'Government & Public Sector',
 };
 
+const INTL_SECTORS = [
+  'Food & Beverage', 'Technology & Software', 'Healthcare & Life Sciences',
+  'Financial Services & Fintech', 'Retail & E-Commerce', 'Real Estate & Construction',
+  'Education & EdTech', 'Manufacturing & Logistics', 'Wellness & Fitness',
+  'Hospitality & Tourism', 'Energy & Sustainability', 'Professional Services',
+  'Transportation & Mobility', 'Media & Entertainment', 'Agriculture & AgTech',
+  'Government & Public Sector',
+];
+
+const COUNTRIES = [
+  { code: 'US', flag: '🇺🇸', name: 'United States' },
+  { code: 'CA', flag: '🇨🇦', name: 'Canada' },
+  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'AU', flag: '🇦🇺', name: 'Australia' },
+];
+
 // view: 'list' | 'detail' | 'generating' | 'generated'
 
 class CardErrorBoundary extends Component {
@@ -49,6 +66,7 @@ class CardErrorBoundary extends Component {
 }
 
 export default function DashboardPage({ user, onLogout, onNavigate, preselect = {} }) {
+  // ── US state ──
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
   const [zips, setZips] = useState([]);
@@ -60,14 +78,30 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   const [selectedSector, setSelectedSector] = useState('');
 
   const [sectorOpportunities, setSectorOpportunities] = useState([]);
-  const [selectedBudget, setSelectedBudget] = useState('');  // startup cost tier filter
-  const [view, setView] = useState('list');           // which screen to show
-  const [activeOpp, setActiveOpp] = useState(null);   // detail or generated idea
+  const [selectedBudget, setSelectedBudget] = useState('');
+  const [view, setView] = useState('list');
+  const [activeOpp, setActiveOpp] = useState(null);
   const [generateError, setGenerateError] = useState('');
   const [savedReports, setSavedReports] = useState(() => loadReports());
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // ── Country selector ──
+  const [selectedCountry, setSelectedCountry] = useState('US');
+
+  // ── International state ──
+  const [intlRegions, setIntlRegions] = useState([]);
+  const [intlCities, setIntlCities] = useState([]);
+  const [intlAreas, setIntlAreas] = useState([]);
+  const [intlRegion, setIntlRegion] = useState('');
+  const [intlCity, setIntlCity] = useState('');
+  const [intlArea, setIntlArea] = useState('');
+  const [intlSector, setIntlSector] = useState('');
+  const [intlInvestment, setIntlInvestment] = useState('');
+  const [intlSkills, setIntlSkills] = useState('');
+  const [intlIdeas, setIntlIdeas] = useState([]);
+  const [intlGenerating, setIntlGenerating] = useState(false);
+  const [intlError, setIntlError] = useState('');
 
   const resultsRef = useRef(null);
 
@@ -152,10 +186,29 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       .finally(() => setLoading(false));
   }, [selectedSector]);
 
+  // ── International effects ──
+  useEffect(() => {
+    if (selectedCountry === 'US') return;
+    setIntlRegions([]); setIntlCities([]); setIntlAreas([]);
+    setIntlRegion(''); setIntlCity(''); setIntlArea('');
+    setIntlIdeas([]);
+    api.intlRegions(selectedCountry).then(setIntlRegions).catch(() => {});
+  }, [selectedCountry]);
+
+  useEffect(() => {
+    if (!intlRegion) { setIntlCities([]); setIntlCity(''); setIntlAreas([]); setIntlArea(''); return; }
+    api.intlCities(selectedCountry, intlRegion).then(setIntlCities).catch(() => {});
+  }, [selectedCountry, intlRegion]);
+
+  useEffect(() => {
+    if (!intlCity) { setIntlAreas([]); setIntlArea(''); return; }
+    api.intlAreas(selectedCountry, intlRegion, intlCity).then(setIntlAreas).catch(() => {});
+  }, [selectedCountry, intlRegion, intlCity]);
+
   // Parse a startup cost string like "$25K–$75K" or "$1.2M" into a max dollar value
   function parseStartupCostMax(str) {
     if (!str) return Infinity;
-    const upper = str.split(/[–-]/).pop();   // take the upper bound
+    const upper = str.split(/[–-]/).pop();
     const m = upper.replace(/,/g, '').match(/\$?([\d.]+)\s*([KMB]?)/i);
     if (!m) return Infinity;
     const num = parseFloat(m[1]);
@@ -183,7 +236,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     const savedId = opp._savedId || makeId();
     const oppWithId = { ...opp, _savedId: savedId };
     setActiveOpp(oppWithId);
-    setSavedOpportunityId(null); // reset until user explicitly saves via SaveButton
+    setSavedOpportunityId(null);
     setView(isGenerated ? 'generated' : 'detail');
     setGenerateError('');
     scrollToResults();
@@ -200,8 +253,8 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     setSavedReports(saveReport(report));
   }, [selectedSector, selectedZip]);
 
-  const [savedOpportunityId, setSavedOpportunityId] = useState(null); // DB UUID after save, for ShareButton
-  const [liveStep, setLiveStep] = useState(0); // 0=idle, 1-4=loading steps
+  const [savedOpportunityId, setSavedOpportunityId] = useState(null);
+  const [liveStep, setLiveStep] = useState(0);
 
   const handleLiveAnalysis = useCallback(async () => {
     if (!selectedState || !selectedCity || !selectedZip || !selectedSector) return;
@@ -210,8 +263,6 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     setActiveOpp(null);
     scrollToResults();
     try {
-      // Animate through loading steps
-      const steps = [1, 2, 3, 4];
       const timer1 = setTimeout(() => setLiveStep(2), 1800);
       const timer2 = setTimeout(() => setLiveStep(3), 3600);
       const timer3 = setTimeout(() => setLiveStep(4), 5400);
@@ -250,6 +301,36 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     }
   }, [selectedSector, selectedZip, selectedCity, selectedState, openDetail]);
 
+  const handleGenerateIntl = useCallback(async () => {
+    if (!intlSector) return;
+    setIntlGenerating(true);
+    setIntlError('');
+    setIntlIdeas([]);
+    scrollToResults();
+    const countryMeta = COUNTRIES.find(c => c.code === selectedCountry);
+    const currencyMap = { CA: 'CAD', GB: 'GBP', AU: 'AUD' };
+    try {
+      const ideas = await api.generateIntlIdea({
+        country: selectedCountry,
+        region: intlRegion,
+        city: intlCity,
+        area: intlArea,
+        sector: intlSector,
+        currency: currencyMap[selectedCountry] || 'CAD',
+        skills: intlSkills,
+        investmentLevel: intlInvestment,
+      });
+      setIntlIdeas(Array.isArray(ideas) ? ideas : []);
+    } catch (err) {
+      const msg = err.message || 'Failed to generate ideas. Please try again.';
+      setIntlError(msg.includes('credits') ? msg + ' — click "+ Add Credits" in the header to top up.' : msg);
+    } finally {
+      setIntlGenerating(false);
+    }
+  }, [selectedCountry, intlRegion, intlCity, intlArea, intlSector, intlSkills, intlInvestment]);
+
+  const isIntl = selectedCountry !== 'US';
+
   return (
     <div className={styles.page}>
       {/* Header */}
@@ -276,70 +357,170 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
           <h2 className={styles.filterTitle}>Explore Opportunities</h2>
           <p className={styles.filterSub}>Select a location and sector to generate your business intelligence report.</p>
 
-          <div className={styles.filters}>
-            <div className={styles.filterGroup}>
-              <label>State</label>
-              <div className={styles.selectWrap}>
-                <select value={selectedState} onChange={e => setSelectedState(e.target.value)}>
-                  <option value="">— Select state —</option>
-                  {states.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label>City</label>
-              <div className={styles.selectWrap}>
-                <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} disabled={!cities.length}>
-                  <option value="">— Select city —</option>
-                  {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label>ZIP Code</label>
-              <div className={styles.selectWrap}>
-                <select value={selectedZip} onChange={e => setSelectedZip(e.target.value)} disabled={!zips.length}>
-                  <option value="">— Select ZIP —</option>
-                  {zips.map(z => <option key={z} value={z}>{z}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label>Industry Sector</label>
-              <div className={styles.selectWrap}>
-                <select value={selectedSector} onChange={e => setSelectedSector(e.target.value)} disabled={!sectors.length}>
-                  <option value="">— Select sector —</option>
-                  {sectors.map(s => (
-                    <option key={s.name} value={s.name}>
-                      {s.score ? `★ ${s.score.toFixed(1)}  ` : ''}{s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label>Startup Budget</label>
-              <div className={styles.selectWrap}>
-                <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)}>
-                  {BUDGET_TIERS.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          {/* Country selector */}
+          <div className={styles.countrySelector}>
+            {COUNTRIES.map(c => (
+              <button
+                key={c.code}
+                className={`${styles.countryBtn} ${selectedCountry === c.code ? styles.countryBtnActive : ''}`}
+                onClick={() => setSelectedCountry(c.code)}
+              >
+                {c.flag} {c.name}
+              </button>
+            ))}
           </div>
 
-          {selectedBudget && (
-            <div className={styles.budgetBadge}>
-              💰 Showing opportunities with startup cost up to <strong>${activeBudget.max.toLocaleString()}</strong>
-              {filteredOpportunities.length === 0 && sectorOpportunities.length > 0 && (
-                <span className={styles.budgetNoMatch}> — no curated matches, but you can still generate an AI idea within this budget</span>
+          {/* US flow */}
+          {!isIntl && (
+            <>
+              <div className={styles.filters}>
+                <div className={styles.filterGroup}>
+                  <label>State</label>
+                  <div className={styles.selectWrap}>
+                    <select value={selectedState} onChange={e => setSelectedState(e.target.value)}>
+                      <option value="">— Select state —</option>
+                      {states.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                  <label>City</label>
+                  <div className={styles.selectWrap}>
+                    <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} disabled={!cities.length}>
+                      <option value="">— Select city —</option>
+                      {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                  <label>ZIP Code</label>
+                  <div className={styles.selectWrap}>
+                    <select value={selectedZip} onChange={e => setSelectedZip(e.target.value)} disabled={!zips.length}>
+                      <option value="">— Select ZIP —</option>
+                      {zips.map(z => <option key={z} value={z}>{z}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                  <label>Industry Sector</label>
+                  <div className={styles.selectWrap}>
+                    <select value={selectedSector} onChange={e => setSelectedSector(e.target.value)} disabled={!sectors.length}>
+                      <option value="">— Select sector —</option>
+                      {sectors.map(s => (
+                        <option key={s.name} value={s.name}>
+                          {s.score ? `★ ${s.score.toFixed(1)}  ` : ''}{s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                  <label>Startup Budget</label>
+                  <div className={styles.selectWrap}>
+                    <select value={selectedBudget} onChange={e => setSelectedBudget(e.target.value)}>
+                      {BUDGET_TIERS.map(t => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {selectedBudget && (
+                <div className={styles.budgetBadge}>
+                  💰 Showing opportunities with startup cost up to <strong>${activeBudget.max.toLocaleString()}</strong>
+                  {filteredOpportunities.length === 0 && sectorOpportunities.length > 0 && (
+                    <span className={styles.budgetNoMatch}> — no curated matches, but you can still generate an AI idea within this budget</span>
+                  )}
+                  <button className={styles.budgetClear} onClick={() => setSelectedBudget('')}>✕ Clear</button>
+                </div>
               )}
-              <button className={styles.budgetClear} onClick={() => setSelectedBudget('')}>✕ Clear</button>
+            </>
+          )}
+
+          {/* International flow */}
+          {isIntl && (
+            <div className={styles.intlFilters}>
+              <div className={styles.filters} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                <div className={styles.filterGroup}>
+                  <label>Region / Province</label>
+                  <div className={styles.selectWrap}>
+                    <select value={intlRegion} onChange={e => setIntlRegion(e.target.value)} disabled={!intlRegions.length}>
+                      <option value="">— Select region —</option>
+                      {intlRegions.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                  <label>City</label>
+                  <div className={styles.selectWrap}>
+                    <select value={intlCity} onChange={e => setIntlCity(e.target.value)} disabled={!intlCities.length}>
+                      <option value="">— Select city —</option>
+                      {intlCities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                  <label>Area / District</label>
+                  <div className={styles.selectWrap}>
+                    <select value={intlArea} onChange={e => setIntlArea(e.target.value)} disabled={!intlAreas.length}>
+                      <option value="">— Select area —</option>
+                      {intlAreas.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.filters} style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginTop: 16 }}>
+                <div className={styles.filterGroup}>
+                  <label>Industry Sector</label>
+                  <div className={styles.selectWrap}>
+                    <select value={intlSector} onChange={e => setIntlSector(e.target.value)}>
+                      <option value="">— Select sector —</option>
+                      {INTL_SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                  <label>Investment Level (optional)</label>
+                  <input
+                    className={styles.intlInput}
+                    type="text"
+                    placeholder={selectedCountry === 'GB' ? 'e.g. Under £25,000' : selectedCountry === 'AU' ? 'e.g. Under AUD $50,000' : 'e.g. Under CAD $25,000'}
+                    value={intlInvestment}
+                    onChange={e => setIntlInvestment(e.target.value)}
+                  />
+                </div>
+
+                <div className={styles.filterGroup}>
+                  <label>Your Skills (optional)</label>
+                  <input
+                    className={styles.intlInput}
+                    type="text"
+                    placeholder="e.g. marketing, trades, tech"
+                    value={intlSkills}
+                    onChange={e => setIntlSkills(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginTop: 20 }}>
+                <button
+                  className={styles.intlGenerateBtn}
+                  onClick={handleGenerateIntl}
+                  disabled={!intlSector || intlGenerating}
+                >
+                  {intlGenerating ? '⏳ Generating…' : '🌍 Generate International Ideas'}
+                  {!intlGenerating && <span className={styles.creditTag}>3 credits</span>}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -348,176 +529,225 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
         {/* Results */}
         <div className={styles.results} ref={resultsRef}>
 
-          {/* Empty states */}
-          {!selectedState && <EmptyState message="Select a state to get started." icon="🗺️" />}
-          {selectedState && !selectedCity && <EmptyState message="Now select a city." icon="🏙️" />}
-          {selectedCity && !selectedZip && <EmptyState message="Choose a ZIP code." icon="📍" />}
-          {selectedZip && !selectedSector && <EmptyState message="Select an industry sector to see the opportunity analysis." icon="🏭" />}
+          {/* International results */}
+          {isIntl && (
+            <div>
+              {intlGenerating && (
+                <div className={styles.generatingScreen}>
+                  <div className={styles.generatingSpinner} />
+                  <h3 className={styles.generatingTitle}>Generating international ideas…</h3>
+                  <p className={styles.generatingSubtitle}>
+                    AI is analysing the {intlSector || 'selected'} sector
+                    {intlCity ? ` in ${intlCity}` : ''}
+                    {selectedCountry === 'CA' ? ', Canada' : selectedCountry === 'GB' ? ', United Kingdom' : ', Australia'} and building localised opportunity reports.
+                  </p>
+                </div>
+              )}
 
-          {/* Loading sector list */}
-          {loading && (
-            <div className={styles.loadingWrap}>
-              <div className={styles.spinner} />
-              <p>Loading opportunities…</p>
-            </div>
-          )}
+              {intlError && <div className={styles.generateError}>{intlError}</div>}
 
-          {error && <div className={styles.errorBox}>{error}</div>}
-          {generateError && view === 'list' && <div className={styles.generateError}>{generateError}</div>}
+              {!intlGenerating && intlIdeas.length === 0 && !intlError && (
+                <EmptyState message={intlSector ? 'Click "Generate International Ideas" to get started.' : 'Select a sector above, then generate ideas.'} icon="🌍" />
+              )}
 
-          {/* ── SCREEN: ranked list ── */}
-          {!loading && view === 'list' && filteredOpportunities.length > 0 && (
-            <div className={styles.rankedList}>
-              <div className={styles.rankedHeader}>
-                <h2 className={styles.rankedTitle}>
-                  {selectedBudget ? `${filteredOpportunities.length} Opportunit${filteredOpportunities.length === 1 ? 'y' : 'ies'}` : 'Top 5 Opportunities'} — {selectedSector}
-                </h2>
-                <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
-              </div>
-              {filteredOpportunities.map((opp, idx) => {
-                const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
-                return (
-                  <button key={opp.name} className={styles.rankedItem} onClick={() => openDetail(opp)}>
-                    <span className={styles.rankedRank}>#{idx + 1}</span>
-                    <div className={styles.rankedInfo}>
-                      <div className={styles.rankedName}>{opp.name}</div>
-                      <div className={styles.rankedMeta}>
-                        <span>{opp.model}</span>
-                        <span className={styles.rankedDot}>·</span>
-                        <span>Startup: {opp.startupCost}</span>
-                        <span className={styles.rankedDot}>·</span>
-                        <span>Margin: {opp.grossMargin}</span>
-                        <span className={styles.rankedDot}>·</span>
-                        <span>Yr1: {opp.revenueYr1}</span>
-                      </div>
-                    </div>
-                    <span className={styles.rankedScore} style={{ background: `${color}22`, color, borderColor: `${color}44` }}>
-                      ★ {opp.score.toFixed(1)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {liveStep > 0 && (
-            <div className={styles.liveLoadingOverlay}>
-              <div className={styles.liveLoadingBox}>
-                <div className={styles.liveSpinner} />
-                <div className={styles.liveSteps}>
-                  {['Fetching Census business data…', 'Loading BLS employment data…', 'Checking Google Trends signals…', 'Generating AI analysis…'].map((label, i) => (
-                    <div key={i} className={`${styles.liveStep} ${liveStep > i ? styles.liveStepDone : ''} ${liveStep === i + 1 ? styles.liveStepActive : ''}`}>
-                      <span className={styles.liveStepDot} />
-                      {label}
-                    </div>
+              {!intlGenerating && intlIdeas.length > 0 && (
+                <div>
+                  <div className={styles.rankedHeader} style={{ marginBottom: 20 }}>
+                    <h2 className={styles.rankedTitle}>
+                      {intlIdeas.length} International Business Ideas — {intlSector}
+                    </h2>
+                    <p className={styles.rankedSub}>
+                      AI-generated ideas for {intlCity || (intlRegions.find(r => r.code === intlRegion)?.name) || COUNTRIES.find(c => c.code === selectedCountry)?.name}. The last idea is a wildcard.
+                    </p>
+                  </div>
+                  {intlIdeas.map((idea, i) => (
+                    <IntlIdeaCard key={i} idea={idea} />
                   ))}
-                </div>
-                <p className={styles.liveNote}>Live analysis takes 4–8 seconds. Worth the wait.</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── SCREEN: detail (curated) ── */}
-          {view === 'detail' && activeOpp && (
-            <div>
-              <div className={styles.screenBar}>
-                <button className={styles.backBtn} onClick={() => { setView('list'); setActiveOpp(null); }}>
-                  ← Back to rankings
-                </button>
-                <div className={styles.generateGroup}>
-                  <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
-                    🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
-                  </button>
-                  <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
-                    ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
-                  </button>
-                  <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
-                    ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
-                  </button>
-                  <SaveButton
-                    cardData={activeOpp}
-                    state={states.find(s => s.code === selectedState)?.name || selectedState}
-                    city={selectedCity}
-                    zip={selectedZip}
-                    sector={selectedSector}
-                    sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
-                    onNavigateDashboard={() => onNavigate('saved')}
-                    onSaved={setSavedOpportunityId}
-                  />
-                </div>
-              </div>
-              {generateError && <div className={styles.generateError}>{generateError}</div>}
-              <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
-                <OpportunityCard
-                  opportunity={activeOpp}
-                  zip={selectedZip}
-                  sector={selectedSector}
-                  state={states.find(s => s.code === selectedState)?.name || selectedState}
-                  city={selectedCity}
-                  sectorLabel={selectedSector}
-                  onNavigate={onNavigate}
-                  savedOpportunityId={savedOpportunityId}
-                />
-              </CardErrorBoundary>
-            </div>
-          )}
-
-          {/* ── SCREEN: generating ── */}
-          {view === 'generating' && (
-            <div className={styles.generatingScreen}>
-              <div className={styles.generatingSpinner} />
-              <h3 className={styles.generatingTitle}>Crafting a new business idea…</h3>
-              <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
-            </div>
-          )}
-
-          {/* ── SCREEN: generated idea ── */}
-          {view === 'generated' && activeOpp && (
-            <div>
-              <div className={styles.screenBar}>
-                <button className={styles.backBtn} onClick={() => { setView('list'); setActiveOpp(null); }}>
-                  ← Back to rankings
-                </button>
-                <div className={styles.generatedActions}>
-                  {activeOpp.blueOcean
-                    ? <span className={styles.blueOceanBadge}>◎ Blue Ocean — No Competitors</span>
-                    : <span className={styles.generatedBadge}>✦ AI-Generated</span>
-                  }
-                  <div className={styles.generateGroup}>
-                    <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
-                      🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                  <div style={{ textAlign: 'center', marginTop: 16 }}>
+                    <button className={styles.generateBtn} onClick={handleGenerateIntl} disabled={intlGenerating}>
+                      ↺ Generate New Ideas <span className={styles.creditTag}>3 credits</span>
                     </button>
-                    <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
-                      ✦ Generate Another <span className={styles.creditTag}>3 credits</span>
-                    </button>
-                    <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
-                      ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
-                    </button>
-                    <SaveButton
-                      cardData={activeOpp}
-                      state={states.find(s => s.code === selectedState)?.name || selectedState}
-                      city={selectedCity}
-                      zip={selectedZip}
-                      sector={selectedSector}
-                      sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
-                      onNavigateDashboard={() => onNavigate('saved')}
-                      onSaved={setSavedOpportunityId}
-                    />
                   </div>
                 </div>
-              </div>
-              <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
-                <OpportunityCard
-                  opportunity={activeOpp}
-                  zip={selectedZip}
-                  sector={selectedSector}
-                  state={states.find(s => s.code === selectedState)?.name || selectedState}
-                  city={selectedCity}
-                  sectorLabel={selectedSector}
-                  onNavigate={onNavigate}
-                  savedOpportunityId={savedOpportunityId}
-                />
-              </CardErrorBoundary>
+              )}
+            </div>
+          )}
+
+          {/* US flow */}
+          {!isIntl && (
+            <div>
+              {/* Empty states */}
+              {!selectedState && <EmptyState message="Select a state to get started." icon="🗺️" />}
+              {selectedState && !selectedCity && <EmptyState message="Now select a city." icon="🏙️" />}
+              {selectedCity && !selectedZip && <EmptyState message="Choose a ZIP code." icon="📍" />}
+              {selectedZip && !selectedSector && <EmptyState message="Select an industry sector to see the opportunity analysis." icon="🏭" />}
+
+              {/* Loading sector list */}
+              {loading && (
+                <div className={styles.loadingWrap}>
+                  <div className={styles.spinner} />
+                  <p>Loading opportunities…</p>
+                </div>
+              )}
+
+              {error && <div className={styles.errorBox}>{error}</div>}
+              {generateError && view === 'list' && <div className={styles.generateError}>{generateError}</div>}
+
+              {/* ── SCREEN: ranked list ── */}
+              {!loading && view === 'list' && filteredOpportunities.length > 0 && (
+                <div className={styles.rankedList}>
+                  <div className={styles.rankedHeader}>
+                    <h2 className={styles.rankedTitle}>
+                      {selectedBudget ? `${filteredOpportunities.length} Opportunit${filteredOpportunities.length === 1 ? 'y' : 'ies'}` : 'Top 5 Opportunities'} — {selectedSector}
+                    </h2>
+                    <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
+                  </div>
+                  {filteredOpportunities.map((opp, idx) => {
+                    const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
+                    return (
+                      <button key={opp.name} className={styles.rankedItem} onClick={() => openDetail(opp)}>
+                        <span className={styles.rankedRank}>#{idx + 1}</span>
+                        <div className={styles.rankedInfo}>
+                          <div className={styles.rankedName}>{opp.name}</div>
+                          <div className={styles.rankedMeta}>
+                            <span>{opp.model}</span>
+                            <span className={styles.rankedDot}>·</span>
+                            <span>Startup: {opp.startupCost}</span>
+                            <span className={styles.rankedDot}>·</span>
+                            <span>Margin: {opp.grossMargin}</span>
+                            <span className={styles.rankedDot}>·</span>
+                            <span>Yr1: {opp.revenueYr1}</span>
+                          </div>
+                        </div>
+                        <span className={styles.rankedScore} style={{ background: `${color}22`, color, borderColor: `${color}44` }}>
+                          ★ {opp.score.toFixed(1)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {liveStep > 0 && (
+                <div className={styles.liveLoadingOverlay}>
+                  <div className={styles.liveLoadingBox}>
+                    <div className={styles.liveSpinner} />
+                    <div className={styles.liveSteps}>
+                      {['Fetching Census business data…', 'Loading BLS employment data…', 'Checking Google Trends signals…', 'Generating AI analysis…'].map((label, i) => (
+                        <div key={i} className={`${styles.liveStep} ${liveStep > i ? styles.liveStepDone : ''} ${liveStep === i + 1 ? styles.liveStepActive : ''}`}>
+                          <span className={styles.liveStepDot} />
+                          {label}
+                        </div>
+                      ))}
+                    </div>
+                    <p className={styles.liveNote}>Live analysis takes 4–8 seconds. Worth the wait.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* ── SCREEN: detail (curated) ── */}
+              {view === 'detail' && activeOpp && (
+                <div>
+                  <div className={styles.screenBar}>
+                    <button className={styles.backBtn} onClick={() => { setView('list'); setActiveOpp(null); }}>
+                      ← Back to rankings
+                    </button>
+                    <div className={styles.generateGroup}>
+                      <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                        🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                      </button>
+                      <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
+                        ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
+                      </button>
+                      <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
+                        ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
+                      </button>
+                      <SaveButton
+                        cardData={activeOpp}
+                        state={states.find(s => s.code === selectedState)?.name || selectedState}
+                        city={selectedCity}
+                        zip={selectedZip}
+                        sector={selectedSector}
+                        sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
+                        onNavigateDashboard={() => onNavigate('saved')}
+                        onSaved={setSavedOpportunityId}
+                      />
+                    </div>
+                  </div>
+                  {generateError && <div className={styles.generateError}>{generateError}</div>}
+                  <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
+                    <OpportunityCard
+                      opportunity={activeOpp}
+                      zip={selectedZip}
+                      sector={selectedSector}
+                      state={states.find(s => s.code === selectedState)?.name || selectedState}
+                      city={selectedCity}
+                      sectorLabel={selectedSector}
+                      onNavigate={onNavigate}
+                      savedOpportunityId={savedOpportunityId}
+                    />
+                  </CardErrorBoundary>
+                </div>
+              )}
+
+              {/* ── SCREEN: generating ── */}
+              {view === 'generating' && (
+                <div className={styles.generatingScreen}>
+                  <div className={styles.generatingSpinner} />
+                  <h3 className={styles.generatingTitle}>Crafting a new business idea…</h3>
+                  <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
+                </div>
+              )}
+
+              {/* ── SCREEN: generated idea ── */}
+              {view === 'generated' && activeOpp && (
+                <div>
+                  <div className={styles.screenBar}>
+                    <button className={styles.backBtn} onClick={() => { setView('list'); setActiveOpp(null); }}>
+                      ← Back to rankings
+                    </button>
+                    <div className={styles.generatedActions}>
+                      {activeOpp.blueOcean
+                        ? <span className={styles.blueOceanBadge}>◎ Blue Ocean — No Competitors</span>
+                        : <span className={styles.generatedBadge}>✦ AI-Generated</span>
+                      }
+                      <div className={styles.generateGroup}>
+                        <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                          🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                        </button>
+                        <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
+                          ✦ Generate Another <span className={styles.creditTag}>3 credits</span>
+                        </button>
+                        <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
+                          ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
+                        </button>
+                        <SaveButton
+                          cardData={activeOpp}
+                          state={states.find(s => s.code === selectedState)?.name || selectedState}
+                          city={selectedCity}
+                          zip={selectedZip}
+                          sector={selectedSector}
+                          sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
+                          onNavigateDashboard={() => onNavigate('saved')}
+                          onSaved={setSavedOpportunityId}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
+                    <OpportunityCard
+                      opportunity={activeOpp}
+                      zip={selectedZip}
+                      sector={selectedSector}
+                      state={states.find(s => s.code === selectedState)?.name || selectedState}
+                      city={selectedCity}
+                      sectorLabel={selectedSector}
+                      onNavigate={onNavigate}
+                      savedOpportunityId={savedOpportunityId}
+                    />
+                  </CardErrorBoundary>
+                </div>
+              )}
             </div>
           )}
 
