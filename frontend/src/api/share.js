@@ -1,5 +1,4 @@
-// Use relative /api path so requests go through Vercel's proxy rewrite to the backend
-const BASE_URL = '';
+const BASE_URL = (process.env.REACT_APP_API_URL || 'https://big-hm1k.onrender.com').replace(/\/$/, '');
 
 function authHeaders() {
   const token = localStorage.getItem('big_token');

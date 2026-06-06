@@ -1,12 +1,18 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "build",
-  "framework": "create-react-app",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "https://big-hm1k.onrender.com/api/:path*"
+      "src": "/api/(.*)",
+      "dest": "https://big-hm1k.onrender.com/api/$1"
+    },
+    {
+      "src": "/analysis/(.*)",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
-
