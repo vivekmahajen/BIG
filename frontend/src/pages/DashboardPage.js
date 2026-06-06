@@ -65,7 +65,18 @@ class CardErrorBoundary extends Component {
   }
 }
 
-export default function DashboardPage({ user, onLogout, onNavigate, preselect = {} }) {
+export default function DashboardPage({ user, onLogout, onNavigate, preselect: _preselect = {} }) {
+  // Always read URL params fresh — props may be stale if passed through re-renders
+  const preselect = (() => {
+    const p = new URLSearchParams(window.location.search);
+    return {
+      state:   p.get('state')   || _preselect.state   || '',
+      city:    p.get('city')    || _preselect.city     || '',
+      sector:  p.get('sector')  || _preselect.sector   || '',
+      country: p.get('country') || _preselect.country  || '',
+      region:  p.get('region')  || _preselect.region   || '',
+    };
+  })();
   // ── US state ──
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
