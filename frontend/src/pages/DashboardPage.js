@@ -223,17 +223,17 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect: _
         api.intlAreas(selectedCountry, regionCode, cityName).then(setIntlAreas).catch(() => {});
       }).catch(() => {});
     }).catch(() => {});
-  }, [selectedCountry]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedCountry]); 
 
   useEffect(() => {
     if (!intlRegion) { setIntlCities([]); setIntlCity(''); setIntlAreas([]); setIntlArea(''); return; }
     api.intlCities(selectedCountry, intlRegion).then(setIntlCities).catch(() => {});
-  }, [selectedCountry, intlRegion]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedCountry, intlRegion]); 
 
   useEffect(() => {
     if (!intlCity) { setIntlAreas([]); setIntlArea(''); return; }
     api.intlAreas(selectedCountry, intlRegion, intlCity).then(setIntlAreas).catch(() => {});
-  }, [selectedCountry, intlRegion, intlCity]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedCountry, intlRegion, intlCity]); 
 
   // Parse a startup cost string like "$25K–$75K" or "$1.2M" into a max dollar value
   function parseStartupCostMax(str) {
