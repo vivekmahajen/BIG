@@ -591,7 +591,15 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect: _
                     </p>
                   </div>
                   {intlIdeas.map((idea, i) => (
-                    <IntlIdeaCard key={i} idea={idea} />
+                    <IntlIdeaCard
+                      key={i}
+                      idea={idea}
+                      country={selectedCountry}
+                      region={intlRegion}
+                      city={intlCity}
+                      sector={intlSector}
+                      onNavigate={onNavigate}
+                    />
                   ))}
                   <div style={{ textAlign: 'center', marginTop: 16 }}>
                     <button className={styles.generateBtn} onClick={handleGenerateIntl} disabled={intlGenerating}>
