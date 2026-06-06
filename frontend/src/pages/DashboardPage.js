@@ -470,6 +470,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   city={selectedCity}
                   sectorLabel={selectedSector}
                   onNavigate={onNavigate}
+                  savedOpportunityId={activeOpp?._savedId}
                 />
               </CardErrorBoundary>
             </div>
@@ -528,6 +529,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   city={selectedCity}
                   sectorLabel={selectedSector}
                   onNavigate={onNavigate}
+                  savedOpportunityId={activeOpp?._savedId}
                 />
               </CardErrorBoundary>
             </div>

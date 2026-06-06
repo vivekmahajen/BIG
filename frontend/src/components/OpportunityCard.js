@@ -384,8 +384,9 @@ function CompetitorCompare({ businessName, sector, competitors, onCompareReady }
   );
 }
 
-export default function OpportunityCard({ opportunity: raw, zip, sector, state, city, sectorLabel, onNavigate, savedOpportunityId }) {
+export default function OpportunityCard({ opportunity: raw, zip, sector, state, city, sectorLabel, onNavigate, savedOpportunityId: initialSavedId }) {
   const [compareData, setCompareData] = useState(null);
+  const [savedOpportunityId, setSavedOpportunityId] = useState(initialSavedId || null);
 
   const o = {
     ...raw,
@@ -420,6 +421,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
           sector={sector}
           sectorLabel={sectorLabel}
           onNavigate={onNavigate}
+          onSaved={id => setSavedOpportunityId(id)}
         />
       </div>
 
