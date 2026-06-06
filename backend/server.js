@@ -131,6 +131,11 @@ async function callClaude(client, prompt, budget, retryPrefix = '') {
     for (let retry = 1; retry <= 2; retry++) {
       const costMax = parseStartupCostMax(idea.startupCost);
       if (costMax <= budget.max && costMax >= budget.min) break;
+      if (retry === 2) {
+        const err = new Error(`No viable idea found within the $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()} budget range after multiple attempts.`);
+        err.budgetExceeded = true;
+        throw err;
+      }
       const strict = `CRITICAL ERROR: Your previous response had startupCost "${idea.startupCost}" (max=$${costMax.toLocaleString()}) which VIOLATES the required range of $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Choose a completely different, simpler, lower-cost business concept that genuinely fits this budget. Do NOT scale down the same idea — pick a new one.\n\n${retryPrefix}${prompt}`;
       idea = await attempt(strict);
     }
@@ -385,6 +390,7 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
     res.json(idea);
   } catch (err) {
     console.error('generate-idea error:', err.message);
+    if (err.budgetExceeded) return res.status(422).json({ error: err.message, budgetExceeded: true });
     res.status(500).json({ error: 'Failed to generate idea: ' + err.message });
   }
 });
@@ -464,6 +470,7 @@ The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values 
     res.json(idea);
   } catch (err) {
     console.error('generate-blue-ocean error:', err.message);
+    if (err.budgetExceeded) return res.status(422).json({ error: err.message, budgetExceeded: true });
     res.status(500).json({ error: 'Failed to generate blue ocean idea: ' + err.message });
   }
 });

@@ -216,7 +216,13 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       }
     } catch (err) {
       const msg = err.message || 'Failed to generate idea. Please try again.';
-      setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" in the header to top up.' : msg);
+      if (msg.includes('No viable idea found within')) {
+        setGenerateError(msg + ' Try a different sector or relax the budget filter.');
+      } else if (msg.includes('credits')) {
+        setGenerateError(msg + ' — click "+ Add Credits" in the header to top up.');
+      } else {
+        setGenerateError(msg);
+      }
       setView('list');
     }
   }, [selectedSector, selectedZip, selectedCity, selectedState, openDetail]);
