@@ -474,6 +474,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
               <div className={styles.generatingSpinner} />
               <h3 className={styles.generatingTitle}>Crafting a new business idea…</h3>
               <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
+              {selectedBudget && <p style={{fontSize:11,color:'#6b7280',marginTop:4}}>Budget filter active: {activeBudget.label} (max ${activeBudget.max.toLocaleString()})</p>}
             </div>
           )}
 
