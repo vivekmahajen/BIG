@@ -208,6 +208,17 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       const idea = blueOcean
         ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState, budgetRange)
         : await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState, budgetRange);
+
+      // Client-side safety net: reject if returned idea still violates the budget
+      if (budgetRange) {
+        const costMax = parseStartupCostMax(idea.startupCost);
+        if (costMax > budgetRange.max) {
+          setGenerateError(`No viable idea found within the $${budgetRange.min.toLocaleString()}–$${budgetRange.max.toLocaleString()} budget range. Try a different sector or relax the budget filter.`);
+          setView('list');
+          return;
+        }
+      }
+
       try {
         openDetail(idea, true);
       } catch {
