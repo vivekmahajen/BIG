@@ -371,6 +371,21 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
             </div>
           )}
 
+          {/* ── Generate buttons — always visible when sector is selected ── */}
+          {!loading && view === 'list' && selectedSector && (
+            <div className={styles.generateGroup} style={{ marginTop: 16 }}>
+              <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+              </button>
+              <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
+                ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
+              </button>
+              <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
+                ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
+              </button>
+            </div>
+          )}
+
           {liveStep > 0 && (
             <div className={styles.liveLoadingOverlay}>
               <div className={styles.liveLoadingBox}>
