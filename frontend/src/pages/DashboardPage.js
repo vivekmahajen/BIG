@@ -200,14 +200,15 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     }
   }, [selectedState, selectedCity, selectedZip, selectedSector, openDetail]);
 
-  const handleGenerateIdea = useCallback(async (blueOcean = false) => {
+  async function handleGenerateIdea(blueOcean = false) {
     setView('generating');
     setGenerateError('');
     setActiveOpp(null);
     scrollToResults();
-    const currentBudgetValue = selectedBudgetRef.current;
-    const currentBudgetTier = BUDGET_TIERS.find(t => t.value === currentBudgetValue) || BUDGET_TIERS[0];
-    const budgetRange = currentBudgetValue ? { min: currentBudgetTier.min, max: currentBudgetTier.max, label: currentBudgetTier.label } : null;
+    // Read budget fresh from state (no useCallback closure issues)
+    const budgetValue = selectedBudget;
+    const budgetTier = BUDGET_TIERS.find(t => t.value === budgetValue) || BUDGET_TIERS[0];
+    const budgetRange = budgetValue ? { min: budgetTier.min, max: budgetTier.max, label: budgetTier.label } : null;
     try {
       const idea = blueOcean
         ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState, budgetRange)
@@ -240,7 +241,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       }
       setView('list');
     }
-  }, [selectedSector, selectedZip, selectedCity, selectedState, selectedBudget, activeBudget, openDetail]);
+  }
 
   return (
     <div className={styles.page}>
