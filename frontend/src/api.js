@@ -84,4 +84,12 @@ export const api = {
     request(`/reset-validate?token=${encodeURIComponent(token)}`),
   resetPassword: (token, password) =>
     request('/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
+
+  intlCountries: () => request('/intl/countries'),
+  intlRegions: (countryCode) => request(`/intl/${countryCode}/regions`),
+  intlCities: (countryCode, regionCode) => request(`/intl/${countryCode}/${regionCode}/cities`),
+  intlAreas: (countryCode, regionCode, cityName) =>
+    request(`/intl/${countryCode}/${regionCode}/${encodeURIComponent(cityName)}/areas`),
+  generateIntlIdea: (payload) =>
+    request('/generate-intl-idea', { method: 'POST', body: JSON.stringify(payload) }),
 };

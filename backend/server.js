@@ -51,7 +51,6 @@ bcrypt.hash('demo1234', 10).then(hash => {
     id: 1, email: 'demo@big.com', name: 'Demo User', passwordHash: hash,
     tier: 'free', credits: 10, packCredits: 0,
     creditsResetAt: nextMonthStart(),
-    referral_code: 'DEMO1234',
   });
 });
 
@@ -84,7 +83,6 @@ function userPublic(user) {
     packCredits: user.packCredits || 0,
     monthlyAllowance: tier.monthlyCredits,
     creditsResetAt: user.creditsResetAt,
-    referral_code: user.referral_code || null,
   };
 }
 
@@ -224,24 +222,10 @@ app.post('/api/register', async (req, res) => {
   if (users.find(u => u.email === email))
     return res.status(409).json({ error: 'Email already registered' });
   const passwordHash = await bcrypt.hash(password, 10);
-  // Generate a unique referral code for this user
-  function genReferralCode() {
-    return (
-      Math.random().toString(36).substring(2, 6).toUpperCase() +
-      Math.random().toString(36).substring(2, 6).toUpperCase()
-    );
-  }
-  let referralCode = genReferralCode();
-  // Ensure uniqueness
-  while (users.find(u => u.referral_code === referralCode)) {
-    referralCode = genReferralCode();
-  }
-
   const user = {
     id: users.length + 1, email, name, passwordHash,
     tier: 'free', credits: 10, packCredits: 0,
     creditsResetAt: nextMonthStart(),
-    referral_code: referralCode,
   };
   users.push(user);
   const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
@@ -690,10 +674,152 @@ if (process.env.DATABASE_URL) {
   );
 }
 
-// ── Share & Referral Routes ────────────────────────────────────────────────
-const makeShareRouter = require('./routes/share');
-const makeReferralsRouter = require('./routes/referrals');
-app.use('/api/share', makeShareRouter(users, auth));
-app.use('/api/referrals', makeReferralsRouter(users, auth));
+// ── International Geo Endpoints ───────────────────────────────────────────────
+app.get('/api/intl/countries', auth, (req, res) => {
+  const { INTL_GEO } = require('./intlGeoData');
+  const countries = Object.entries(INTL_GEO).map(([code, c]) => ({
+    code, name: c.name, currency: c.currency, symbol: c.symbol,
+  }));
+  res.json(countries);
+});
+
+app.get('/api/intl/:countryCode/regions', auth, (req, res) => {
+  const { INTL_GEO } = require('./intlGeoData');
+  const country = INTL_GEO[req.params.countryCode.toUpperCase()];
+  if (!country) return res.status(404).json({ error: 'Country not found' });
+  res.json(country.regions.map(r => ({ code: r.code, name: r.name })));
+});
+
+app.get('/api/intl/:countryCode/:regionCode/cities', auth, (req, res) => {
+  const { INTL_GEO } = require('./intlGeoData');
+  const country = INTL_GEO[req.params.countryCode.toUpperCase()];
+  if (!country) return res.status(404).json({ error: 'Country not found' });
+  const region = country.regions.find(r => r.code === req.params.regionCode);
+  if (!region) return res.status(404).json({ error: 'Region not found' });
+  res.json(region.cities.map(c => ({ name: c.name })));
+});
+
+app.get('/api/intl/:countryCode/:regionCode/:cityName/areas', auth, (req, res) => {
+  const { INTL_GEO } = require('./intlGeoData');
+  const country = INTL_GEO[req.params.countryCode.toUpperCase()];
+  if (!country) return res.status(404).json({ error: 'Country not found' });
+  const region = country.regions.find(r => r.code === req.params.regionCode);
+  if (!region) return res.status(404).json({ error: 'Region not found' });
+  const city = region.cities.find(c => c.name === req.params.cityName);
+  if (!city) return res.status(404).json({ error: 'City not found' });
+  res.json(city.areas);
+});
+
+// ── International Idea Generation ─────────────────────────────────────────────
+app.post('/api/generate-intl-idea', auth, async (req, res) => {
+  const { country, region, city, area, sector, currency, skills, investmentLevel } = req.body;
+  if (!country || !sector) return res.status(400).json({ error: 'country and sector required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'generate-idea')) {
+    return res.status(402).json({
+      error: `Not enough credits. Generating a business idea costs ${CREDIT_COSTS['generate-idea']} credits.`,
+      creditsRequired: CREDIT_COSTS['generate-idea'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });
+
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+
+  // Country-specific context
+  const countryCtx = {
+    CA: {
+      structures: 'Corporation (Inc.), Limited Partnership, or Sole Proprietorship — NOT LLC',
+      taxBody: 'Canada Revenue Agency (CRA)',
+      regAuthority: region === 'QC' ? 'Registraire des entreprises (Quebec) and Corporations Canada' : 'Corporations Canada and provincial registry',
+      marketData: 'Statistics Canada (statcan.gc.ca), BDC (bdc.ca), Innovation, Science and Economic Development Canada',
+      notes: 'HST/GST applies; CBSA for imports; Business Development Bank of Canada for financing',
+    },
+    GB: {
+      structures: 'Limited Company (Ltd), Limited Liability Partnership (LLP), or Sole Trader — NOT LLC',
+      taxBody: 'HM Revenue & Customs (HMRC)',
+      regAuthority: region === 'SCT' ? 'Companies House and Registers of Scotland' : region === 'NIR' ? 'Companies House (Belfast)' : 'Companies House (companieshouse.gov.uk)',
+      marketData: 'Office for National Statistics (ons.gov.uk), British Business Bank, Innovate UK, local Growth Hubs',
+      notes: 'VAT registration required above £90,000 turnover; Making Tax Digital applies; consider IR35 if contracting',
+    },
+    AU: {
+      structures: 'Proprietary Limited (Pty Ltd), Partnership, or Sole Trader — NOT LLC',
+      taxBody: 'Australian Taxation Office (ATO)',
+      regAuthority: 'Australian Securities and Investments Commission (ASIC) and state business registry',
+      marketData: 'Australian Bureau of Statistics (abs.gov.au), Business.gov.au, CSIRO, state investment authorities',
+      notes: 'ABN registration required; GST applies above AUD $75,000 turnover; Fair Work Act governs employment',
+    },
+  };
+
+  const ctx = countryCtx[country] || countryCtx.CA;
+  const locationStr = [area, city, region, country].filter(Boolean).join(', ');
+  const currencySymbol = currency === 'GBP' ? '£' : currency === 'AUD' ? 'AUD $' : 'CAD $';
+
+  const prompt = `You are an international business opportunity analyst specialising in ${country === 'CA' ? 'Canada' : country === 'GB' ? 'the United Kingdom' : 'Australia'}.
+
+Generate 4 diverse, highly actionable business ideas for the "${sector}" sector in ${locationStr}.
+The 4th idea MUST be a surprising "wildcard" idea — unexpected for this sector/location but genuinely viable.
+
+RULES:
+- Use ${currency} currency throughout (symbol: ${currencySymbol})
+- Business structure: ${ctx.structures}
+- Tax body: ${ctx.taxBody}
+- Registration: ${ctx.regAuthority}
+- Market data sources: ${ctx.marketData}
+- Important: ${ctx.notes}
+${skills ? `- Founder skills available: ${skills}` : ''}
+${investmentLevel ? `- Target investment level: ${investmentLevel}` : ''}
+
+Return ONLY a valid JSON array of exactly 4 objects (no markdown, no explanation):
+
+[
+  {
+    "name": "Specific Business Name",
+    "what": "What it is in 1-2 sentences",
+    "whyHereNow": "Why this specific location and current timing makes this opportunity compelling",
+    "startupCost": {
+      "low": 15000,
+      "high": 40000,
+      "currency": "${currency}",
+      "breakdown": ["Registration: ${currencySymbol}500", "Equipment: ${currencySymbol}X,000", "Working capital: ${currencySymbol}X,000"]
+    },
+    "revenueMonthly": { "low": 8000, "high": 20000, "currency": "${currency}" },
+    "steps": [
+      "Step 1: Register with ${ctx.regAuthority.split(' and ')[0]} — specific action",
+      "Step 2: specific action with real local authority named",
+      "Step 3: specific action"
+    ],
+    "watchOut": ["Risk or regulatory consideration 1", "Risk 2"],
+    "resources": ["https://real-url-1.gov", "https://real-url-2"],
+    "isWildcard": false
+  }
+]
+
+Set isWildcard: true on the 4th idea only. Use real, accurate URLs. Be specific with numbers. Keep all text concise.`;
+
+  try {
+    const Anthropic2 = require('@anthropic-ai/sdk');
+    const client2 = new Anthropic2({ apiKey });
+    const msg = await client2.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const text = msg.content[0].text.trim();
+    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    let ideas;
+    try { ideas = JSON.parse(json); } catch {
+      ideas = JSON.parse(json.replace(/,\s*$/, '') + ']');
+    }
+    res.json(ideas);
+  } catch (err) {
+    console.error('generate-intl-idea error:', err.message);
+    res.status(500).json({ error: 'Failed to generate international ideas: ' + err.message });
+  }
+});
 
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));
