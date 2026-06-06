@@ -5,6 +5,7 @@ const CREDIT_COSTS = {
   'generate-blue-ocean': 8,     // blue ocean (no competitors) — 3 base + 5 premium
   'competitor-compare': 2,      // AI analysis
   'competitive-analysis': 5,    // deep AI roadmap
+  'business-plan': 3,           // investor-ready business plan generation
 };
 
 // Subscription tiers

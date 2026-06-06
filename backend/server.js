@@ -475,6 +475,151 @@ The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values 
   }
 });
 
+// ── Business Plan Generation ───────────────────────────────────────────────
+const BUSINESS_PLAN_SYSTEM_PROMPT = `You are an expert business plan writer specialising in investor-ready documents for small and medium businesses. Your output will be used by an entrepreneur to pitch to investors, apply for loans, and guide their first 12 months of operation.
+
+Generate a complete, structured business plan based on the BIG analysis data provided. The plan must be specific to this location, industry, and opportunity — not generic. Every section must use the real numbers from the analysis.
+
+OUTPUT FORMAT:
+Respond ONLY with a valid JSON object. No preamble, no markdown fences, no commentary outside the JSON.
+
+JSON STRUCTURE:
+{
+  "plan_title": "[Industry] Business Plan — [City], [State]",
+  "generated_date": "[today's date in Month DD, YYYY format]",
+  "tagline": "[1 punchy sentence positioning the opportunity]",
+  "sections": {
+    "executive_summary": {
+      "headline": "[1 bold sentence — the investment thesis]",
+      "body": "[3-4 paragraphs: what the business is, why this location, why now, what success looks like at 12 months. Use the score, exit valuation, and LTV:CAC ratio from the data. Be specific — city name, industry, real numbers.]",
+      "key_metrics": [
+        {"label": "BIG Opportunity Score", "value": "[score]/10"},
+        {"label": "Projected 12-Month Revenue", "value": "[revenueYr1 value]"},
+        {"label": "Projected Exit Valuation", "value": "[exitVal value]"},
+        {"label": "LTV:CAC Ratio", "value": "[ltv_cac value]"},
+        {"label": "Market Saturation", "value": "[low/medium/high based on data]"},
+        {"label": "Startup Cost Range", "value": "[startupCost value]"}
+      ]
+    },
+    "market_opportunity": {
+      "headline": "[Why this market, why now]",
+      "market_size": "[Description of total addressable market. Reference the TAM and SAM from the data.]",
+      "demand_signals": "[Describe each green signal from the analysis and what it means for this business.]",
+      "blue_ocean": "[If no competitors: explain the low-competition advantage. Otherwise: explain differentiation strategy.]",
+      "local_context": "[2-3 sentences on why this specific city is the right place to launch.]",
+      "data_source": "Census ZIP Business Patterns (ZBP) + BLS QCEW + BIG proprietary scoring engine"
+    },
+    "competitive_landscape": {
+      "headline": "[How this business wins in a competitive market]",
+      "competitor_analysis": "[Analyse the top competitors listed in the data. For each, describe their strength, weakness, and the gap this business exploits.]",
+      "competitive_advantage": "[3 specific advantages this business has given the location, timing, and market data.]",
+      "moat": "[What makes this business hard to copy once established? Network effects, local relationships, proprietary data, brand recognition.]"
+    },
+    "revenue_model": {
+      "headline": "[The core revenue thesis]",
+      "primary_revenue": "[Describe the primary revenue stream in detail: pricing model, transaction size, frequency, who pays.]",
+      "secondary_revenue": "[1-2 secondary revenue streams that emerge after Month 6.]",
+      "pricing_strategy": "[Specific pricing recommendation for this industry and city.]",
+      "unit_economics": {
+        "avg_transaction": "[estimated average transaction value]",
+        "monthly_customers_needed": "[number of customers needed at Month 12 to hit the revenue target]",
+        "ltv": "[estimated 12-month LTV per customer]",
+        "cac": "[estimated customer acquisition cost]",
+        "ltv_cac": "[ratio from analysis data]",
+        "payback_period": "[estimated months to recoup CAC]"
+      },
+      "revenue_ramp": "[Month 1-3 / Month 4-6 / Month 7-12 revenue narrative. Be realistic and specific.]"
+    },
+    "startup_costs": {
+      "headline": "[What it takes to get to first revenue]",
+      "total_range": "[startupCost value from data]",
+      "breakdown": [
+        {"category": "Business registration & legal", "low": "[number only]", "high": "[number only]", "notes": "[specific registration steps for this state/country]"},
+        {"category": "Technology & software", "low": "[number only]", "high": "[number only]", "notes": "[specific tools for this industry]"},
+        {"category": "Marketing & lead generation", "low": "[number only]", "high": "[number only]", "notes": "[specific channels for this city+industry]"},
+        {"category": "Equipment & workspace", "low": "[number only]", "high": "[number only]", "notes": "[specific requirements for this industry]"},
+        {"category": "Working capital (3 months)", "low": "[number only]", "high": "[number only]", "notes": "[covers ops until revenue positive]"},
+        {"category": "Contingency (15%)", "low": "[number only]", "high": "[number only]", "notes": "First-time founders spend 15-20% more than planned"}
+      ],
+      "funding_options": "[3 specific funding sources for this country and business type. Name the programme and eligibility. Use SBA 7(a) for US, BDC for Canada, British Business Bank for UK, AusIndustry for Australia.]"
+    },
+    "milestones": {
+      "headline": "[The 12-month sprint — from zero to predictable revenue]",
+      "months": [
+        {"period": "Month 1-2", "phase": "Foundation", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"},
+        {"period": "Month 3-4", "phase": "First Revenue", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"},
+        {"period": "Month 5-6", "phase": "Growth", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"},
+        {"period": "Month 7-9", "phase": "Scale", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"},
+        {"period": "Month 10-12", "phase": "Optimise", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"}
+      ],
+      "year_1_exit_criteria": "[What does success look like at Month 12? Specific metrics indicating the business is on track for the projected exit valuation.]"
+    },
+    "exit_strategy": {
+      "headline": "[The wealth-building thesis]",
+      "primary_exit": "[Most likely exit path for this type of business. Be specific: strategic acquisition by what type of acquirer, private equity roll-up, or management buyout.]",
+      "valuation_basis": "[How the projected exit valuation was derived. Reference the exit multiple from the BIG data and comparable transactions.]",
+      "timeline": "[Realistic timeline to exit from launch: typically 3-7 years for this type of business.]",
+      "value_drivers": "[3-4 specific things the founder should build from Day 1 to maximise exit value: recurring revenue, customer concentration, documented processes, defensible data.]",
+      "alternative_paths": "[2 alternative exit paths if the primary path doesn't materialise.]"
+    }
+  },
+  "footer_disclaimer": "This business plan was generated by BIG (Business Opportunity Intelligence) using Census ZBP, BLS QCEW, and proprietary market scoring data. Projections are estimates based on comparable businesses in this market and should be validated with a financial advisor before making investment decisions.",
+  "big_score_context": "A BIG Score of [score]/10 places this opportunity among the top-rated opportunities analysed in [state]."
+}
+
+QUALITY RULES:
+1. Every number must come from the analysis data provided. Do not invent figures not in the data.
+2. Every section must reference the specific city, state/region, and industry — not generic placeholders.
+3. The startup cost breakdown numbers must sum to approximately the startupCost range in the data.
+4. The competitive landscape must reference the actual topCompetitors from the analysis data.
+5. The milestone revenue targets must ramp from $0 toward the revenueYr1 range from the analysis.
+6. The exit strategy valuation must be grounded in the exitVal range from the BIG data.
+7. Never use placeholder text like "[insert here]" in the output — every field must be fully populated.
+8. Tone: confident, specific, investor-ready. Not salesy. Not generic. Not padded.`;
+
+app.post('/api/business-plan', auth, async (req, res) => {
+  const { analysis, location } = req.body;
+  if (!analysis) return res.status(400).json({ error: 'analysis data required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'business-plan')) {
+    return res.status(402).json({
+      error: `Not enough credits. Business plan generation costs ${CREDIT_COSTS['business-plan']} credits.`,
+      creditsRequired: CREDIT_COSTS['business-plan'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'AI generation not configured' });
+
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+
+  try {
+    const msg = await client.messages.create({
+      model: 'claude-opus-4-8',
+      max_tokens: 8000,
+      system: BUSINESS_PLAN_SYSTEM_PROMPT,
+      messages: [{
+        role: 'user',
+        content: `Generate a complete business plan for the following BIG analysis:\n\n${JSON.stringify({ analysis, location }, null, 2)}`,
+      }],
+    });
+
+    const raw = msg.content[0].text.trim();
+    const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    const plan = JSON.parse(clean);
+
+    res.json({ plan, creditsUsed: CREDIT_COSTS['business-plan'], creditsRemaining: user.credits + (user.packCredits || 0) });
+  } catch (err) {
+    // Refund credits on failure
+    user.credits += CREDIT_COSTS['business-plan'];
+    console.error('business-plan error:', err.message);
+    res.status(500).json({ error: 'Business plan generation failed: ' + err.message });
+  }
+});
+
 app.post('/api/competitor-compare', auth, async (req, res) => {
   const { businessName, sector, competitors } = req.body;
   if (!businessName || !competitors || !competitors.length) {

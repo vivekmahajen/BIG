@@ -107,4 +107,7 @@ export const api = {
     request(`/intl/${countryCode}/${regionCode}/${encodeURIComponent(cityName)}/areas`),
   generateIntlIdea: (payload) =>
     request('/generate-intl-idea', { method: 'POST', body: JSON.stringify(payload) }),
+
+  generateBusinessPlan: (analysis, location) =>
+    request('/business-plan', { method: 'POST', body: JSON.stringify({ analysis, location }) }),
 };

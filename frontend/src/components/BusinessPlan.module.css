@@ -1,0 +1,321 @@
+.wrapper {
+  background: #0d1117;
+  border: 1px solid #1e2a3a;
+  border-radius: 16px;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 28px 20px;
+  background: #07090d;
+  border-bottom: 2px solid #ffc843;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.headerLeft { flex: 1; min-width: 0; }
+
+.planBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffc843;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.planTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #eef2f8;
+  margin: 0 0 6px;
+}
+
+.planTagline {
+  font-size: 13px;
+  color: #4d6070;
+  font-style: italic;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.exportBtn {
+  background: transparent;
+  border: 1px solid #ffc843;
+  color: #ffc843;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.exportBtn:hover { background: rgba(255,200,67,0.1); }
+.exportBtn:disabled { opacity: 0.5; cursor: default; }
+
+.deckBtn {
+  background: transparent;
+  border: 1px solid #a78bfa;
+  color: #a78bfa;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.deckBtn:hover { background: rgba(167,139,250,0.1); }
+.deckBtn:disabled { opacity: 0.5; cursor: default; }
+
+.closeBtn {
+  background: transparent;
+  border: 1px solid #1e2a3a;
+  color: #4d6070;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.closeBtn:hover { border-color: #4d6070; color: #eef2f8; }
+
+/* Metrics bar */
+.metricsBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0;
+  background: #111620;
+  border-bottom: 1px solid #1e2a3a;
+}
+
+.metric {
+  padding: 16px 14px;
+  border-right: 1px solid #1e2a3a;
+  text-align: center;
+}
+.metric:last-child { border-right: none; }
+
+.metricVal {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffc843;
+  margin-bottom: 4px;
+}
+
+.metricLbl {
+  font-size: 10px;
+  color: #4d6070;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Sections */
+.sections { padding: 0 28px 8px; }
+
+.section { border-bottom: 1px solid #1e2a3a; }
+.section:last-child { border-bottom: none; }
+
+.sectionHeader {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  background: none;
+  border: none;
+  color: #c8d4e3;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+}
+.sectionHeader:hover { color: #ffc843; }
+.sectionHeaderOpen { color: #ffc843; }
+
+.chevron { font-size: 11px; color: #4d6070; }
+
+.sectionBody { padding: 4px 0 20px; }
+
+.sectionHeadline {
+  font-size: 16px;
+  font-weight: 700;
+  color: #eef2f8;
+  margin: 0 0 16px;
+  line-height: 1.4;
+}
+
+.bodyText {
+  color: #8da0b3;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.fieldBlock {
+  margin-bottom: 16px;
+}
+.fieldBlock h4 {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4d6070;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 6px;
+}
+.fieldBlock p {
+  color: #8da0b3;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Startup cost table */
+.totalRange {
+  font-size: 15px;
+  color: #c8d4e3;
+  margin-bottom: 16px;
+}
+.totalRange strong { color: #ffc843; }
+
+.costTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+.costTable th {
+  text-align: left;
+  padding: 8px 10px;
+  color: #4d6070;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #1e2a3a;
+}
+.costTable td {
+  padding: 10px 10px;
+  color: #8da0b3;
+  border-bottom: 1px solid #0d1117;
+}
+.costTable tr:hover td { background: #111620; }
+.costTable td:nth-child(2), .costTable td:nth-child(3) { color: #ffc843; font-weight: 600; }
+
+/* Milestones */
+.milestoneGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.milestoneCard {
+  background: #111620;
+  border: 1px solid #1e2a3a;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.milestonePeriod {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffc843;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.milestonePhase {
+  font-size: 13px;
+  font-weight: 700;
+  color: #eef2f8;
+  margin-bottom: 6px;
+}
+
+.milestoneRevenue {
+  font-size: 15px;
+  font-weight: 800;
+  color: #00d4ff;
+  margin-bottom: 10px;
+}
+
+.milestoneGoals {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+.milestoneGoals li {
+  font-size: 11px;
+  color: #4d6070;
+  padding: 2px 0;
+  line-height: 1.4;
+}
+.milestoneGoals li::before { content: '· '; color: #ffc843; }
+
+.milestoneMetric {
+  font-size: 10px;
+  color: #2d3f52;
+  font-style: italic;
+}
+
+/* Unit economics */
+.ueBlock { margin-bottom: 20px; }
+.ueBlock h4 {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4d6070;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 12px;
+}
+
+.ueGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.ueItem {
+  background: #111620;
+  border: 1px solid #1e2a3a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.ueVal {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffc843;
+  margin-bottom: 4px;
+}
+
+.ueLbl {
+  font-size: 10px;
+  color: #4d6070;
+  text-transform: capitalize;
+}
+
+.dataSource {
+  font-size: 11px;
+  color: #2d3f52;
+  font-style: italic;
+  margin-top: 12px;
+}
+
+.disclaimer {
+  padding: 16px 28px;
+  font-size: 11px;
+  color: #2d3f52;
+  border-top: 1px solid #1e2a3a;
+  line-height: 1.6;
+  margin: 0;
+}
