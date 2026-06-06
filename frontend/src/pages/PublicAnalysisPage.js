@@ -205,11 +205,27 @@ export default function PublicAnalysisPage() {
 
         {data && (() => {
           const card = data.card_data || {};
+          const isIntl = !!(card.whyHereNow || card.revenueMonthly);
           const score = card.score ?? data.score;
-          const sector = data.sector || card.sector || '';
+          const sector = data.sector_label || data.sector || card.sector || '';
           const city = data.city || '';
           const stateName = data.state || '';
           const zip = data.zip || card.bestZip || '';
+
+          // Normalize intl startupCost object → display string
+          const sym = card.startupCost?.currency === 'GBP' ? '£' : card.startupCost?.currency === 'AUD' ? 'AUD $' : 'CAD $';
+          const intlStartupCost = isIntl && card.startupCost
+            ? `${sym}${Number(card.startupCost.low).toLocaleString()} – ${sym}${Number(card.startupCost.high).toLocaleString()}`
+            : null;
+          const intlRevenue = isIntl && card.revenueMonthly
+            ? `${sym}${Number(card.revenueMonthly.low).toLocaleString()} – ${sym}${Number(card.revenueMonthly.high).toLocaleString()}/mo`
+            : null;
+
+          // Build a normalized card for MetricGrid (safe string values only)
+          const metricCard = isIntl ? {
+            startupCost: intlStartupCost,
+            revenueYr1: intlRevenue,
+          } : card;
 
           return (
             <div>
@@ -264,14 +280,34 @@ export default function PublicAnalysisPage() {
               {/* Metrics */}
               <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 20 }}>
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: '0 0 4px' }}>Key Financials</h2>
-                <MetricGrid data={card} />
+                <MetricGrid data={metricCard} />
               </div>
 
-              {/* Why it works */}
-              {card.whyItWorks && (
+              {/* Why it works (US) or Why here & now (Intl) */}
+              {(card.whyItWorks || card.whyHereNow) && (
                 <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 20 }}>
-                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: '0 0 12px' }}>💡 Why It Makes Money</h2>
-                  <p style={{ color: '#475569', lineHeight: 1.7, margin: 0 }}>{card.whyItWorks}</p>
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: '0 0 12px' }}>💡 {isIntl ? 'Why Here & Now' : 'Why It Makes Money'}</h2>
+                  <p style={{ color: '#475569', lineHeight: 1.7, margin: 0 }}>{card.whyItWorks || card.whyHereNow}</p>
+                </div>
+              )}
+
+              {/* Intl: What it is */}
+              {isIntl && card.what && (
+                <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 20 }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: '0 0 12px' }}>📋 The Business</h2>
+                  <p style={{ color: '#475569', lineHeight: 1.7, margin: 0 }}>{card.what}</p>
+                </div>
+              )}
+
+              {/* Intl: Getting started steps */}
+              {isIntl && Array.isArray(card.steps) && card.steps.length > 0 && (
+                <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 20 }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: '0 0 12px' }}>🚀 Getting Started</h2>
+                  <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {card.steps.slice(0, 3).map((s, i) => (
+                      <li key={i} style={{ color: '#475569', fontSize: 14, lineHeight: 1.6 }}>{s}</li>
+                    ))}
+                  </ol>
                 </div>
               )}
 
