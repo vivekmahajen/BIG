@@ -225,7 +225,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       }
       setView('list');
     }
-  }, [selectedSector, selectedZip, selectedCity, selectedState, openDetail]);
+  }, [selectedSector, selectedZip, selectedCity, selectedState, selectedBudget, activeBudget, openDetail]);
 
   return (
     <div className={styles.page}>
