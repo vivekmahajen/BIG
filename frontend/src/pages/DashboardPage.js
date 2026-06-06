@@ -62,8 +62,8 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   // Auto-select state from URL param once states are loaded
   useEffect(() => {
     if (preselect.state && states.length > 0 && !selectedState) {
-      const match = states.find(s => s === preselect.state || s.toLowerCase() === preselect.state.toLowerCase());
-      if (match) setSelectedState(match);
+      const match = states.find(s => s.code === preselect.state || s.code?.toLowerCase() === preselect.state.toLowerCase());
+      if (match) setSelectedState(match.code);
     }
   }, [preselect.state, states]);
 
@@ -73,8 +73,8 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       setCities(data);
       // auto-select city from URL param
       if (preselect.city) {
-        const match = data.find(c => c === preselect.city || c.toLowerCase() === preselect.city.toLowerCase());
-        if (match) { setSelectedCity(match); return; }
+        const match = data.find(c => c.name === preselect.city || c.name?.toLowerCase() === preselect.city.toLowerCase());
+        if (match) { setSelectedCity(match.name); return; }
       }
       setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
@@ -96,8 +96,19 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       setSectors(data);
       // auto-select sector from URL param
       if (preselect.sector) {
-        const match = data.find(s => s === preselect.sector || s.toLowerCase().replace(/\s+/g, '_') === preselect.sector.toLowerCase());
-        if (match) { setSelectedSector(match); return; }
+        const SEO_SECTOR_MAP = {
+          food_beverage: 'Food & Beverage', technology: 'Technology & Software',
+          healthcare: 'Healthcare & Life Sciences', financial_services: 'Financial Services & Fintech',
+          retail: 'Retail & E-Commerce', real_estate: 'Real Estate & Construction',
+          education: 'Education & EdTech', manufacturing: 'Manufacturing & Logistics',
+          wellness: 'Wellness & Fitness', hospitality: 'Hospitality & Tourism',
+          energy: 'Energy & Sustainability', professional_services: 'Professional Services',
+          transportation: 'Transportation & Mobility', media_entertainment: 'Media & Entertainment',
+          agriculture: 'Agriculture & AgTech', government: 'Government & Public Sector',
+        };
+        const backendName = SEO_SECTOR_MAP[preselect.sector] || preselect.sector;
+        const match = data.find(s => s.name === backendName || s.name?.toLowerCase() === backendName.toLowerCase());
+        if (match) { setSelectedSector(match.name); return; }
       }
     });
   }, [selectedZip]);
