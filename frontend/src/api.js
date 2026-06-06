@@ -90,8 +90,8 @@ export const api = {
   pricing: () => request('/pricing'),
   buyPack: (packId) => request('/buy-pack', { method: 'POST', body: JSON.stringify({ packId }) }),
 
-  liveCard: (state, city, zip, sector) =>
-    request('/live-card', { method: 'POST', body: JSON.stringify({ state, city, zip, sector }) }),
+  liveCard: (state, city, zip, sector, budget) =>
+    generateWithBudgetCheck('/live-card', { state, city, zip, sector }, budget),
 
   resetRequest: (email) =>
     request('/reset-request', { method: 'POST', body: JSON.stringify({ email }) }),

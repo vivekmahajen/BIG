@@ -176,29 +176,36 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
 
   const [liveStep, setLiveStep] = useState(0); // 0=idle, 1-4=loading steps
 
-  const handleLiveAnalysis = useCallback(async () => {
+  async function handleLiveAnalysis() {
     if (!selectedState || !selectedCity || !selectedZip || !selectedSector) return;
     setLiveStep(1);
     setGenerateError('');
     setActiveOpp(null);
     scrollToResults();
+    const budgetValue = selectedBudgetRef.current;
+    const budgetTier = BUDGET_TIERS.find(t => t.value === budgetValue) || BUDGET_TIERS[0];
+    const budgetRange = budgetValue ? { min: budgetTier.min, max: budgetTier.max, label: budgetTier.label } : null;
     try {
-      // Animate through loading steps
-      const steps = [1, 2, 3, 4];
       const timer1 = setTimeout(() => setLiveStep(2), 1800);
       const timer2 = setTimeout(() => setLiveStep(3), 3600);
       const timer3 = setTimeout(() => setLiveStep(4), 5400);
-      const card = await api.liveCard(selectedState, selectedCity, selectedZip, selectedSector);
+      const card = await api.liveCard(selectedState, selectedCity, selectedZip, selectedSector, budgetRange);
       clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
       setLiveStep(0);
       openDetail(card, true);
     } catch (err) {
       setLiveStep(0);
       const msg = err.message || 'Live analysis failed. Please try again.';
-      setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" to top up.' : msg);
+      if (msg.includes('No viable idea found within')) {
+        setGenerateError(msg + ' Try a different sector or relax the budget filter.');
+      } else if (msg.includes('credits')) {
+        setGenerateError(msg + ' — click "+ Add Credits" to top up.');
+      } else {
+        setGenerateError(msg);
+      }
       setView('list');
     }
-  }, [selectedState, selectedCity, selectedZip, selectedSector, openDetail]);
+  }
 
   async function handleGenerateIdea(blueOcean = false) {
     setView('generating');
