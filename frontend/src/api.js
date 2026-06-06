@@ -1,6 +1,27 @@
 const _ROOT = (process.env.REACT_APP_API_URL || 'https://big-hm1k.onrender.com').replace(/\/$/, '');
 const BASE = _ROOT.endsWith('/api') ? _ROOT : `${_ROOT}/api`;
 
+function parseCostMax(str) {
+  if (!str) return Infinity;
+  const upper = str.split(/[–\-]/).pop();
+  const m = upper.replace(/,/g, '').match(/\$?([\d.]+)\s*([KMB]?)/i);
+  if (!m) return Infinity;
+  const n = parseFloat(m[1]);
+  const u = m[2].toUpperCase();
+  return u === 'M' ? n * 1e6 : u === 'B' ? n * 1e9 : u === 'K' ? n * 1e3 : n;
+}
+
+async function generateWithBudgetCheck(path, body, budget) {
+  const idea = await request(path, { method: 'POST', body: JSON.stringify(body) });
+  if (budget) {
+    const costMax = parseCostMax(idea.startupCost);
+    if (costMax > budget.max) {
+      throw new Error(`No viable idea found within the $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()} budget range. Try a different sector or relax the budget filter.`);
+    }
+  }
+  return idea;
+}
+
 function getToken() {
   return localStorage.getItem('big_token');
 }
@@ -48,16 +69,10 @@ export const api = {
     request(`/sector-opportunities?sector=${encodeURIComponent(sector)}`),
 
   generateIdea: (sector, zip, city, state, budget) =>
-    request('/generate-idea', {
-      method: 'POST',
-      body: JSON.stringify({ sector, zip, city, state, budget }),
-    }),
+    generateWithBudgetCheck('/generate-idea', { sector, zip, city, state, budget }, budget),
 
   generateBlueOcean: (sector, zip, city, state, budget) =>
-    request('/generate-blue-ocean', {
-      method: 'POST',
-      body: JSON.stringify({ sector, zip, city, state, budget }),
-    }),
+    generateWithBudgetCheck('/generate-blue-ocean', { sector, zip, city, state, budget }, budget),
 
   competitorCompare: (businessName, sector, competitors) =>
     request('/competitor-compare', {
