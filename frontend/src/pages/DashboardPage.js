@@ -69,13 +69,15 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect: _
   // Always read URL params fresh — props may be stale if passed through re-renders
   const preselect = (() => {
     const p = new URLSearchParams(window.location.search);
-    return {
+    const result = {
       state:   p.get('state')   || _preselect.state   || '',
       city:    p.get('city')    || _preselect.city     || '',
       sector:  p.get('sector')  || _preselect.sector   || '',
       country: p.get('country') || _preselect.country  || '',
       region:  p.get('region')  || _preselect.region   || '',
     };
+    console.log('[BIG] preselect', result);
+    return result;
   })();
   // ── US state ──
   const [states, setStates] = useState([]);
@@ -118,6 +120,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect: _
   const [intlInvestment, setIntlInvestment] = useState('');
   const [intlSkills, setIntlSkills] = useState('');
   const [intlIdeas, setIntlIdeas] = useState([]);
+  console.log('[BIG] intl state init', { selectedCountry, intlRegion, intlCity, intlSector });
   const [intlGenerating, setIntlGenerating] = useState(false);
   const [intlError, setIntlError] = useState('');
 
