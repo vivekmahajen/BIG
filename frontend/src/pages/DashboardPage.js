@@ -87,7 +87,10 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   const [error, setError] = useState('');
 
   // ── Country selector ──
-  const [selectedCountry, setSelectedCountry] = useState('US');
+  const [selectedCountry, setSelectedCountry] = useState(() => {
+    const c = (preselect.country || '').toUpperCase();
+    return ['CA', 'GB', 'AU'].includes(c) ? c : 'US';
+  });
 
   // ── International state ──
   const [intlRegions, setIntlRegions] = useState([]);
@@ -192,18 +195,37 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     setIntlRegions([]); setIntlCities([]); setIntlAreas([]);
     setIntlRegion(''); setIntlCity(''); setIntlArea('');
     setIntlIdeas([]);
-    api.intlRegions(selectedCountry).then(setIntlRegions).catch(() => {});
-  }, [selectedCountry]);
+    api.intlRegions(selectedCountry).then(regions => {
+      setIntlRegions(regions);
+      // Preselect region from URL param
+      if (preselect.region) {
+        const match = regions.find(r => r.code === preselect.region || r.name.toLowerCase() === preselect.region.toLowerCase());
+        if (match) setIntlRegion(match.code);
+      }
+    }).catch(() => {});
+  }, [selectedCountry]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!intlRegion) { setIntlCities([]); setIntlCity(''); setIntlAreas([]); setIntlArea(''); return; }
-    api.intlCities(selectedCountry, intlRegion).then(setIntlCities).catch(() => {});
-  }, [selectedCountry, intlRegion]);
+    api.intlCities(selectedCountry, intlRegion).then(cities => {
+      setIntlCities(cities);
+      if (preselect.city) {
+        const match = cities.find(c => c.name.toLowerCase() === preselect.city.toLowerCase());
+        if (match) setIntlCity(match.name);
+      }
+    }).catch(() => {});
+  }, [selectedCountry, intlRegion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!intlCity) { setIntlAreas([]); setIntlArea(''); return; }
     api.intlAreas(selectedCountry, intlRegion, intlCity).then(setIntlAreas).catch(() => {});
-  }, [selectedCountry, intlRegion, intlCity]);
+    // Preselect sector from URL param (apiId like "technology" or "food_beverage")
+    if (preselect.sector) {
+      const needle = preselect.sector.replace(/_/g, ' ').toLowerCase();
+      const match = INTL_SECTORS.find(s => s.toLowerCase().includes(needle) || needle.includes(s.split(' ')[0].toLowerCase()));
+      if (match) setIntlSector(match);
+    }
+  }, [selectedCountry, intlRegion, intlCity]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Parse a startup cost string like "$25K–$75K" or "$1.2M" into a max dollar value
   function parseStartupCostMax(str) {

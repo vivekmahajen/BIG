@@ -17,6 +17,8 @@ function getUrlPreselect() {
     state: p.get('state') || '',
     city: p.get('city') || '',
     sector: p.get('sector') || '',
+    country: p.get('country') || '',
+    region: p.get('region') || '',
   };
 }
 
