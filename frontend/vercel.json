@@ -7,8 +7,20 @@
       "dest": "https://big-hm1k.onrender.com/api/$1"
     },
     {
-      "src": "/analysis/(.*)",
-      "dest": "/index.html"
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|svg|ico|json|woff|woff2|ttf))",
+      "dest": "/$1"
     },
     {
       "src": "/(.*)",
