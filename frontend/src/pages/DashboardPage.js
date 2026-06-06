@@ -50,6 +50,8 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   const [error, setError] = useState('');
 
   const resultsRef = useRef(null);
+  const selectedBudgetRef = useRef(selectedBudget);
+  selectedBudgetRef.current = selectedBudget; // always current, no closure issues
 
   function scrollToResults() {
     if (resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -203,7 +205,9 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     setGenerateError('');
     setActiveOpp(null);
     scrollToResults();
-    const budgetRange = selectedBudget ? { min: activeBudget.min, max: activeBudget.max, label: activeBudget.label } : null;
+    const currentBudgetValue = selectedBudgetRef.current;
+    const currentBudgetTier = BUDGET_TIERS.find(t => t.value === currentBudgetValue) || BUDGET_TIERS[0];
+    const budgetRange = currentBudgetValue ? { min: currentBudgetTier.min, max: currentBudgetTier.max, label: currentBudgetTier.label } : null;
     try {
       const idea = blueOcean
         ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState, budgetRange)
