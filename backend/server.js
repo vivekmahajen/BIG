@@ -674,6 +674,12 @@ if (process.env.DATABASE_URL) {
   );
 }
 
+// ── Share & Referrals ─────────────────────────────────────────────────────
+const makeShareRouter = require('./routes/share');
+app.use('/api/share', makeShareRouter(users, auth));
+const makeReferralsRouter = require('./routes/referrals');
+app.use('/api/referrals', makeReferralsRouter(users, auth));
+
 // ── International Geo Endpoints ───────────────────────────────────────────────
 app.get('/api/intl/countries', auth, (req, res) => {
   const { INTL_GEO } = require('./intlGeoData');
