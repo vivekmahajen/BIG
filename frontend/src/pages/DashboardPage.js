@@ -96,10 +96,14 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   const [intlRegions, setIntlRegions] = useState([]);
   const [intlCities, setIntlCities] = useState([]);
   const [intlAreas, setIntlAreas] = useState([]);
-  const [intlRegion, setIntlRegion] = useState('');
-  const [intlCity, setIntlCity] = useState('');
+  const [intlRegion, setIntlRegion] = useState(() => preselect.region || '');
+  const [intlCity, setIntlCity] = useState(() => preselect.city || '');
   const [intlArea, setIntlArea] = useState('');
-  const [intlSector, setIntlSector] = useState('');
+  const [intlSector, setIntlSector] = useState(() => {
+    if (!preselect.sector) return '';
+    const needle = preselect.sector.replace(/_/g, ' ').toLowerCase();
+    return INTL_SECTORS.find(s => s.toLowerCase().includes(needle) || needle.includes(s.split(' ')[0].toLowerCase())) || '';
+  });
   const [intlInvestment, setIntlInvestment] = useState('');
   const [intlSkills, setIntlSkills] = useState('');
   const [intlIdeas, setIntlIdeas] = useState([]);
@@ -191,47 +195,29 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
 
   // ── International effects ──
 
-  // One-time preselect chain when landing with ?country=CA&region=ON&city=Toronto&sector=...
-  useEffect(() => {
-    if (selectedCountry === 'US' || !preselect.region) return;
-    api.intlRegions(selectedCountry).then(regions => {
-      setIntlRegions(regions);
-      const regionMatch = regions.find(r => r.code === preselect.region || r.name.toLowerCase() === preselect.region.toLowerCase());
-      if (!regionMatch) return;
-      setIntlRegion(regionMatch.code);
-      if (!preselect.city) return;
-      api.intlCities(selectedCountry, regionMatch.code).then(cities => {
-        setIntlCities(cities);
-        const cityMatch = cities.find(c => c.name.toLowerCase() === preselect.city.toLowerCase());
-        if (cityMatch) setIntlCity(cityMatch.name);
-        if (preselect.sector) {
-          const needle = preselect.sector.replace(/_/g, ' ').toLowerCase();
-          const sectorMatch = INTL_SECTORS.find(s => s.toLowerCase().includes(needle) || needle.includes(s.split(' ')[0].toLowerCase()));
-          if (sectorMatch) setIntlSector(sectorMatch);
-        }
-        api.intlAreas(selectedCountry, regionMatch.code, cityMatch?.name || '').then(setIntlAreas).catch(() => {});
-      }).catch(() => {});
-    }).catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // Load dropdown options on mount (handles both preselect and normal country switching)
   useEffect(() => {
     if (selectedCountry === 'US') return;
-    if (preselect.region) return; // handled by one-time preselect above
-    setIntlRegions([]); setIntlCities([]); setIntlAreas([]);
-    setIntlRegion(''); setIntlCity(''); setIntlArea('');
-    setIntlIdeas([]);
-    api.intlRegions(selectedCountry).then(setIntlRegions).catch(() => {});
+    api.intlRegions(selectedCountry).then(regions => {
+      setIntlRegions(regions);
+      const regionCode = intlRegion || '';
+      if (!regionCode) return;
+      api.intlCities(selectedCountry, regionCode).then(cities => {
+        setIntlCities(cities);
+        const cityName = intlCity || '';
+        if (!cityName) return;
+        api.intlAreas(selectedCountry, regionCode, cityName).then(setIntlAreas).catch(() => {});
+      }).catch(() => {});
+    }).catch(() => {});
   }, [selectedCountry]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!intlRegion || preselect.region) return; // preselect handled separately
-    setIntlCities([]); setIntlCity(''); setIntlAreas([]); setIntlArea('');
+    if (!intlRegion) { setIntlCities([]); setIntlCity(''); setIntlAreas([]); setIntlArea(''); return; }
     api.intlCities(selectedCountry, intlRegion).then(setIntlCities).catch(() => {});
   }, [selectedCountry, intlRegion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!intlCity) { setIntlAreas([]); setIntlArea(''); return; }
-    if (preselect.city) return; // preselect handled separately
     api.intlAreas(selectedCountry, intlRegion, intlCity).then(setIntlAreas).catch(() => {});
   }, [selectedCountry, intlRegion, intlCity]); // eslint-disable-line react-hooks/exhaustive-deps
 
