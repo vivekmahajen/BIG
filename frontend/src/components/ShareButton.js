@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateShareLink } from '../api/share';
 import './ShareButton.css';
 
@@ -13,6 +13,12 @@ export default function ShareButton({ opportunityId, opportunityName }) {
   const [error, setError] = useState('');
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setShareUrl('');
+    setError('');
+    setOpen(false);
+  }, [opportunityId]);
 
   async function handleShare() {
     if (!opportunityId) return;

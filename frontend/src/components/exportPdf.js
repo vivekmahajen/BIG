@@ -12,6 +12,10 @@ export function exportPlanAsPDF(plan, analysisId) {
   const MUTED = [77, 96, 112];
   const WHITE = [238, 242, 248];
 
+  // Dark page background
+  doc.setFillColor(...DARK);
+  doc.rect(0, 0, pageW, pageH, 'F');
+
   // Header band
   doc.setFillColor(...DARK);
   doc.rect(0, 0, pageW, 36, 'F');
@@ -71,7 +75,12 @@ export function exportPlanAsPDF(plan, analysisId) {
   y += 30;
 
   function checkPage(needed = 20) {
-    if (y + needed > pageH - 15) { doc.addPage(); y = margin; }
+    if (y + needed > pageH - 15) {
+      doc.addPage();
+      doc.setFillColor(...DARK);
+      doc.rect(0, 0, pageW, pageH, 'F');
+      y = margin;
+    }
   }
 
   function addSection(title, content, accent) {
@@ -85,7 +94,7 @@ export function exportPlanAsPDF(plan, analysisId) {
     y += 10;
 
     doc.setTextColor(...TEXT);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     const lines = doc.splitTextToSize(content || '', pageW - margin * 2);
     lines.forEach(line => {
