@@ -3,26 +3,26 @@
 // Postal codes are representative samples (not exhaustive).
 
 const COUNTRIES = [
-  { code: 'US', name: 'United States 🇺🇸' },
-  { code: 'GB', name: 'United Kingdom 🇬🇧' },
-  { code: 'CA', name: 'Canada 🇨🇦' },
-  { code: 'AU', name: 'Australia 🇦🇺' },
-  { code: 'IN', name: 'India 🇮🇳' },
-  { code: 'DE', name: 'Germany 🇩🇪' },
-  { code: 'FR', name: 'France 🇫🇷' },
-  { code: 'AE', name: 'United Arab Emirates 🇦🇪' },
-  { code: 'SG', name: 'Singapore 🇸🇬' },
-  { code: 'BR', name: 'Brazil 🇧🇷' },
-  { code: 'JP', name: 'Japan 🇯🇵' },
-  { code: 'MX', name: 'Mexico 🇲🇽' },
-  { code: 'ZA', name: 'South Africa 🇿🇦' },
-  { code: 'NL', name: 'Netherlands 🇳🇱' },
-  { code: 'NG', name: 'Nigeria 🇳🇬' },
-  { code: 'KE', name: 'Kenya 🇰🇪' },
-  { code: 'ES', name: 'Spain 🇪🇸' },
-  { code: 'IT', name: 'Italy 🇮🇹' },
-  { code: 'PH', name: 'Philippines 🇵🇭' },
-  { code: 'PK', name: 'Pakistan 🇵🇰' },
+  { code: 'US', name: 'United States' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'IN', name: 'India' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+  { code: 'AE', name: 'United Arab Emirates' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'ZA', name: 'South Africa' },
+  { code: 'NL', name: 'Netherlands' },
+  { code: 'NG', name: 'Nigeria' },
+  { code: 'KE', name: 'Kenya' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'PH', name: 'Philippines' },
+  { code: 'PK', name: 'Pakistan' },
 ];
 
 const INTERNATIONAL_REGIONS = {
@@ -102,6 +102,21 @@ const INTERNATIONAL_REGIONS = {
     { code: 'CA-NS', name: 'Nova Scotia', cities: [
       { name: 'Halifax', postalAreas: ['B3H 4R2','B3J 1S9','B3K 5X5'] },
       { name: 'Sydney', postalAreas: ['B1P 6J7','B1S 2G2'] },
+    ]},
+    { code: 'CA-NB', name: 'New Brunswick', cities: [
+      { name: 'Moncton', postalAreas: ['E1C 1A1','E1C 4M4','E1E 1A1'] },
+      { name: 'Saint John', postalAreas: ['E2L 1B8','E2M 3V9','E2J 1N4'] },
+      { name: 'Fredericton', postalAreas: ['E3B 1A1','E3B 4G4','E3C 2G2'] },
+    ]},
+    { code: 'CA-SK', name: 'Saskatchewan', cities: [
+      { name: 'Saskatoon', postalAreas: ['S7K 0A1','S7H 0A1','S7L 0A1'] },
+      { name: 'Regina', postalAreas: ['S4P 0A1','S4R 0A1','S4S 0A1'] },
+    ]},
+    { code: 'CA-PE', name: 'Prince Edward Island', cities: [
+      { name: 'Charlottetown', postalAreas: ['C1A 1A1','C1A 4N5'] },
+    ]},
+    { code: 'CA-NL', name: 'Newfoundland & Labrador', cities: [
+      { name: "St. John's", postalAreas: ['A1A 1A1','A1B 0A1','A1C 0A1'] },
     ]},
   ],
 
