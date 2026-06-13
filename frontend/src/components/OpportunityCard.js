@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
 import styles from './OpportunityCard.module.css';
+import SaveButton from './SaveButton';
+import ShareButton from './ShareButton';
+import BusinessPlan from './BusinessPlan';
 
 const LEGEND = [
   { abbr: 'TAM', full: 'Total Addressable Market', desc: 'The entire revenue opportunity if 100% market share were captured.' },
@@ -382,8 +385,26 @@ function CompetitorCompare({ businessName, sector, competitors, onCompareReady }
   );
 }
 
-export default function OpportunityCard({ opportunity: raw, zip, sector }) {
+export default function OpportunityCard({ opportunity: raw, zip, sector, state, city, sectorLabel, onNavigate, savedOpportunityId: initialSavedId, user }) {
   const [compareData, setCompareData] = useState(null);
+  const [savedOpportunityId, setSavedOpportunityId] = useState(initialSavedId || null);
+  const [plan, setPlan] = useState(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planError, setPlanError] = useState('');
+
+  async function handleBuildPlan() {
+    setPlanLoading(true);
+    setPlanError('');
+    try {
+      const location = { city, state, zip, country: 'United States' };
+      const result = await api.generateBusinessPlan(raw, location);
+      setPlan(result.plan);
+    } catch (err) {
+      setPlanError(err.message || 'Failed to generate business plan. Please try again.');
+    } finally {
+      setPlanLoading(false);
+    }
+  }
 
   const o = {
     ...raw,
@@ -406,6 +427,20 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
         <button className={styles.pdfBtn} onClick={() => handlePrint(o, zip, sector)}>
           ⬇ Download PDF
         </button>
+        <ShareButton
+          opportunityId={savedOpportunityId || null}
+          opportunityName={o.name}
+        />
+        <SaveButton
+          cardData={raw}
+          state={state}
+          city={city}
+          zip={zip}
+          sector={sector}
+          sectorLabel={sectorLabel}
+          onNavigate={onNavigate}
+          onSaved={id => setSavedOpportunityId(id)}
+        />
       </div>
 
       <div className={styles.card}>
@@ -562,7 +597,52 @@ export default function OpportunityCard({ opportunity: raw, zip, sector }) {
         )}
 
         <Legend />
+
+        {/* Build Business Plan */}
+        <div style={{ borderTop: '1px solid #1e2a3a', marginTop: 24, paddingTop: 20, textAlign: 'center' }}>
+          {!plan && (
+            <>
+              <button
+                onClick={handleBuildPlan}
+                disabled={planLoading}
+                style={{
+                  background: planLoading ? '#1e2a3a' : 'linear-gradient(135deg, #ffc843, #f59e0b)',
+                  color: '#07090d',
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '12px 28px',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: planLoading ? 'default' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                {planLoading
+                  ? '⏳ Generating Business Plan…'
+                  : '📄 Build Business Plan ✦ 3 credits'}
+              </button>
+              {planLoading && (
+                <p style={{ fontSize: 12, color: '#4d6070', marginTop: 10 }}>
+                  Claude is writing your investor-ready plan. This takes 20–40 seconds…
+                </p>
+              )}
+              {planError && (
+                <p style={{ fontSize: 13, color: '#ef4444', marginTop: 10 }}>{planError}</p>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {plan && (
+        <BusinessPlan
+          plan={plan}
+          analysisId={raw._savedId || raw.bestZip || 'plan'}
+          onClose={() => setPlan(null)}
+        />
+      )}
     </div>
   );
 }

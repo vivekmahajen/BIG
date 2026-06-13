@@ -756,3 +756,84 @@
   .mainColumns { flex-direction: column; }
   .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); }
 }
+
+/* ── Country selector ── */
+.countrySelector {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.countryBtn {
+  background: var(--surface2, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.countryBtn:hover {
+  background: rgba(99,102,241,0.08);
+  border-color: rgba(99,102,241,0.35);
+}
+
+.countryBtnActive {
+  background: rgba(99,102,241,0.15);
+  border-color: #6366f1;
+  color: #a5b4fc;
+}
+
+/* ── International filters ── */
+.intlFilters {
+  margin-top: 4px;
+}
+
+.intlInput {
+  width: 100%;
+  background: var(--surface2, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.intlInput:focus {
+  border-color: #6366f1;
+}
+
+.intlInput::placeholder {
+  color: var(--muted);
+}
+
+.intlGenerateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.intlGenerateBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.intlGenerateBtn:not(:disabled):hover {
+  opacity: 0.9;
+}

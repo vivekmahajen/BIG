@@ -3,6 +3,7 @@ import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
 import Disclaimer from '../components/Disclaimer';
 import CreditsDisplay from '../components/CreditsDisplay';
+import SaveButton from '../components/SaveButton';
 import { saveReport, loadReports, deleteReport, makeId } from '../savedReports';
 import styles from './DashboardPage.module.css';
 
@@ -27,7 +28,7 @@ class CardErrorBoundary extends Component {
   }
 }
 
-export default function DashboardPage({ user, onLogout, onNavigate }) {
+export default function DashboardPage({ user, onLogout, onNavigate, preselect = {} }) {
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
@@ -52,6 +53,8 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   const [error, setError] = useState('');
 
   const resultsRef = useRef(null);
+  const selectedBudgetRef = useRef(selectedBudget);
+  selectedBudgetRef.current = selectedBudget; // always current, no closure issues
 
   function scrollToResults() {
     if (resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -60,6 +63,14 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   useEffect(() => {
     api.countries().then(setCountries).catch(() => {});
   }, []);
+
+  // Auto-select state from URL param once states are loaded
+  useEffect(() => {
+    if (preselect.state && states.length > 0 && !selectedState) {
+      const match = states.find(s => s.code === preselect.state || s.code?.toLowerCase() === preselect.state.toLowerCase());
+      if (match) setSelectedState(match.code);
+    }
+  }, [preselect.state, states]);
 
   useEffect(() => {
     setSelectedState(''); setSelectedStateName(''); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
@@ -72,20 +83,45 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     const stateName = states.find(s => s.code === selectedState)?.name || selectedState;
     setSelectedStateName(stateName);
     api.cities(selectedState, selectedCountry).then(data => {
-      setCities(data); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
+      setCities(data);
+      if (preselect.city) {
+        const match = data.find(c => c.name === preselect.city || c.name?.toLowerCase() === preselect.city.toLowerCase());
+        if (match) { setSelectedCity(match.name); return; }
+      }
+      setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
   }, [selectedState, selectedCountry]);
 
   useEffect(() => {
     if (!selectedState || !selectedCity) { setZips([]); setSelectedZip(''); return; }
     api.zips(selectedState, selectedCity, selectedCountry).then(data => {
-      setZips(data); setSelectedZip(''); setSelectedSector('');
+      setZips(data);
+      if (data.length > 0 && preselect.city) { setSelectedZip(data[0]); return; }
+      setSelectedZip(''); setSelectedSector('');
     });
   }, [selectedState, selectedCity, selectedCountry]);
 
   useEffect(() => {
     if (!selectedZip) { setSectors([]); setSelectedSector(''); return; }
-    api.sectors(selectedZip).then(setSectors);
+    api.sectors(selectedZip).then(data => {
+      setSectors(data);
+      // auto-select sector from URL param
+      if (preselect.sector) {
+        const SEO_SECTOR_MAP = {
+          food_beverage: 'Food & Beverage', technology: 'Technology & Software',
+          healthcare: 'Healthcare & Life Sciences', financial_services: 'Financial Services & Fintech',
+          retail: 'Retail & E-Commerce', real_estate: 'Real Estate & Construction',
+          education: 'Education & EdTech', manufacturing: 'Manufacturing & Logistics',
+          wellness: 'Wellness & Fitness', hospitality: 'Hospitality & Tourism',
+          energy: 'Energy & Sustainability', professional_services: 'Professional Services',
+          transportation: 'Transportation & Mobility', media_entertainment: 'Media & Entertainment',
+          agriculture: 'Agriculture & AgTech', government: 'Government & Public Sector',
+        };
+        const backendName = SEO_SECTOR_MAP[preselect.sector] || preselect.sector;
+        const match = data.find(s => s.name === backendName || s.name?.toLowerCase() === backendName.toLowerCase());
+        if (match) { setSelectedSector(match.name); return; }
+      }
+    });
   }, [selectedZip]);
 
   useEffect(() => {
@@ -110,11 +146,13 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   }
 
   const BUDGET_TIERS = [
-    { value: '',           label: '— Any startup cost —',       min: 0,      max: Infinity },
-    { value: '100-1000',   label: '$100 – $1,000  (Bootstrap)',  min: 100,    max: 1_000 },
-    { value: '1k-10k',     label: '$1,001 – $10,000  (Lean)',    min: 1_001,  max: 10_000 },
-    { value: '10k-50k',    label: '$10,001 – $50,000  (Funded)', min: 10_001, max: 50_000 },
-    { value: '50k-100k',   label: '$50,001 – $100,000  (Scale)', min: 50_001, max: 100_000 },
+    { value: '',           label: '— Any startup cost —',              min: 0,         max: Infinity },
+    { value: '0-1k',       label: '$0 – $1,000  (Side Hustle)',        min: 0,         max: 1_000 },
+    { value: '1k-10k',     label: '$1,000 – $10,000  (Bootstrap)',     min: 1_000,     max: 10_000 },
+    { value: '10k-50k',    label: '$10,000 – $50,000  (Lean)',         min: 10_000,    max: 50_000 },
+    { value: '50k-100k',   label: '$50,000 – $100,000  (Funded)',      min: 50_000,    max: 100_000 },
+    { value: '100k-1m',    label: '$100,000 – $1,000,000  (Scale)',    min: 100_000,   max: 1_000_000 },
+    { value: '1m-10m',     label: '$1,000,000 – $10,000,000  (Growth)', min: 1_000_000, max: 10_000_000 },
   ];
 
   const activeBudget = BUDGET_TIERS.find(t => t.value === selectedBudget) || BUDGET_TIERS[0];
@@ -147,42 +185,63 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
 
   const [liveStep, setLiveStep] = useState(0); // 0=idle, 1-4=loading steps
 
-  const handleLiveAnalysis = useCallback(async () => {
+  async function handleLiveAnalysis() {
     if (!selectedState || !selectedCity || !selectedZip || !selectedSector) return;
     setLiveStep(1);
     setGenerateError('');
     setActiveOpp(null);
     scrollToResults();
+    const budgetValue = selectedBudgetRef.current;
+    const budgetTier = BUDGET_TIERS.find(t => t.value === budgetValue) || BUDGET_TIERS[0];
+    const budgetRange = budgetValue ? { min: budgetTier.min, max: budgetTier.max, label: budgetTier.label } : null;
     try {
-      // Animate through loading steps
-      const steps = [1, 2, 3, 4];
       const timer1 = setTimeout(() => setLiveStep(2), 1800);
       const timer2 = setTimeout(() => setLiveStep(3), 3600);
       const timer3 = setTimeout(() => setLiveStep(4), 5400);
-      const card = await api.liveCard(selectedStateName || selectedState, selectedCity, selectedZip, selectedSector, selectedCountry !== 'US' ? selectedCountry : undefined);
+      const card = await api.liveCard(selectedStateName || selectedState, selectedCity, selectedZip, selectedSector, selectedCountry !== 'US' ? selectedCountry : undefined, budgetRange);
       clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
       setLiveStep(0);
       openDetail(card, true);
     } catch (err) {
       setLiveStep(0);
       const msg = err.message || 'Live analysis failed. Please try again.';
-      setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" to top up.' : msg);
+      if (msg.includes('No viable idea found within')) {
+        setGenerateError(msg + ' Try a different sector or relax the budget filter.');
+      } else if (msg.includes('credits')) {
+        setGenerateError(msg + ' — click "+ Add Credits" to top up.');
+      } else {
+        setGenerateError(msg);
+      }
       setView('list');
     }
-  }, [selectedState, selectedStateName, selectedCity, selectedZip, selectedSector, selectedCountry, openDetail]);
+  }
 
-  const handleGenerateIdea = useCallback(async (blueOcean = false) => {
+  async function handleGenerateIdea(blueOcean = false) {
     setView('generating');
     setGenerateError('');
     setActiveOpp(null);
     scrollToResults();
-    const budgetRange = selectedBudget ? { min: activeBudget.min, max: activeBudget.max, label: activeBudget.label } : null;
+    // Read budget fresh (avoid stale closure)
+    const budgetValue = selectedBudget;
+    const budgetTier = BUDGET_TIERS.find(t => t.value === budgetValue) || BUDGET_TIERS[0];
+    const budgetRange = budgetValue ? { min: budgetTier.min, max: budgetTier.max, label: budgetTier.label } : null;
     const countryCtx = selectedCountry !== 'US' ? selectedCountry : undefined;
-    const stateLabel = selectedStateName || selectedState; // use human-readable name for AI prompt
+    const stateLabel = selectedStateName || selectedState;
     try {
       const idea = blueOcean
         ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, stateLabel, budgetRange, countryCtx)
         : await api.generateIdea(selectedSector, selectedZip, selectedCity, stateLabel, budgetRange, countryCtx);
+
+      if (budgetRange) {
+        const costMax = parseStartupCostMax(idea.startupCost);
+        if (costMax > budgetRange.max) {
+          setGenerateError(`No viable idea found within the $${budgetRange.min.toLocaleString()}–$${budgetRange.max.toLocaleString()} budget range. Try a different sector or relax the budget filter.`);
+          setView('list');
+          return;
+        }
+      }
+
+
       try {
         openDetail(idea, true);
       } catch {
@@ -191,10 +250,16 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
       }
     } catch (err) {
       const msg = err.message || 'Failed to generate idea. Please try again.';
-      setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" in the header to top up.' : msg);
+      if (msg.includes('No viable idea found within')) {
+        setGenerateError(msg + ' Try a different sector or relax the budget filter.');
+      } else if (msg.includes('credits')) {
+        setGenerateError(msg + ' — click "+ Add Credits" in the header to top up.');
+      } else {
+        setGenerateError(msg);
+      }
       setView('list');
     }
-  }, [selectedSector, selectedZip, selectedCity, selectedState, selectedStateName, selectedCountry, openDetail]);
+  }
 
   return (
     <div className={styles.page}>
@@ -205,7 +270,9 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
           <span className={styles.headerTitle}>Business Opportunity Intelligence</span>
         </div>
         <div className={styles.headerRight}>
+          <button className={styles.navBtn} onClick={() => onNavigate('saved')}>📊 My Saved</button>
           <button className={styles.navBtn} onClick={() => onNavigate('competitive')}>⚔ Competitive Analysis</button>
+          <button className={styles.navBtn} onClick={() => onNavigate('saved')}>📁 My Dashboard</button>
           <CreditsDisplay user={user} onBuyCredits={() => onNavigate('pricing')} />
           <span className={styles.userName}>{user.name}</span>
           <button className={styles.logoutBtn} onClick={onLogout}>Sign out</button>
@@ -288,7 +355,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
 
           {selectedBudget && (
             <div className={styles.budgetBadge}>
-              💰 Showing opportunities with startup cost up to <strong>${activeBudget.max.toLocaleString()}</strong>
+              💰 Showing opportunities with startup cost in the <strong>{activeBudget.label.split('(')[0].trim()}</strong> range
               {filteredOpportunities.length === 0 && sectorOpportunities.length > 0 && (
                 <span className={styles.budgetNoMatch}> — no curated matches, but you can still generate an AI idea within this budget</span>
               )}
@@ -353,6 +420,21 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
             </div>
           )}
 
+          {/* ── Generate buttons — always visible when sector is selected ── */}
+          {!loading && view === 'list' && selectedSector && (
+            <div className={styles.generateGroup} style={{ marginTop: 16 }}>
+              <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+              </button>
+              <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
+                ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
+              </button>
+              <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
+                ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
+              </button>
+            </div>
+          )}
+
           {liveStep > 0 && (
             <div className={styles.liveLoadingOverlay}>
               <div className={styles.liveLoadingBox}>
@@ -389,11 +471,29 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                   <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
                     ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
                   </button>
+                  <SaveButton
+                    cardData={activeOpp}
+                    state={states.find(s => s.code === selectedState)?.name || selectedState}
+                    city={selectedCity}
+                    zip={selectedZip}
+                    sector={selectedSector}
+                    sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
+                    onNavigateDashboard={() => onNavigate('saved')}
+                  />
                 </div>
               </div>
               {generateError && <div className={styles.generateError}>{generateError}</div>}
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
-                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+                <OpportunityCard
+                  opportunity={activeOpp}
+                  zip={selectedZip}
+                  sector={selectedSector}
+                  state={states.find(s => s.code === selectedState)?.name || selectedState}
+                  city={selectedCity}
+                  sectorLabel={selectedSector}
+                  onNavigate={onNavigate}
+                  savedOpportunityId={activeOpp?._savedId}
+                />
               </CardErrorBoundary>
             </div>
           )}
@@ -404,6 +504,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
               <div className={styles.generatingSpinner} />
               <h3 className={styles.generatingTitle}>Crafting a new business idea…</h3>
               <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}${selectedStateName ? `, ${selectedStateName}` : ''}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
+              {selectedBudget && <p style={{fontSize:11,color:'#6b7280',marginTop:4}}>Budget filter active: {activeBudget.label} (max ${activeBudget.max.toLocaleString()})</p>}
             </div>
           )}
 
@@ -431,11 +532,29 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                     <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
                       ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
                     </button>
+                    <SaveButton
+                      cardData={activeOpp}
+                      state={states.find(s => s.code === selectedState)?.name || selectedState}
+                      city={selectedCity}
+                      zip={selectedZip}
+                      sector={selectedSector}
+                      sectorLabel={sectors.find(s => s.name === selectedSector)?.name || selectedSector}
+                      onNavigateDashboard={() => onNavigate('saved')}
+                    />
                   </div>
                 </div>
               </div>
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
-                <OpportunityCard opportunity={activeOpp} zip={selectedZip} sector={selectedSector} />
+                <OpportunityCard
+                  opportunity={activeOpp}
+                  zip={selectedZip}
+                  sector={selectedSector}
+                  state={states.find(s => s.code === selectedState)?.name || selectedState}
+                  city={selectedCity}
+                  sectorLabel={selectedSector}
+                  onNavigate={onNavigate}
+                  savedOpportunityId={activeOpp?._savedId}
+                />
               </CardErrorBoundary>
             </div>
           )}

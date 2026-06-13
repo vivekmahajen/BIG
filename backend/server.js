@@ -8,6 +8,31 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'big-opportunity-secret-2026';
 
+// Auto-run migrations on startup when DATABASE_URL is set
+if (process.env.DATABASE_URL) {
+  const { Pool } = require('pg');
+  const fs = require('fs');
+  const path = require('path');
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  const migrationsDir = path.join(__dirname, 'migrations');
+  const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+  (async () => {
+    for (const file of files) {
+      try {
+        const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+        await pool.query(sql);
+        console.log(`✅ Migration applied: ${file}`);
+      } catch (err) {
+        console.error(`❌ Migration failed (${file}):`, err.message);
+      }
+    }
+    await pool.end();
+  })();
+}
+
 app.use(cors({
   origin: [
     'https://big-eosin.vercel.app',
@@ -85,7 +110,7 @@ function parseStartupCostMax(str) {
   return u === 'M' ? n * 1e6 : u === 'B' ? n * 1e9 : u === 'K' ? n * 1e3 : n;
 }
 
-// Call Claude and parse JSON; retries once if budget constraint is violated
+// Call Claude and parse JSON; retries up to 2 times if budget constraint is violated
 async function callClaude(client, prompt, budget, retryPrefix = '') {
   async function attempt(p) {
     const msg = await client.messages.create({
@@ -103,10 +128,15 @@ async function callClaude(client, prompt, budget, retryPrefix = '') {
   let idea = await attempt(prompt);
 
   if (budget) {
-    const costMax = parseStartupCostMax(idea.startupCost);
-    if (costMax > budget.max || costMax < budget.min) {
-      // Retry with an even more explicit budget instruction prepended
-      const strict = `YOUR PREVIOUS RESPONSE HAD A STARTUP COST OF "${idea.startupCost}" WHICH IS OUTSIDE THE REQUIRED RANGE OF $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()}. YOU MUST CORRECT THIS.\n\n${retryPrefix}${prompt}`;
+    for (let retry = 1; retry <= 2; retry++) {
+      const costMax = parseStartupCostMax(idea.startupCost);
+      if (costMax <= budget.max && costMax >= budget.min) break;
+      if (retry === 2) {
+        const err = new Error(`No viable idea found within the $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()} budget range after multiple attempts.`);
+        err.budgetExceeded = true;
+        throw err;
+      }
+      const strict = `CRITICAL ERROR: Your previous response had startupCost "${idea.startupCost}" (max=$${costMax.toLocaleString()}) which VIOLATES the required range of $${budget.min.toLocaleString()}–$${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Choose a completely different, simpler, lower-cost business concept that genuinely fits this budget. Do NOT scale down the same idea — pick a new one.\n\n${retryPrefix}${prompt}`;
       idea = await attempt(strict);
     }
   }
@@ -344,8 +374,12 @@ app.post('/api/generate-idea', auth, async (req, res) => {
   const countryLabel = country && country !== 'US' ? getCountryName(country) : null;
   const locationCtx = [city, state, countryLabel, zip].filter(Boolean).join(', ');
   const budgetCtx = budget
-    ? `\n\nCRITICAL BUDGET CONSTRAINT: The total startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field must fall within this range. Design the entire business model around this budget — choose a lean, capital-efficient approach that is genuinely viable at this funding level.`
+    ? `\n\nCRITICAL BUDGET CONSTRAINT: The total startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design the entire business model around this budget — choose a lean, capital-efficient approach that is genuinely viable at this funding level. Do NOT suggest a business that requires more capital than this.`
     : '';
+
+  const startupCostExample = budget
+    ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+    : '"$XK–$YK"';
 
   const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}
 
@@ -354,7 +388,7 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
 {
   "name": "Specific Business Name (4-7 words)",
   "model": "Business model type (e.g. SaaS, B2B Services, Marketplace)",
-  "startupCost": "$XK–$YK",
+  "startupCost": ${startupCostExample},
   "grossMargin": "XX–YY%",
   "timeToProfit": "X–Y months",
   "tam": "$XB or $XM",
@@ -384,6 +418,7 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
     res.json(idea);
   } catch (err) {
     console.error('generate-idea error:', err.message);
+    if (err.budgetExceeded) return res.status(422).json({ error: err.message, budgetExceeded: true });
     res.status(500).json({ error: 'Failed to generate idea: ' + err.message });
   }
 });
@@ -410,8 +445,12 @@ app.post('/api/generate-blue-ocean', auth, async (req, res) => {
   const _countryLabel = country && country !== 'US' ? _gcn(country) : null;
   const locationCtx = [city, state, _countryLabel, zip].filter(Boolean).join(', ');
   const budgetCtx = budget
-    ? `\n- BUDGET CONSTRAINT: Startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field must be within this range. Design for this exact funding level.`
+    ? `\n- CRITICAL BUDGET CONSTRAINT: Startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design for this exact funding level — choose a genuinely low-cost approach.`
     : '';
+
+  const blueOceanStartupCostExample = budget
+    ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+    : '"$XK–$YK"';
 
   const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
 
@@ -426,7 +465,7 @@ Return ONLY a valid JSON object (no markdown, no explanation):
 {
   "name": "Specific Business Name (4-7 words)",
   "model": "Business model type",
-  "startupCost": "$XK–$YK",
+  "startupCost": ${blueOceanStartupCostExample},
   "grossMargin": "XX–YY%",
   "timeToProfit": "X–Y months",
   "tam": "$XB or $XM",
@@ -461,7 +500,153 @@ The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values 
     res.json(idea);
   } catch (err) {
     console.error('generate-blue-ocean error:', err.message);
+    if (err.budgetExceeded) return res.status(422).json({ error: err.message, budgetExceeded: true });
     res.status(500).json({ error: 'Failed to generate blue ocean idea: ' + err.message });
+  }
+});
+
+// ── Business Plan Generation ───────────────────────────────────────────────
+const BUSINESS_PLAN_SYSTEM_PROMPT = `You are an expert business plan writer specialising in investor-ready documents for small and medium businesses. Your output will be used by an entrepreneur to pitch to investors, apply for loans, and guide their first 12 months of operation.
+
+Generate a complete, structured business plan based on the BIG analysis data provided. The plan must be specific to this location, industry, and opportunity — not generic. Every section must use the real numbers from the analysis.
+
+OUTPUT FORMAT:
+Respond ONLY with a valid JSON object. No preamble, no markdown fences, no commentary outside the JSON.
+
+JSON STRUCTURE:
+{
+  "plan_title": "[Industry] Business Plan — [City], [State]",
+  "generated_date": "[today's date in Month DD, YYYY format]",
+  "tagline": "[1 punchy sentence positioning the opportunity]",
+  "sections": {
+    "executive_summary": {
+      "headline": "[1 bold sentence — the investment thesis]",
+      "body": "[3-4 paragraphs: what the business is, why this location, why now, what success looks like at 12 months. Use the score, exit valuation, and LTV:CAC ratio from the data. Be specific — city name, industry, real numbers.]",
+      "key_metrics": [
+        {"label": "BIG Opportunity Score", "value": "[score]/10"},
+        {"label": "Projected 12-Month Revenue", "value": "[revenueYr1 value]"},
+        {"label": "Projected Exit Valuation", "value": "[exitVal value]"},
+        {"label": "LTV:CAC Ratio", "value": "[ltv_cac value]"},
+        {"label": "Market Saturation", "value": "[low/medium/high based on data]"},
+        {"label": "Startup Cost Range", "value": "[startupCost value]"}
+      ]
+    },
+    "market_opportunity": {
+      "headline": "[Why this market, why now]",
+      "market_size": "[Description of total addressable market. Reference the TAM and SAM from the data.]",
+      "demand_signals": "[Describe each green signal from the analysis and what it means for this business.]",
+      "blue_ocean": "[If no competitors: explain the low-competition advantage. Otherwise: explain differentiation strategy.]",
+      "local_context": "[2-3 sentences on why this specific city is the right place to launch.]",
+      "data_source": "Census ZIP Business Patterns (ZBP) + BLS QCEW + BIG proprietary scoring engine"
+    },
+    "competitive_landscape": {
+      "headline": "[How this business wins in a competitive market]",
+      "competitor_analysis": "[Analyse the top competitors listed in the data. For each, describe their strength, weakness, and the gap this business exploits.]",
+      "competitive_advantage": "[3 specific advantages this business has given the location, timing, and market data.]",
+      "moat": "[What makes this business hard to copy once established? Network effects, local relationships, proprietary data, brand recognition.]"
+    },
+    "revenue_model": {
+      "headline": "[The core revenue thesis]",
+      "primary_revenue": "[Describe the primary revenue stream in detail: pricing model, transaction size, frequency, who pays.]",
+      "secondary_revenue": "[1-2 secondary revenue streams that emerge after Month 6.]",
+      "pricing_strategy": "[Specific pricing recommendation for this industry and city.]",
+      "unit_economics": {
+        "avg_transaction": "[estimated average transaction value]",
+        "monthly_customers_needed": "[number of customers needed at Month 12 to hit the revenue target]",
+        "ltv": "[estimated 12-month LTV per customer]",
+        "cac": "[estimated customer acquisition cost]",
+        "ltv_cac": "[ratio from analysis data]",
+        "payback_period": "[estimated months to recoup CAC]"
+      },
+      "revenue_ramp": "[Month 1-3 / Month 4-6 / Month 7-12 revenue narrative. Be realistic and specific.]"
+    },
+    "startup_costs": {
+      "headline": "[What it takes to get to first revenue]",
+      "total_range": "[startupCost value from data]",
+      "breakdown": [
+        {"category": "Business registration & legal", "low": "[number only]", "high": "[number only]", "notes": "[specific registration steps for this state/country]"},
+        {"category": "Technology & software", "low": "[number only]", "high": "[number only]", "notes": "[specific tools for this industry]"},
+        {"category": "Marketing & lead generation", "low": "[number only]", "high": "[number only]", "notes": "[specific channels for this city+industry]"},
+        {"category": "Equipment & workspace", "low": "[number only]", "high": "[number only]", "notes": "[specific requirements for this industry]"},
+        {"category": "Working capital (3 months)", "low": "[number only]", "high": "[number only]", "notes": "[covers ops until revenue positive]"},
+        {"category": "Contingency (15%)", "low": "[number only]", "high": "[number only]", "notes": "First-time founders spend 15-20% more than planned"}
+      ],
+      "funding_options": "[3 specific funding sources for this country and business type. Name the programme and eligibility. Use SBA 7(a) for US, BDC for Canada, British Business Bank for UK, AusIndustry for Australia.]"
+    },
+    "milestones": {
+      "headline": "[The 12-month sprint — from zero to predictable revenue]",
+      "months": [
+        {"period": "Month 1-2", "phase": "Foundation", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"},
+        {"period": "Month 3-4", "phase": "First Revenue", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"},
+        {"period": "Month 5-6", "phase": "Growth", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"},
+        {"period": "Month 7-9", "phase": "Scale", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"},
+        {"period": "Month 10-12", "phase": "Optimise", "goals": ["goal 1", "goal 2", "goal 3"], "revenue_target": "$[amount]", "key_metric": "[what to measure]"}
+      ],
+      "year_1_exit_criteria": "[What does success look like at Month 12? Specific metrics indicating the business is on track for the projected exit valuation.]"
+    },
+    "exit_strategy": {
+      "headline": "[The wealth-building thesis]",
+      "primary_exit": "[Most likely exit path for this type of business. Be specific: strategic acquisition by what type of acquirer, private equity roll-up, or management buyout.]",
+      "valuation_basis": "[How the projected exit valuation was derived. Reference the exit multiple from the BIG data and comparable transactions.]",
+      "timeline": "[Realistic timeline to exit from launch: typically 3-7 years for this type of business.]",
+      "value_drivers": "[3-4 specific things the founder should build from Day 1 to maximise exit value: recurring revenue, customer concentration, documented processes, defensible data.]",
+      "alternative_paths": "[2 alternative exit paths if the primary path doesn't materialise.]"
+    }
+  },
+  "footer_disclaimer": "This business plan was generated by BIG (Business Opportunity Intelligence) using Census ZBP, BLS QCEW, and proprietary market scoring data. Projections are estimates based on comparable businesses in this market and should be validated with a financial advisor before making investment decisions.",
+  "big_score_context": "A BIG Score of [score]/10 places this opportunity among the top-rated opportunities analysed in [state]."
+}
+
+QUALITY RULES:
+1. Every number must come from the analysis data provided. Do not invent figures not in the data.
+2. Every section must reference the specific city, state/region, and industry — not generic placeholders.
+3. The startup cost breakdown numbers must sum to approximately the startupCost range in the data.
+4. The competitive landscape must reference the actual topCompetitors from the analysis data.
+5. The milestone revenue targets must ramp from $0 toward the revenueYr1 range from the analysis.
+6. The exit strategy valuation must be grounded in the exitVal range from the BIG data.
+7. Never use placeholder text like "[insert here]" in the output — every field must be fully populated.
+8. Tone: confident, specific, investor-ready. Not salesy. Not generic. Not padded.`;
+
+app.post('/api/business-plan', auth, async (req, res) => {
+  const { analysis, location } = req.body;
+  if (!analysis) return res.status(400).json({ error: 'analysis data required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'business-plan')) {
+    return res.status(402).json({
+      error: `Not enough credits. Business plan generation costs ${CREDIT_COSTS['business-plan']} credits.`,
+      creditsRequired: CREDIT_COSTS['business-plan'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'AI generation not configured' });
+
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+
+  try {
+    const msg = await client.messages.create({
+      model: 'claude-opus-4-8',
+      max_tokens: 8000,
+      system: BUSINESS_PLAN_SYSTEM_PROMPT,
+      messages: [{
+        role: 'user',
+        content: `Generate a complete business plan for the following BIG analysis:\n\n${JSON.stringify({ analysis, location }, null, 2)}`,
+      }],
+    });
+
+    const raw = msg.content[0].text.trim();
+    const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    const plan = JSON.parse(clean);
+
+    res.json({ plan, creditsUsed: CREDIT_COSTS['business-plan'], creditsRemaining: user.credits + (user.packCredits || 0) });
+  } catch (err) {
+    // Refund credits on failure
+    user.credits += CREDIT_COSTS['business-plan'];
+    console.error('business-plan error:', err.message);
+    res.status(500).json({ error: 'Business plan generation failed: ' + err.message });
   }
 });
 
@@ -655,11 +840,184 @@ app.post('/api/live-card', auth, async (req, res) => {
     const { generateLiveCard } = require('./services/opportunityService');
     const { getCountryName: gcn } = require('./internationalGeoData');
     const stateLabel = country && country !== 'US' ? `${state}, ${gcn(country)}` : state;
-    const card = await generateLiveCard(stateLabel, city, zip, sector);
+
+    // Hard 25-second timeout — prevents hanging when BLS/Census/Claude stall
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Analysis timed out after 25s — please try again')), 25000)
+    );
+    const card = await Promise.race([
+      generateLiveCard(stateLabel, city, zip, sector, { force: true }),
+      timeout,
+    ]);
     res.json(card);
   } catch (err) {
     console.error('[BIG live-card]', err.message);
     res.status(500).json({ error: 'Live analysis failed: ' + err.message });
+  }
+});
+
+// ── Saved Opportunities ────────────────────────────────────────────────────
+// Saved opportunities (requires DATABASE_URL env var)
+if (process.env.DATABASE_URL) {
+  const savedOpportunitiesRoutes = require('./routes/savedOpportunities');
+  app.use('/api/saved-opportunities', savedOpportunitiesRoutes);
+} else {
+  app.use('/api/saved-opportunities', (req, res) =>
+    res.status(503).json({ error: 'Database not configured. Set DATABASE_URL to enable saving.' })
+  );
+}
+
+// ── Share & Referrals ─────────────────────────────────────────────────────
+const makeShareRouter = require('./routes/share');
+app.use('/api/share', makeShareRouter(users, auth));
+const makeReferralsRouter = require('./routes/referrals');
+app.use('/api/referrals', makeReferralsRouter(users, auth));
+
+// ── International Geo Endpoints ───────────────────────────────────────────────
+app.get('/api/intl/countries', auth, (req, res) => {
+  const { INTL_GEO } = require('./intlGeoData');
+  const countries = Object.entries(INTL_GEO).map(([code, c]) => ({
+    code, name: c.name, currency: c.currency, symbol: c.symbol,
+  }));
+  res.json(countries);
+});
+
+app.get('/api/intl/:countryCode/regions', auth, (req, res) => {
+  const { INTL_GEO } = require('./intlGeoData');
+  const country = INTL_GEO[req.params.countryCode.toUpperCase()];
+  if (!country) return res.status(404).json({ error: 'Country not found' });
+  res.json(country.regions.map(r => ({ code: r.code, name: r.name })));
+});
+
+app.get('/api/intl/:countryCode/:regionCode/cities', auth, (req, res) => {
+  const { INTL_GEO } = require('./intlGeoData');
+  const country = INTL_GEO[req.params.countryCode.toUpperCase()];
+  if (!country) return res.status(404).json({ error: 'Country not found' });
+  const region = country.regions.find(r => r.code === req.params.regionCode);
+  if (!region) return res.status(404).json({ error: 'Region not found' });
+  res.json(region.cities.map(c => ({ name: c.name })));
+});
+
+app.get('/api/intl/:countryCode/:regionCode/:cityName/areas', auth, (req, res) => {
+  const { INTL_GEO } = require('./intlGeoData');
+  const country = INTL_GEO[req.params.countryCode.toUpperCase()];
+  if (!country) return res.status(404).json({ error: 'Country not found' });
+  const region = country.regions.find(r => r.code === req.params.regionCode);
+  if (!region) return res.status(404).json({ error: 'Region not found' });
+  const city = region.cities.find(c => c.name === req.params.cityName);
+  if (!city) return res.status(404).json({ error: 'City not found' });
+  res.json(city.areas);
+});
+
+// ── International Idea Generation ─────────────────────────────────────────────
+app.post('/api/generate-intl-idea', auth, async (req, res) => {
+  const { country, region, city, area, sector, currency, skills, investmentLevel } = req.body;
+  if (!country || !sector) return res.status(400).json({ error: 'country and sector required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'generate-idea')) {
+    return res.status(402).json({
+      error: `Not enough credits. Generating a business idea costs ${CREDIT_COSTS['generate-idea']} credits.`,
+      creditsRequired: CREDIT_COSTS['generate-idea'],
+      creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
+    });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });
+
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+
+  // Country-specific context
+  const countryCtx = {
+    CA: {
+      structures: 'Corporation (Inc.), Limited Partnership, or Sole Proprietorship — NOT LLC',
+      taxBody: 'Canada Revenue Agency (CRA)',
+      regAuthority: region === 'QC' ? 'Registraire des entreprises (Quebec) and Corporations Canada' : 'Corporations Canada and provincial registry',
+      marketData: 'Statistics Canada (statcan.gc.ca), BDC (bdc.ca), Innovation, Science and Economic Development Canada',
+      notes: 'HST/GST applies; CBSA for imports; Business Development Bank of Canada for financing',
+    },
+    GB: {
+      structures: 'Limited Company (Ltd), Limited Liability Partnership (LLP), or Sole Trader — NOT LLC',
+      taxBody: 'HM Revenue & Customs (HMRC)',
+      regAuthority: region === 'SCT' ? 'Companies House and Registers of Scotland' : region === 'NIR' ? 'Companies House (Belfast)' : 'Companies House (companieshouse.gov.uk)',
+      marketData: 'Office for National Statistics (ons.gov.uk), British Business Bank, Innovate UK, local Growth Hubs',
+      notes: 'VAT registration required above £90,000 turnover; Making Tax Digital applies; consider IR35 if contracting',
+    },
+    AU: {
+      structures: 'Proprietary Limited (Pty Ltd), Partnership, or Sole Trader — NOT LLC',
+      taxBody: 'Australian Taxation Office (ATO)',
+      regAuthority: 'Australian Securities and Investments Commission (ASIC) and state business registry',
+      marketData: 'Australian Bureau of Statistics (abs.gov.au), Business.gov.au, CSIRO, state investment authorities',
+      notes: 'ABN registration required; GST applies above AUD $75,000 turnover; Fair Work Act governs employment',
+    },
+  };
+
+  const ctx = countryCtx[country] || countryCtx.CA;
+  const locationStr = [area, city, region, country].filter(Boolean).join(', ');
+  const currencySymbol = currency === 'GBP' ? '£' : currency === 'AUD' ? 'AUD $' : 'CAD $';
+
+  const prompt = `You are an international business opportunity analyst specialising in ${country === 'CA' ? 'Canada' : country === 'GB' ? 'the United Kingdom' : 'Australia'}.
+
+Generate 4 diverse, highly actionable business ideas for the "${sector}" sector in ${locationStr}.
+The 4th idea MUST be a surprising "wildcard" idea — unexpected for this sector/location but genuinely viable.
+
+RULES:
+- Use ${currency} currency throughout (symbol: ${currencySymbol})
+- Business structure: ${ctx.structures}
+- Tax body: ${ctx.taxBody}
+- Registration: ${ctx.regAuthority}
+- Market data sources: ${ctx.marketData}
+- Important: ${ctx.notes}
+${skills ? `- Founder skills available: ${skills}` : ''}
+${investmentLevel ? `- Target investment level: ${investmentLevel}` : ''}
+
+Return ONLY a valid JSON array of exactly 4 objects (no markdown, no explanation):
+
+[
+  {
+    "name": "Specific Business Name",
+    "what": "What it is in 1-2 sentences",
+    "whyHereNow": "Why this specific location and current timing makes this opportunity compelling",
+    "startupCost": {
+      "low": 15000,
+      "high": 40000,
+      "currency": "${currency}",
+      "breakdown": ["Registration: ${currencySymbol}500", "Equipment: ${currencySymbol}X,000", "Working capital: ${currencySymbol}X,000"]
+    },
+    "revenueMonthly": { "low": 8000, "high": 20000, "currency": "${currency}" },
+    "steps": [
+      "Step 1: Register with ${ctx.regAuthority.split(' and ')[0]} — specific action",
+      "Step 2: specific action with real local authority named",
+      "Step 3: specific action"
+    ],
+    "watchOut": ["Risk or regulatory consideration 1", "Risk 2"],
+    "resources": ["https://real-url-1.gov", "https://real-url-2"],
+    "isWildcard": false
+  }
+]
+
+Set isWildcard: true on the 4th idea only. Use real, accurate URLs. Be specific with numbers. Keep all text concise.`;
+
+  try {
+    const Anthropic2 = require('@anthropic-ai/sdk');
+    const client2 = new Anthropic2({ apiKey });
+    const msg = await client2.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const text = msg.content[0].text.trim();
+    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    let ideas;
+    try { ideas = JSON.parse(json); } catch {
+      ideas = JSON.parse(json.replace(/,\s*$/, '') + ']');
+    }
+    res.json(ideas);
+  } catch (err) {
+    console.error('generate-intl-idea error:', err.message);
+    res.status(500).json({ error: 'Failed to generate international ideas: ' + err.message });
   }
 });
 

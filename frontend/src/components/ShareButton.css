@@ -1,0 +1,201 @@
+.share-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.share-btn:hover {
+  background: #ede9fe;
+  color: #6366f1;
+  border-color: #c4b5fd;
+}
+
+.share-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Modal overlay */
+.share-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.share-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.share-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.share-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.share-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0;
+  line-height: 1;
+}
+
+.share-modal-close:hover {
+  color: #475569;
+}
+
+.share-referral-banner {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #166534;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-url-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.share-url-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #475569;
+  background: #f8fafc;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.share-copy-btn {
+  padding: 10px 16px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.share-copy-btn:hover {
+  background: #4f46e5;
+}
+
+.share-copy-btn.copied {
+  background: #10b981;
+}
+
+.share-social-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.share-social-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+
+.share-social-btn.linkedin {
+  background: #f0f7ff;
+  color: #0077b5;
+  border-color: #bfdbfe;
+}
+
+.share-social-btn.linkedin:hover {
+  background: #dbeafe;
+}
+
+.share-social-btn.twitter {
+  background: #f0f9ff;
+  color: #1d9bf0;
+  border-color: #bae6fd;
+}
+
+.share-social-btn.twitter:hover {
+  background: #e0f2fe;
+}
+
+.share-loading {
+  text-align: center;
+  padding: 24px 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.share-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px;
+  color: #991b1b;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.share-not-saved {
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 8px 0;
+}

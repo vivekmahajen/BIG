@@ -16,7 +16,12 @@ async function getEmploymentData(state, naicsCode) {
 
   try {
     const url = `https://data.bls.gov/cew/data/api/2023/a/industry/${naics2}.csv`;
-    const { data: csv } = await axios.get(url, { timeout: 12000, responseType: 'text' });
+    const { data: csv } = await axios.get(url, {
+      timeout: 10000,          // connection + response must complete within 10s
+      responseType: 'text',
+      maxContentLength: 20 * 1024 * 1024,  // bail if response exceeds 20 MB
+      maxBodyLength: 20 * 1024 * 1024,
+    });
     const records = parse(csv, { columns: true, skip_empty_lines: true });
 
     // Try own_code=5 (private), agglvl=74 (state×industry)

@@ -5,15 +5,17 @@ const { getBusinessDensity } = require('./censusService');
 const { getEmploymentData } = require('./blsService');
 const { getSectorTrend } = require('./trendsService');
 
-const cardCache = new NodeCache({ stdTTL: 3600 }); // 1-hour card cache
+const cardCache = new NodeCache({ stdTTL: 86400 }); // 24-hour card cache
 
-async function generateLiveCard(state, city, zip, sectorName) {
+async function generateLiveCard(state, city, zip, sectorName, { force = false } = {}) {
   const sectorConfig = SECTOR_MAP[sectorName];
   if (!sectorConfig) throw new Error(`Unknown sector: ${sectorName}`);
 
   const cacheKey = `livecard_${zip}_${sectorName.replace(/\s+/g,'_')}`;
-  const cached = cardCache.get(cacheKey);
-  if (cached) return { ...cached, _fromCache: true };
+  if (!force) {
+    const cached = cardCache.get(cacheKey);
+    if (cached) return { ...cached, _fromCache: true };
+  }
 
   const t0 = Date.now();
 
@@ -28,8 +30,10 @@ async function generateLiveCard(state, city, zip, sectorName) {
 
   // Build Claude prompt
   const censusCtx = censusData?.estab != null
-    ? `- Existing ${sectorConfig.naicsLabel} establishments in ZIP ${zip}: ${censusData.estab.toLocaleString()}\n- Employees in sector / ZIP: ${censusData.emp?.toLocaleString()}\n- Annual payroll: $${censusData.payann ? Math.round(censusData.payann/1000)+'K' : 'N/A'}\n- Source: ${censusData.source}`
-    : `- Census data for ZIP ${zip}: unavailable — use state-level knowledge`;
+    ? censusData.statewide
+      ? `- ${sectorConfig.naicsLabel} establishments statewide in ${state}: ${censusData.estab.toLocaleString()} (ZIP-level data unavailable — do NOT present this as a local figure)\n- Statewide employees in sector: ${censusData.emp?.toLocaleString()}\n- Statewide annual payroll: $${censusData.payann ? Math.round(censusData.payann/1000)+'K' : 'N/A'}\n- Source: ${censusData.source}`
+      : `- ${sectorConfig.naicsLabel} establishments in ZIP ${zip}: ${censusData.estab.toLocaleString()}\n- Employees in sector / ZIP: ${censusData.emp?.toLocaleString()}\n- Annual payroll: $${censusData.payann ? Math.round(censusData.payann/1000)+'K' : 'N/A'}\n- Source: ${censusData.source}`
+    : `- Census data for ZIP ${zip}: unavailable — use your knowledge of ${city}, ${state} demographics`;
 
   const blsCtx = blsData?.employment != null
     ? `- ${sectorConfig.naicsLabel} employment in ${state}: ${blsData.employment.toLocaleString()} workers\n- Avg weekly wage: $${blsData.avgWeeklyWage?.toLocaleString()}\n- Avg annual pay: $${blsData.avgAnnualPay?.toLocaleString()}\n- Establishments statewide: ${blsData.establishments?.toLocaleString()}\n- Source: ${blsData.source}`
