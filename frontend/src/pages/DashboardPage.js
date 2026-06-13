@@ -29,12 +29,15 @@ class CardErrorBoundary extends Component {
 }
 
 export default function DashboardPage({ user, onLogout, onNavigate, preselect = {} }) {
+  const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
   const [zips, setZips] = useState([]);
   const [sectors, setSectors] = useState([]);
 
-  const [selectedState, setSelectedState] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('US');
+  const [selectedState, setSelectedState] = useState('');     // region code
+  const [selectedStateName, setSelectedStateName] = useState(''); // region display name
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedZip, setSelectedZip] = useState('');
   const [selectedSector, setSelectedSector] = useState('');
@@ -58,7 +61,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   }
 
   useEffect(() => {
-    api.states().then(setStates).catch(() => {});
+    api.countries().then(setCountries).catch(() => {});
   }, []);
 
   // Auto-select state from URL param once states are loaded
@@ -70,27 +73,33 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   }, [preselect.state, states]);
 
   useEffect(() => {
+    setSelectedState(''); setSelectedStateName(''); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
+    setCities([]); setZips([]); setSectors([]);
+    api.states(selectedCountry).then(setStates).catch(() => setStates([]));
+  }, [selectedCountry]);
+
+  useEffect(() => {
     if (!selectedState) { setCities([]); setSelectedCity(''); return; }
-    api.cities(selectedState).then(data => {
+    const stateName = states.find(s => s.code === selectedState)?.name || selectedState;
+    setSelectedStateName(stateName);
+    api.cities(selectedState, selectedCountry).then(data => {
       setCities(data);
-      // auto-select city from URL param
       if (preselect.city) {
         const match = data.find(c => c.name === preselect.city || c.name?.toLowerCase() === preselect.city.toLowerCase());
         if (match) { setSelectedCity(match.name); return; }
       }
       setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState]);
+  }, [selectedState, selectedCountry]);
 
   useEffect(() => {
     if (!selectedState || !selectedCity) { setZips([]); setSelectedZip(''); return; }
-    api.zips(selectedState, selectedCity).then(data => {
+    api.zips(selectedState, selectedCity, selectedCountry).then(data => {
       setZips(data);
-      // auto-select first zip (zip isn't passed from SEO pages)
       if (data.length > 0 && preselect.city) { setSelectedZip(data[0]); return; }
       setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState, selectedCity]);
+  }, [selectedState, selectedCity, selectedCountry]);
 
   useEffect(() => {
     if (!selectedZip) { setSectors([]); setSelectedSector(''); return; }
@@ -189,7 +198,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       const timer1 = setTimeout(() => setLiveStep(2), 1800);
       const timer2 = setTimeout(() => setLiveStep(3), 3600);
       const timer3 = setTimeout(() => setLiveStep(4), 5400);
-      const card = await api.liveCard(selectedState, selectedCity, selectedZip, selectedSector, budgetRange);
+      const card = await api.liveCard(selectedStateName || selectedState, selectedCity, selectedZip, selectedSector, selectedCountry !== 'US' ? selectedCountry : undefined, budgetRange);
       clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
       setLiveStep(0);
       openDetail(card, true);
@@ -212,16 +221,17 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     setGenerateError('');
     setActiveOpp(null);
     scrollToResults();
-    // Read budget fresh from state (no useCallback closure issues)
+    // Read budget fresh (avoid stale closure)
     const budgetValue = selectedBudget;
     const budgetTier = BUDGET_TIERS.find(t => t.value === budgetValue) || BUDGET_TIERS[0];
     const budgetRange = budgetValue ? { min: budgetTier.min, max: budgetTier.max, label: budgetTier.label } : null;
+    const countryCtx = selectedCountry !== 'US' ? selectedCountry : undefined;
+    const stateLabel = selectedStateName || selectedState;
     try {
       const idea = blueOcean
-        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState, budgetRange)
-        : await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState, budgetRange);
+        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, stateLabel, budgetRange, countryCtx)
+        : await api.generateIdea(selectedSector, selectedZip, selectedCity, stateLabel, budgetRange, countryCtx);
 
-      // Client-side safety net: reject if returned idea still violates the budget
       if (budgetRange) {
         const costMax = parseStartupCostMax(idea.startupCost);
         if (costMax > budgetRange.max) {
@@ -230,6 +240,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
           return;
         }
       }
+
 
       try {
         openDetail(idea, true);
@@ -278,17 +289,26 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
 
           <div className={styles.filters}>
             <div className={styles.filterGroup}>
-              <label>State</label>
+              <label>Country</label>
               <div className={styles.selectWrap}>
-                <select value={selectedState} onChange={e => setSelectedState(e.target.value)}>
-                  <option value="">— Select state —</option>
+                <select value={selectedCountry} onChange={e => setSelectedCountry(e.target.value)}>
+                  {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label>{selectedCountry === 'US' ? 'State' : 'Region / Province'}</label>
+              <div className={styles.selectWrap}>
+                <select value={selectedState} onChange={e => { setSelectedState(e.target.value); setSelectedStateName(e.target.options[e.target.selectedIndex]?.text || ''); }} disabled={!states.length}>
+                  <option value="">— Select {selectedCountry === 'US' ? 'state' : 'region'} —</option>
                   {states.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
                 </select>
               </div>
             </div>
 
             <div className={styles.filterGroup}>
-              <label>City</label>
+              <label>City / Area</label>
               <div className={styles.selectWrap}>
                 <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} disabled={!cities.length}>
                   <option value="">— Select city —</option>
@@ -298,10 +318,10 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
             </div>
 
             <div className={styles.filterGroup}>
-              <label>ZIP Code</label>
+              <label>{selectedCountry === 'US' ? 'ZIP Code' : 'Postal Area'}</label>
               <div className={styles.selectWrap}>
                 <select value={selectedZip} onChange={e => setSelectedZip(e.target.value)} disabled={!zips.length}>
-                  <option value="">— Select ZIP —</option>
+                  <option value="">— Select {selectedCountry === 'US' ? 'ZIP' : 'postal area'} —</option>
                   {zips.map(z => <option key={z} value={z}>{z}</option>)}
                 </select>
               </div>
@@ -440,9 +460,11 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   ← Back to rankings
                 </button>
                 <div className={styles.generateGroup}>
-                  <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
-                    🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
-                  </button>
+                  {selectedCountry === 'US' && (
+                    <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                      🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                    </button>
+                  )}
                   <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
                     ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
                   </button>
@@ -481,7 +503,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
             <div className={styles.generatingScreen}>
               <div className={styles.generatingSpinner} />
               <h3 className={styles.generatingTitle}>Crafting a new business idea…</h3>
-              <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
+              <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}${selectedStateName ? `, ${selectedStateName}` : ''}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
               {selectedBudget && <p style={{fontSize:11,color:'#6b7280',marginTop:4}}>Budget filter active: {activeBudget.label} (max ${activeBudget.max.toLocaleString()})</p>}
             </div>
           )}
@@ -499,9 +521,11 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                     : <span className={styles.generatedBadge}>✦ AI-Generated</span>
                   }
                   <div className={styles.generateGroup}>
-                    <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
-                      🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
-                    </button>
+                    {selectedCountry === 'US' && (
+                      <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                        🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                      </button>
+                    )}
                     <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
                       ✦ Generate Another <span className={styles.creditTag}>3 credits</span>
                     </button>

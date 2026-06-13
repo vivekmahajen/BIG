@@ -279,33 +279,59 @@ app.post('/api/buy-pack', auth, (req, res) => {
 });
 
 // Geo data
+app.get('/api/geo/countries', auth, (req, res) => {
+  const { COUNTRIES } = require('./internationalGeoData');
+  res.json(COUNTRIES);
+});
+
 app.get('/api/geo/states', auth, (req, res) => {
-  const { geoData } = require('./geoData');
-  res.json(geoData.states.map(s => ({ code: s.code, name: s.name })));
+  const { country } = req.query;
+  if (!country || country === 'US') {
+    const { geoData } = require('./geoData');
+    return res.json(geoData.states.map(s => ({ code: s.code, name: s.name })));
+  }
+  const { getRegionsForCountry } = require('./internationalGeoData');
+  const regions = getRegionsForCountry(country);
+  res.json(regions.map(r => ({ code: r.code, name: r.name })));
 });
 
 app.get('/api/geo/cities', auth, (req, res) => {
-  const { stateCode } = req.query;
-  const { geoData } = require('./geoData');
-  const state = geoData.states.find(s => s.code === stateCode);
-  if (!state) return res.status(404).json({ error: 'State not found' });
-  res.json(state.cities.map(c => ({ name: c.name })));
+  const { stateCode, country } = req.query;
+  if (!country || country === 'US') {
+    const { geoData } = require('./geoData');
+    const state = geoData.states.find(s => s.code === stateCode);
+    if (!state) return res.status(404).json({ error: 'State not found' });
+    return res.json(state.cities.map(c => ({ name: c.name })));
+  }
+  const { getCitiesForRegion } = require('./internationalGeoData');
+  const cities = getCitiesForRegion(country, stateCode);
+  res.json(cities.map(c => ({ name: c.name })));
 });
 
 app.get('/api/geo/zips', auth, (req, res) => {
-  const { stateCode, city } = req.query;
-  const { geoData } = require('./geoData');
-  const state = geoData.states.find(s => s.code === stateCode);
-  if (!state) return res.status(404).json({ error: 'State not found' });
-  const cityData = state.cities.find(c => c.name === city);
-  if (!cityData) return res.status(404).json({ error: 'City not found' });
-  res.json(cityData.zips);
+  const { stateCode, city, country } = req.query;
+  if (!country || country === 'US') {
+    const { geoData } = require('./geoData');
+    const state = geoData.states.find(s => s.code === stateCode);
+    if (!state) return res.status(404).json({ error: 'State not found' });
+    const cityData = state.cities.find(c => c.name === city);
+    if (!cityData) return res.status(404).json({ error: 'City not found' });
+    return res.json(cityData.zips);
+  }
+  const { getPostalAreasForCity } = require('./internationalGeoData');
+  const areas = getPostalAreasForCity(country, stateCode, city);
+  res.json(areas);
 });
 
 app.get('/api/sectors', auth, (req, res) => {
   const { zip } = req.query;
-  const { getSectorsForZip } = require('./geoData');
-  res.json(getSectorsForZip(zip));
+  const { getSectorsForZip, SECTORS } = require('./geoData');
+  // Non-US postal areas won't be in our ZIP database — return all sectors
+  const result = getSectorsForZip(zip);
+  if (!result || result.length === 0) {
+    return res.json(SECTORS.map(name => ({ name, score: null })));
+  }
+  res.json(result);
 });
 
 app.get('/api/opportunity', auth, (req, res) => {
@@ -326,7 +352,7 @@ app.get('/api/sector-opportunities', auth, (req, res) => {
 });
 
 app.post('/api/generate-idea', auth, async (req, res) => {
-  const { sector, zip, city, state, budget } = req.body;
+  const { sector, zip, city, state, budget, country } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });
 
   const user = getUser(req.user.id);
@@ -344,7 +370,9 @@ app.post('/api/generate-idea', auth, async (req, res) => {
   const Anthropic = require('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey });
 
-  const locationCtx = [city, state, zip].filter(Boolean).join(', ');
+  const { getCountryName } = require('./internationalGeoData');
+  const countryLabel = country && country !== 'US' ? getCountryName(country) : null;
+  const locationCtx = [city, state, countryLabel, zip].filter(Boolean).join(', ');
   const budgetCtx = budget
     ? `\n\nCRITICAL BUDGET CONSTRAINT: The total startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design the entire business model around this budget — choose a lean, capital-efficient approach that is genuinely viable at this funding level. Do NOT suggest a business that requires more capital than this.`
     : '';
@@ -396,7 +424,7 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
 });
 
 app.post('/api/generate-blue-ocean', auth, async (req, res) => {
-  const { sector, zip, city, state, budget } = req.body;
+  const { sector, zip, city, state, budget, country } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });
 
   const user = getUser(req.user.id);
@@ -413,7 +441,9 @@ app.post('/api/generate-blue-ocean', auth, async (req, res) => {
 
   const Anthropic = require('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey });
-  const locationCtx = [city, state, zip].filter(Boolean).join(', ');
+  const { getCountryName: _gcn } = require('./internationalGeoData');
+  const _countryLabel = country && country !== 'US' ? _gcn(country) : null;
+  const locationCtx = [city, state, _countryLabel, zip].filter(Boolean).join(', ');
   const budgetCtx = budget
     ? `\n- CRITICAL BUDGET CONSTRAINT: Startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design for this exact funding level — choose a genuinely low-cost approach.`
     : '';
@@ -789,10 +819,11 @@ Deliver as a ${outputFormat || 'full structured report with tables, scorecards, 
 
 // ── Live AI Card (Census + BLS + Trends + Claude) ─────────────────────────
 app.post('/api/live-card', auth, async (req, res) => {
-  const { state, city, zip, sector } = req.body;
+  const { state, city, zip, sector, country } = req.body;
   if (!state || !city || !zip || !sector)
     return res.status(400).json({ error: 'state, city, zip, sector required' });
-  if (!/^\d{5}$/.test(zip))
+  // Only enforce 5-digit ZIP for US; international postal areas have varied formats
+  if ((!country || country === 'US') && !/^\d{5}$/.test(zip))
     return res.status(400).json({ error: 'ZIP must be 5 digits' });
 
   // Charge 3 credits (same as generate-idea — live card uses Claude Sonnet)
@@ -807,13 +838,15 @@ app.post('/api/live-card', auth, async (req, res) => {
 
   try {
     const { generateLiveCard } = require('./services/opportunityService');
+    const { getCountryName: gcn } = require('./internationalGeoData');
+    const stateLabel = country && country !== 'US' ? `${state}, ${gcn(country)}` : state;
 
     // Hard 25-second timeout — prevents hanging when BLS/Census/Claude stall
     const timeout = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Analysis timed out after 25s — please try again')), 25000)
     );
     const card = await Promise.race([
-      generateLiveCard(state, city, zip, sector, { force: true }),
+      generateLiveCard(stateLabel, city, zip, sector, { force: true }),
       timeout,
     ]);
     res.json(card);

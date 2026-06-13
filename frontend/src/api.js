@@ -57,10 +57,11 @@ export const api = {
 
   me: () => request('/me'),
 
-  states: () => request('/geo/states'),
-  cities: (stateCode) => request(`/geo/cities?stateCode=${stateCode}`),
-  zips: (stateCode, city) =>
-    request(`/geo/zips?stateCode=${encodeURIComponent(stateCode)}&city=${encodeURIComponent(city)}`),
+  countries: () => request('/geo/countries'),
+  states: (country = 'US') => request(`/geo/states?country=${encodeURIComponent(country)}`),
+  cities: (stateCode, country = 'US') => request(`/geo/cities?stateCode=${stateCode}&country=${encodeURIComponent(country)}`),
+  zips: (stateCode, city, country = 'US') =>
+    request(`/geo/zips?stateCode=${encodeURIComponent(stateCode)}&city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`),
 
   sectors: (zip) => request(`/sectors?zip=${zip}`),
   opportunity: (zip, sector) =>
@@ -68,11 +69,11 @@ export const api = {
   sectorOpportunities: (sector) =>
     request(`/sector-opportunities?sector=${encodeURIComponent(sector)}`),
 
-  generateIdea: (sector, zip, city, state, budget) =>
-    generateWithBudgetCheck('/generate-idea', { sector, zip, city, state, budget }, budget),
+  generateIdea: (sector, zip, city, state, budget, country) =>
+    generateWithBudgetCheck('/generate-idea', { sector, zip, city, state, budget, country }, budget),
 
-  generateBlueOcean: (sector, zip, city, state, budget) =>
-    generateWithBudgetCheck('/generate-blue-ocean', { sector, zip, city, state, budget }, budget),
+  generateBlueOcean: (sector, zip, city, state, budget, country) =>
+    generateWithBudgetCheck('/generate-blue-ocean', { sector, zip, city, state, budget, country }, budget),
 
   competitorCompare: (businessName, sector, competitors) =>
     request('/competitor-compare', {
@@ -90,8 +91,8 @@ export const api = {
   pricing: () => request('/pricing'),
   buyPack: (packId) => request('/buy-pack', { method: 'POST', body: JSON.stringify({ packId }) }),
 
-  liveCard: (state, city, zip, sector, budget) =>
-    generateWithBudgetCheck('/live-card', { state, city, zip, sector }, budget),
+  liveCard: (state, city, zip, sector, country, budget) =>
+    generateWithBudgetCheck('/live-card', { state, city, zip, sector, country }, budget),
 
   resetRequest: (email) =>
     request('/reset-request', { method: 'POST', body: JSON.stringify({ email }) }),
