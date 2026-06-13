@@ -35,7 +35,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   const [zips, setZips] = useState([]);
   const [sectors, setSectors] = useState([]);
 
-  const [selectedCountry, setSelectedCountry] = useState('US');
+  const [selectedCountry, setSelectedCountry] = useState(preselect.country || 'US');
   const [selectedState, setSelectedState] = useState('');     // region code
   const [selectedStateName, setSelectedStateName] = useState(''); // region display name
   const [selectedCity, setSelectedCity] = useState('');
@@ -64,13 +64,18 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     api.countries().then(setCountries).catch(() => {});
   }, []);
 
-  // Auto-select state from URL param once states are loaded
+  // Auto-select state/region from URL param once states are loaded
   useEffect(() => {
-    if (preselect.state && states.length > 0 && !selectedState) {
-      const match = states.find(s => s.code === preselect.state || s.code?.toLowerCase() === preselect.state.toLowerCase());
+    const regionParam = preselect.region || preselect.state;
+    if (regionParam && states.length > 0 && !selectedState) {
+      const match = states.find(s =>
+        s.code === regionParam ||
+        s.code?.toLowerCase() === regionParam.toLowerCase() ||
+        s.code?.endsWith('-' + regionParam.toUpperCase())
+      );
       if (match) setSelectedState(match.code);
     }
-  }, [preselect.state, states]);
+  }, [preselect.region, preselect.state, states]);
 
   useEffect(() => {
     setSelectedState(''); setSelectedStateName(''); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
