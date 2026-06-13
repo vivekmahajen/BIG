@@ -35,7 +35,8 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   const [sectors, setSectors] = useState([]);
 
   const [selectedCountry, setSelectedCountry] = useState('US');
-  const [selectedState, setSelectedState] = useState('');
+  const [selectedState, setSelectedState] = useState('');     // region code
+  const [selectedStateName, setSelectedStateName] = useState(''); // region display name
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedZip, setSelectedZip] = useState('');
   const [selectedSector, setSelectedSector] = useState('');
@@ -61,13 +62,15 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   }, []);
 
   useEffect(() => {
-    setSelectedState(''); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
+    setSelectedState(''); setSelectedStateName(''); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     setCities([]); setZips([]); setSectors([]);
     api.states(selectedCountry).then(setStates).catch(() => setStates([]));
   }, [selectedCountry]);
 
   useEffect(() => {
     if (!selectedState) { setCities([]); setSelectedCity(''); return; }
+    const stateName = states.find(s => s.code === selectedState)?.name || selectedState;
+    setSelectedStateName(stateName);
     api.cities(selectedState, selectedCountry).then(data => {
       setCities(data); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
@@ -156,7 +159,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
       const timer1 = setTimeout(() => setLiveStep(2), 1800);
       const timer2 = setTimeout(() => setLiveStep(3), 3600);
       const timer3 = setTimeout(() => setLiveStep(4), 5400);
-      const card = await api.liveCard(selectedState, selectedCity, selectedZip, selectedSector, selectedCountry !== 'US' ? selectedCountry : undefined);
+      const card = await api.liveCard(selectedStateName || selectedState, selectedCity, selectedZip, selectedSector, selectedCountry !== 'US' ? selectedCountry : undefined);
       clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
       setLiveStep(0);
       openDetail(card, true);
@@ -166,7 +169,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
       setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" to top up.' : msg);
       setView('list');
     }
-  }, [selectedState, selectedCity, selectedZip, selectedSector, openDetail]);
+  }, [selectedState, selectedStateName, selectedCity, selectedZip, selectedSector, selectedCountry, openDetail]);
 
   const handleGenerateIdea = useCallback(async (blueOcean = false) => {
     setView('generating');
@@ -175,10 +178,11 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     scrollToResults();
     const budgetRange = selectedBudget ? { min: activeBudget.min, max: activeBudget.max, label: activeBudget.label } : null;
     const countryCtx = selectedCountry !== 'US' ? selectedCountry : undefined;
+    const stateLabel = selectedStateName || selectedState; // use human-readable name for AI prompt
     try {
       const idea = blueOcean
-        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState, budgetRange, countryCtx)
-        : await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState, budgetRange, countryCtx);
+        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, stateLabel, budgetRange, countryCtx)
+        : await api.generateIdea(selectedSector, selectedZip, selectedCity, stateLabel, budgetRange, countryCtx);
       try {
         openDetail(idea, true);
       } catch {
@@ -190,7 +194,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
       setGenerateError(msg.includes('credits') ? msg + ' — click "+ Add Credits" in the header to top up.' : msg);
       setView('list');
     }
-  }, [selectedSector, selectedZip, selectedCity, selectedState, openDetail]);
+  }, [selectedSector, selectedZip, selectedCity, selectedState, selectedStateName, selectedCountry, openDetail]);
 
   return (
     <div className={styles.page}>
@@ -229,7 +233,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
             <div className={styles.filterGroup}>
               <label>{selectedCountry === 'US' ? 'State' : 'Region / Province'}</label>
               <div className={styles.selectWrap}>
-                <select value={selectedState} onChange={e => setSelectedState(e.target.value)} disabled={!states.length}>
+                <select value={selectedState} onChange={e => { setSelectedState(e.target.value); setSelectedStateName(e.target.options[e.target.selectedIndex]?.text || ''); }} disabled={!states.length}>
                   <option value="">— Select {selectedCountry === 'US' ? 'state' : 'region'} —</option>
                   {states.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
                 </select>
@@ -399,7 +403,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
             <div className={styles.generatingScreen}>
               <div className={styles.generatingSpinner} />
               <h3 className={styles.generatingTitle}>Crafting a new business idea…</h3>
-              <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
+              <p className={styles.generatingSubtitle}>AI is analysing the {selectedSector} sector{selectedCity ? ` in ${selectedCity}${selectedStateName ? `, ${selectedStateName}` : ''}` : ''}{selectedBudget ? ` within a ${activeBudget.label.split('(')[0].trim()} budget` : ''} and building a full opportunity report.</p>
             </div>
           )}
 
