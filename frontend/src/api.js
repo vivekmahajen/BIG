@@ -35,10 +35,11 @@ export const api = {
 
   me: () => request('/me'),
 
-  states: () => request('/geo/states'),
-  cities: (stateCode) => request(`/geo/cities?stateCode=${stateCode}`),
-  zips: (stateCode, city) =>
-    request(`/geo/zips?stateCode=${encodeURIComponent(stateCode)}&city=${encodeURIComponent(city)}`),
+  countries: () => request('/geo/countries'),
+  states: (country = 'US') => request(`/geo/states?country=${encodeURIComponent(country)}`),
+  cities: (stateCode, country = 'US') => request(`/geo/cities?stateCode=${stateCode}&country=${encodeURIComponent(country)}`),
+  zips: (stateCode, city, country = 'US') =>
+    request(`/geo/zips?stateCode=${encodeURIComponent(stateCode)}&city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`),
 
   sectors: (zip) => request(`/sectors?zip=${zip}`),
   opportunity: (zip, sector) =>
@@ -46,16 +47,16 @@ export const api = {
   sectorOpportunities: (sector) =>
     request(`/sector-opportunities?sector=${encodeURIComponent(sector)}`),
 
-  generateIdea: (sector, zip, city, state, budget) =>
+  generateIdea: (sector, zip, city, state, budget, country) =>
     request('/generate-idea', {
       method: 'POST',
-      body: JSON.stringify({ sector, zip, city, state, budget }),
+      body: JSON.stringify({ sector, zip, city, state, budget, country }),
     }),
 
-  generateBlueOcean: (sector, zip, city, state, budget) =>
+  generateBlueOcean: (sector, zip, city, state, budget, country) =>
     request('/generate-blue-ocean', {
       method: 'POST',
-      body: JSON.stringify({ sector, zip, city, state, budget }),
+      body: JSON.stringify({ sector, zip, city, state, budget, country }),
     }),
 
   competitorCompare: (businessName, sector, competitors) =>
@@ -74,8 +75,8 @@ export const api = {
   pricing: () => request('/pricing'),
   buyPack: (packId) => request('/buy-pack', { method: 'POST', body: JSON.stringify({ packId }) }),
 
-  liveCard: (state, city, zip, sector) =>
-    request('/live-card', { method: 'POST', body: JSON.stringify({ state, city, zip, sector }) }),
+  liveCard: (state, city, zip, sector, country) =>
+    request('/live-card', { method: 'POST', body: JSON.stringify({ state, city, zip, sector, country }) }),
 
   resetRequest: (email) =>
     request('/reset-request', { method: 'POST', body: JSON.stringify({ email }) }),

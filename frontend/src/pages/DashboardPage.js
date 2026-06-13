@@ -28,11 +28,13 @@ class CardErrorBoundary extends Component {
 }
 
 export default function DashboardPage({ user, onLogout, onNavigate }) {
+  const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
   const [zips, setZips] = useState([]);
   const [sectors, setSectors] = useState([]);
 
+  const [selectedCountry, setSelectedCountry] = useState('US');
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedZip, setSelectedZip] = useState('');
@@ -55,22 +57,28 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
   }
 
   useEffect(() => {
-    api.states().then(setStates).catch(() => {});
+    api.countries().then(setCountries).catch(() => {});
   }, []);
 
   useEffect(() => {
+    setSelectedState(''); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
+    setCities([]); setZips([]); setSectors([]);
+    api.states(selectedCountry).then(setStates).catch(() => setStates([]));
+  }, [selectedCountry]);
+
+  useEffect(() => {
     if (!selectedState) { setCities([]); setSelectedCity(''); return; }
-    api.cities(selectedState).then(data => {
+    api.cities(selectedState, selectedCountry).then(data => {
       setCities(data); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState]);
+  }, [selectedState, selectedCountry]);
 
   useEffect(() => {
     if (!selectedState || !selectedCity) { setZips([]); setSelectedZip(''); return; }
-    api.zips(selectedState, selectedCity).then(data => {
+    api.zips(selectedState, selectedCity, selectedCountry).then(data => {
       setZips(data); setSelectedZip(''); setSelectedSector('');
     });
-  }, [selectedState, selectedCity]);
+  }, [selectedState, selectedCity, selectedCountry]);
 
   useEffect(() => {
     if (!selectedZip) { setSectors([]); setSelectedSector(''); return; }
@@ -148,7 +156,7 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
       const timer1 = setTimeout(() => setLiveStep(2), 1800);
       const timer2 = setTimeout(() => setLiveStep(3), 3600);
       const timer3 = setTimeout(() => setLiveStep(4), 5400);
-      const card = await api.liveCard(selectedState, selectedCity, selectedZip, selectedSector);
+      const card = await api.liveCard(selectedState, selectedCity, selectedZip, selectedSector, selectedCountry !== 'US' ? selectedCountry : undefined);
       clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
       setLiveStep(0);
       openDetail(card, true);
@@ -166,10 +174,11 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
     setActiveOpp(null);
     scrollToResults();
     const budgetRange = selectedBudget ? { min: activeBudget.min, max: activeBudget.max, label: activeBudget.label } : null;
+    const countryCtx = selectedCountry !== 'US' ? selectedCountry : undefined;
     try {
       const idea = blueOcean
-        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState, budgetRange)
-        : await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState, budgetRange);
+        ? await api.generateBlueOcean(selectedSector, selectedZip, selectedCity, selectedState, budgetRange, countryCtx)
+        : await api.generateIdea(selectedSector, selectedZip, selectedCity, selectedState, budgetRange, countryCtx);
       try {
         openDetail(idea, true);
       } catch {
@@ -209,17 +218,26 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
 
           <div className={styles.filters}>
             <div className={styles.filterGroup}>
-              <label>State</label>
+              <label>Country</label>
               <div className={styles.selectWrap}>
-                <select value={selectedState} onChange={e => setSelectedState(e.target.value)}>
-                  <option value="">— Select state —</option>
+                <select value={selectedCountry} onChange={e => setSelectedCountry(e.target.value)}>
+                  {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label>{selectedCountry === 'US' ? 'State' : 'Region / Province'}</label>
+              <div className={styles.selectWrap}>
+                <select value={selectedState} onChange={e => setSelectedState(e.target.value)} disabled={!states.length}>
+                  <option value="">— Select {selectedCountry === 'US' ? 'state' : 'region'} —</option>
                   {states.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
                 </select>
               </div>
             </div>
 
             <div className={styles.filterGroup}>
-              <label>City</label>
+              <label>City / Area</label>
               <div className={styles.selectWrap}>
                 <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} disabled={!cities.length}>
                   <option value="">— Select city —</option>
@@ -229,10 +247,10 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
             </div>
 
             <div className={styles.filterGroup}>
-              <label>ZIP Code</label>
+              <label>{selectedCountry === 'US' ? 'ZIP Code' : 'Postal Area'}</label>
               <div className={styles.selectWrap}>
                 <select value={selectedZip} onChange={e => setSelectedZip(e.target.value)} disabled={!zips.length}>
-                  <option value="">— Select ZIP —</option>
+                  <option value="">— Select {selectedCountry === 'US' ? 'ZIP' : 'postal area'} —</option>
                   {zips.map(z => <option key={z} value={z}>{z}</option>)}
                 </select>
               </div>
@@ -356,9 +374,11 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                   ← Back to rankings
                 </button>
                 <div className={styles.generateGroup}>
-                  <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
-                    🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
-                  </button>
+                  {selectedCountry === 'US' && (
+                    <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                      🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                    </button>
+                  )}
                   <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
                     ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
                   </button>
@@ -396,9 +416,11 @@ export default function DashboardPage({ user, onLogout, onNavigate }) {
                     : <span className={styles.generatedBadge}>✦ AI-Generated</span>
                   }
                   <div className={styles.generateGroup}>
-                    <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
-                      🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
-                    </button>
+                    {selectedCountry === 'US' && (
+                      <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                        🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                      </button>
+                    )}
                     <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
                       ✦ Generate Another <span className={styles.creditTag}>3 credits</span>
                     </button>

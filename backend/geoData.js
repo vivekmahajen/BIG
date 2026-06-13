@@ -498,4 +498,4 @@ function getOpportunity(zip, sector) {
   return generateDefaultOpportunity(zip, sector);
 }
 
-module.exports = { geoData, getSectorsForZip, getOpportunity };
+module.exports = { geoData, getSectorsForZip, getOpportunity, SECTORS };
