@@ -401,6 +401,50 @@ MANDATORY INDIA RULES:
 7. Registration path: Udyam (MSME) → GST → Shop & Establishment Act → any sector-specific licence.
 `;
     currencyNote = ' Use ₹ (Indian Rupees) for ALL monetary values. Indian number format: ₹1,00,000 = one lakh.';
+  } else if (country === 'CN') {
+    const { GBT_INDUSTRY_MAP, detectCityTier: detectCNTier, getChinaProvinceByCode } = require('./config/chinaData');
+    const provinceData = getChinaProvinceByCode(state);
+    const cityTier = detectCNTier(city);
+    const gbtInfo = GBT_INDUSTRY_MAP[sector] || {};
+    indiaCtx = `
+CHINA-SPECIFIC CONTEXT:
+- Province Economic Profile: ${provinceData?.economicProfile || 'Emerging market with growth potential'}
+- City Tier: ${cityTier} city (${cityTier === 'Tier 1' ? 'highest competition and purchasing power (Beijing/Shanghai/Shenzhen/Guangzhou)' : cityTier === 'New Tier 1' ? 'rapidly growing consumer market with strong digital adoption' : cityTier === 'Tier 2' ? 'growing middle class, lower costs, less competition than Tier 1' : 'underserved market, strong cost advantages, local customer loyalty'})
+- GB/T 4754-2017 Industry Code: ${gbtInfo.code || 'N/A'} — ${gbtInfo.name || sector} (${gbtInfo.description || ''})
+- Business Registration: GSXT (国家企业信用信息公示系统) via local Market Supervision Administration (市场监督管理局). Options: 个体工商户 (sole proprietor) or 有限责任公司 (LLC)
+- Tax: VAT registration, corporate income tax 25% (small enterprises 5–10%), fapiao (发票) invoicing required
+
+MANDATORY CHINA RULES:
+1. ALL monetary values MUST be in Chinese Yuan (¥/人民币/CNY). NEVER use USD/$/dollars.
+2. Use Chinese number format: ¥10万 (10,0000 yuan = 10 wan) or ¥1亿 (100 million yuan = 1 yi).
+3. Express amounts as: ¥X万 for tens of thousands, ¥X百万 for hundreds of thousands, ¥X亿 for 100 millions.
+4. Startup costs must reflect Chinese market rates (significantly different from US — labour costs lower in interior, higher in Tier 1).
+5. Reference China's digital ecosystem: WeChat mini-programs, Douyin, Meituan, Taobao/JD.com, Xiaohongshu.
+6. Consider platform-specific strategies: WeChat for CRM, Douyin for content marketing, Meituan for local services.
+7. Registration: GSXT → local Market Supervision Administration → tax registration → social insurance.
+`;
+    currencyNote = ' Use ¥ (Chinese Yuan/CNY) for ALL monetary values. Format: ¥X万 (10,000s) or ¥X亿 (100 millions).';
+  } else if (country === 'ID') {
+    const { KBLI_INDUSTRY_MAP, getIndonesiaProvinceByCode } = require('./config/indonesiaData');
+    const provinceData = getIndonesiaProvinceByCode(state);
+    const kbliInfo = KBLI_INDUSTRY_MAP[sector] || {};
+    indiaCtx = `
+INDONESIA-SPECIFIC CONTEXT:
+- Province Economic Profile: ${provinceData?.economicProfile || 'Growing market with UMKM opportunity'}
+- KBLI 2020 Industry Code: ${kbliInfo.code || 'N/A'} — ${kbliInfo.name || sector} (${kbliInfo.description || ''})
+- Business Registration: OSS-RBA (oss.go.id) for NIB (Nomor Induk Berusaha). Mikro tier for turnover < Rp 300 juta. Also NPWP (tax ID) from KPP.
+- Government Finance Programs: KUR Mikro (up to Rp 100 juta, 6%), KUR Kecil (up to Rp 500 juta, 6%), BPUM grants, PNM Mekaar for women
+
+MANDATORY INDONESIA RULES:
+1. ALL monetary values MUST be in Indonesian Rupiah (Rp/IDR). NEVER use USD/$/dollars.
+2. Use Indonesian format: Rp X juta (millions), Rp X miliar (billions). Example: Rp 50 juta, Rp 2 miliar.
+3. Startup costs must reflect Indonesian market rates — significantly lower than US, especially outside Jakarta.
+4. Reference KUR subsidized loans (6% annual interest) as primary funding vehicle for UMKM.
+5. Mention relevant digital platforms: Tokopedia, Shopee, TikTok Shop, GoFood/Gojek, Grab.
+6. Consider Indonesia's UMKM culture: most businesses start very small, scale via marketplace platforms.
+7. Registration: OSS-RBA NIB → NPWP → PKP (if VAT applicable) → sector-specific permit (izin usaha).
+`;
+    currencyNote = ' Use Rp (Indonesian Rupiah/IDR) for ALL monetary values. Format: Rp X juta (millions) or Rp X miliar (billions).';
   }
 
   const budgetCtx = budget
@@ -409,9 +453,20 @@ MANDATORY INDIA RULES:
 
   const startupCostExample = country === 'IN'
     ? '"₹X lakh–₹Y lakh"'
-    : budget
-      ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
-      : '"$XK–$YK"';
+    : country === 'CN'
+      ? '"¥X万–¥Y万"'
+      : country === 'ID'
+        ? '"Rp X juta–Rp Y juta"'
+        : budget
+          ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+          : '"$XK–$YK"';
+
+  const tamExample = country === 'IN' ? '₹X,XX,XXX crore or ₹X,XXX crore' : country === 'CN' ? '¥X亿 or ¥X百亿' : country === 'ID' ? 'Rp X triliun or Rp X miliar' : '$XB or $XM';
+  const revYr1Example = country === 'IN' ? '₹X lakh–₹Y lakh' : country === 'CN' ? '¥X万–¥Y万' : country === 'ID' ? 'Rp X juta–Rp Y juta' : '$XK–$YK';
+  const revYr3Example = country === 'IN' ? '₹X crore–₹Y crore' : country === 'CN' ? '¥X百万–¥Y百万' : country === 'ID' ? 'Rp X miliar–Rp Y miliar' : '$XM–$YM';
+  const exitValExample = country === 'IN' ? '₹X crore–₹Y crore' : country === 'CN' ? '¥X亿–¥Y亿' : country === 'ID' ? 'Rp X miliar–Rp Y miliar' : '$XM–$YM';
+  const samExample = country === 'IN' ? '₹X,XXX crore (10% of TAM)' : country === 'CN' ? '¥X亿 (10% of TAM)' : country === 'ID' ? 'Rp X miliar (10% of TAM)' : '$XM (10% of TAM)';
+  const somExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM (1% of TAM)';
 
   const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}${indiaCtx}
 
@@ -423,11 +478,11 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
   "startupCost": ${startupCostExample},
   "grossMargin": "XX–YY%",
   "timeToProfit": "X–Y months",
-  "tam": "${country === 'IN' ? '₹X,XX,XXX crore or ₹X,XXX crore' : '$XB or $XM'}",
-  "revenueYr1": "${country === 'IN' ? '₹X lakh–₹Y lakh' : '$XK–$YK'}",
-  "revenueYr3": "${country === 'IN' ? '₹X crore–₹Y crore' : '$XM–$YM'}",
+  "tam": "${tamExample}",
+  "revenueYr1": "${revYr1Example}",
+  "revenueYr3": "${revYr3Example}",
   "score": 8.5,
-  "exitVal": "${country === 'IN' ? '₹X crore–₹Y crore' : '$XM–$YM'}",
+  "exitVal": "${exitValExample}",
   "whyItWorks": "2-3 sentence explanation of why this business makes money, specific market dynamics, and why now is the right time.",
   "profitDrivers": ["driver 1", "driver 2", "driver 3"],
   "greenSignals": ["positive market signal 1", "signal 2", "signal 3"],
@@ -437,8 +492,8 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
   "topCompetitors": ["Competitor A", "Competitor B", "Competitor C"],
   "ltv_cac": "X:1",
   "paybackMonths": 8,
-  "sam": "${country === 'IN' ? '₹X,XXX crore (10% of TAM)' : '$XM (10% of TAM)'}",
-  "som": "${country === 'IN' ? '₹XXX crore (1% of TAM)' : '$XM (1% of TAM)'}",
+  "sam": "${samExample}",
+  "som": "${somExample}",
   "bestZip": "${zip || '78701'}"
 }
 
@@ -505,6 +560,45 @@ MANDATORY INDIA RULES:
 7. Registration path: Udyam (MSME) → GST → Shop & Establishment Act → any sector-specific licence.
 `;
     boCurrencyNote = ' Use ₹ (Indian Rupees) for ALL monetary values. Indian number format: ₹1,00,000 = one lakh.';
+  } else if (country === 'CN') {
+    const { GBT_INDUSTRY_MAP, detectCityTier: detectCNTier, getChinaProvinceByCode } = require('./config/chinaData');
+    const provinceData = getChinaProvinceByCode(state);
+    const cityTier = detectCNTier(city);
+    const gbtInfo = GBT_INDUSTRY_MAP[sector] || {};
+    boIndiaCtx = `
+CHINA-SPECIFIC CONTEXT:
+- Province Economic Profile: ${provinceData?.economicProfile || 'Emerging market with growth potential'}
+- City Tier: ${cityTier} city
+- GB/T 4754-2017 Industry Code: ${gbtInfo.code || 'N/A'} — ${gbtInfo.name || sector}
+- Business Registration: GSXT via local Market Supervision Administration (市场监督管理局)
+
+MANDATORY CHINA RULES:
+1. ALL monetary values MUST be in Chinese Yuan (¥/CNY). NEVER use USD/$.
+2. Use Chinese format: ¥X万 (10,000s) or ¥X亿 (100 millions).
+3. Reference China's digital ecosystem: WeChat, Douyin, Meituan, Taobao/JD.com.
+4. Consider platform-specific strategies for each channel.
+5. Registration: GSXT → Market Supervision Administration → tax registration.
+`;
+    boCurrencyNote = ' Use ¥ (Chinese Yuan/CNY) for ALL monetary values. Format: ¥X万 or ¥X亿.';
+  } else if (country === 'ID') {
+    const { KBLI_INDUSTRY_MAP, getIndonesiaProvinceByCode } = require('./config/indonesiaData');
+    const provinceData = getIndonesiaProvinceByCode(state);
+    const kbliInfo = KBLI_INDUSTRY_MAP[sector] || {};
+    boIndiaCtx = `
+INDONESIA-SPECIFIC CONTEXT:
+- Province Economic Profile: ${provinceData?.economicProfile || 'Growing UMKM market'}
+- KBLI 2020 Industry Code: ${kbliInfo.code || 'N/A'} — ${kbliInfo.name || sector}
+- Business Registration: OSS-RBA (oss.go.id) for NIB + NPWP from KPP
+- Government Finance: KUR Mikro (Rp 100 juta, 6%), KUR Kecil (Rp 500 juta, 6%), BPUM grants
+
+MANDATORY INDONESIA RULES:
+1. ALL monetary values MUST be in Indonesian Rupiah (Rp/IDR). NEVER use USD/$.
+2. Use format: Rp X juta (millions) or Rp X miliar (billions).
+3. Reference KUR subsidized loans as primary UMKM funding.
+4. Mention platforms: Tokopedia, Shopee, TikTok Shop, GoFood/Gojek.
+5. Registration: OSS-RBA NIB → NPWP → sector-specific izin usaha.
+`;
+    boCurrencyNote = ' Use Rp (Indonesian Rupiah/IDR) for ALL monetary values. Format: Rp X juta or Rp X miliar.';
   }
 
   const budgetCtx = budget
@@ -513,9 +607,19 @@ MANDATORY INDIA RULES:
 
   const blueOceanStartupCostExample = country === 'IN'
     ? '"₹X lakh–₹Y lakh"'
-    : budget
-      ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
-      : '"$XK–$YK"';
+    : country === 'CN'
+      ? '"¥X万–¥Y万"'
+      : country === 'ID'
+        ? '"Rp X juta–Rp Y juta"'
+        : budget
+          ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+          : '"$XK–$YK"';
+  const boTamExample = country === 'IN' ? '₹X,XX,XXX crore or ₹X,XXX crore' : country === 'CN' ? '¥X亿 or ¥X百亿' : country === 'ID' ? 'Rp X triliun or Rp X miliar' : '$XB or $XM';
+  const boRevYr1Example = country === 'IN' ? '₹X lakh–₹Y lakh' : country === 'CN' ? '¥X万–¥Y万' : country === 'ID' ? 'Rp X juta–Rp Y juta' : '$XK–$YK';
+  const boRevYr3Example = country === 'IN' ? '₹X crore–₹Y crore' : country === 'CN' ? '¥X百万–¥Y百万' : country === 'ID' ? 'Rp X miliar–Rp Y miliar' : '$XM–$YM';
+  const boExitValExample = country === 'IN' ? '₹X crore–₹Y crore' : country === 'CN' ? '¥X亿–¥Y亿' : country === 'ID' ? 'Rp X miliar–Rp Y miliar' : '$XM–$YM';
+  const boSamExample = country === 'IN' ? '₹X,XXX crore (10% of TAM)' : country === 'CN' ? '¥X亿 (10% of TAM)' : country === 'ID' ? 'Rp X miliar (10% of TAM)' : '$XM';
+  const boSomExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM';
 
   const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
 
@@ -533,11 +637,11 @@ Return ONLY a valid JSON object (no markdown, no explanation):${boCurrencyNote}
   "startupCost": ${blueOceanStartupCostExample},
   "grossMargin": "XX–YY%",
   "timeToProfit": "X–Y months",
-  "tam": "${country === 'IN' ? '₹X,XX,XXX crore or ₹X,XXX crore' : '$XB or $XM'}",
-  "revenueYr1": "${country === 'IN' ? '₹X lakh–₹Y lakh' : '$XK–$YK'}",
-  "revenueYr3": "${country === 'IN' ? '₹X crore–₹Y crore' : '$XM–$YM'}",
+  "tam": "${boTamExample}",
+  "revenueYr1": "${boRevYr1Example}",
+  "revenueYr3": "${boRevYr3Example}",
   "score": 9.0,
-  "exitVal": "${country === 'IN' ? '₹X crore–₹Y crore' : '$XM–$YM'}",
+  "exitVal": "${boExitValExample}",
   "whyItWorks": "2-3 sentences: the unmet need, why it's profitable, and why NOW is the right time to enter.",
   "blueOceanReason": "Specific explanation of why NO competitors exist: what gap in the market, technology, regulation, or customer insight makes this space completely empty.",
   "firstMoverAdvantage": "Concrete advantages of being first: network effects, switching costs, brand, data, regulatory moat, etc.",
@@ -549,8 +653,8 @@ Return ONLY a valid JSON object (no markdown, no explanation):${boCurrencyNote}
   "topCompetitors": [],
   "ltv_cac": "X:1",
   "paybackMonths": 8,
-  "sam": "${country === 'IN' ? '₹X,XXX crore (10% of TAM)' : '$XM'}",
-  "som": "${country === 'IN' ? '₹XXX crore (1% of TAM)' : '$XM'}",
+  "sam": "${boSamExample}",
+  "som": "${boSomExample}",
   "bestZip": "${zip || '78701'}",
   "blueOcean": true
 }
