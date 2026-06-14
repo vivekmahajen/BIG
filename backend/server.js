@@ -351,6 +351,28 @@ app.get('/api/sector-opportunities', auth, (req, res) => {
   res.json(opps);
 });
 
+// Public test endpoint — no auth, no credits — hit in browser to verify signals
+app.get('/api/validate-test', async (req, res) => {
+  const sector  = req.query.sector  || 'food';
+  const city    = req.query.city    || 'Austin';
+  const country = req.query.country || 'US';
+  try {
+    const { buildValidationPayload } = require('./validation/index');
+    const payload = await buildValidationPayload(sector, city, country);
+    res.json({
+      summary: {
+        reddit:  payload.reddit  ? `${payload.reddit.length} posts` : 'no data (expected — Reddit throttles)',
+        trends:  payload.trends  ? `${payload.trends.trend} (${payload.trends.growthPercent > 0 ? '+' : ''}${payload.trends.growthPercent}%)` : 'no data (SERPAPI_KEY missing or not set)',
+        reviews: payload.reviews ? `${payload.reviews.reviewCount} reviews, ${payload.reviews.topPainThemes.length} pain themes` : 'no data (SERPAPI_KEY missing or not set)',
+        search:  payload.search  ? `${payload.search.totalMonthlySearches.toLocaleString()} monthly searches — ${payload.search.verdict}` : 'no data (DATAFORSEO keys missing or not set)',
+      },
+      raw: payload,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Pre-fetch validation signals (cacheable, no credit cost)
 app.post('/api/validate', auth, async (req, res) => {
   const { sector, city, country } = req.body;
