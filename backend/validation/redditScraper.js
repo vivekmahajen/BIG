@@ -1,11 +1,26 @@
 'use strict';
 
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
+];
+
 const PAIN_KEYWORDS = [
   'frustrated','annoyed','terrible','awful','horrible','can\'t find','nobody',
   'no one','impossible','overpriced','rip off','wish','need','looking for',
   'can anyone','help','rant','venting','complaint','so hard','never found',
   'no options','no good','where can i','does anyone know','struggling',
 ];
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomUA() {
+  return USER_AGENTS[randInt(0, USER_AGENTS.length - 1)];
+}
 
 function buildQueries(sector, city) {
   return [
@@ -31,12 +46,26 @@ async function scrapeRedditPainPoints(sector, city) {
 
   for (const query of queries) {
     try {
-      const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=relevance&t=year&limit=25`;
+      // Random delay 1.5–3.5s between queries to avoid rate limiting
+      await new Promise(r => setTimeout(r, randInt(1500, 3500)));
+
+      const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=relevance&t=year&limit=25&raw_json=1`;
       const resp = await fetch(url, {
-        headers: { 'User-Agent': 'BIG-Validator/1.0 (business research tool)' },
-        signal: AbortSignal.timeout(8000),
+        headers: {
+          'User-Agent': randomUA(),
+          'Accept': 'application/json',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache',
+        },
+        signal: AbortSignal.timeout(10000),
       });
+
+      if (resp.status === 429) {
+        console.warn('[reddit] rate limited, skipping remaining queries');
+        break;
+      }
       if (!resp.ok) continue;
+
       const data = await resp.json();
       const posts = data?.data?.children ?? [];
 
@@ -44,7 +73,7 @@ async function scrapeRedditPainPoints(sector, city) {
         if (seen.has(p.id)) continue;
         seen.add(p.id);
         const score = painScore(p);
-        if (score > 0.3) {
+        if (score > 0.25) {
           results.push({
             title:     p.title,
             subreddit: p.subreddit_name_prefixed || `r/${p.subreddit}`,
@@ -57,10 +86,9 @@ async function scrapeRedditPainPoints(sector, city) {
           });
         }
       }
-    } catch (_) {
-      // individual query failure is non-fatal
+    } catch (err) {
+      if (err.name !== 'AbortError') console.warn('[reddit] query failed:', err.message);
     }
-    await new Promise(r => setTimeout(r, 1000));
   }
 
   return results
