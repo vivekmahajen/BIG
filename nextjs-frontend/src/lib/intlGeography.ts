@@ -272,6 +272,412 @@ export const INTL_GEO: Record<string, IntlCountry> = {
       ]},
     ],
   },
+
+  DE: {
+    name: 'Germany', code: 'DE', currency: 'EUR', symbol: '€',
+    regions: [
+      { name: 'Bavaria', code: 'BY', slug: 'bavaria', cities: [
+        { city: 'Munich', slug: 'munich' },
+        { city: 'Nuremberg', slug: 'nuremberg' },
+        { city: 'Augsburg', slug: 'augsburg' },
+      ]},
+      { name: 'Berlin', code: 'BE', slug: 'berlin', cities: [
+        { city: 'Berlin', slug: 'berlin' },
+        { city: 'Potsdam', slug: 'potsdam' },
+      ]},
+      { name: 'North Rhine-Westphalia', code: 'NW', slug: 'north-rhine-westphalia', cities: [
+        { city: 'Cologne', slug: 'cologne' },
+        { city: 'Düsseldorf', slug: 'dusseldorf' },
+        { city: 'Dortmund', slug: 'dortmund' },
+        { city: 'Essen', slug: 'essen' },
+      ]},
+      { name: 'Hamburg', code: 'HH', slug: 'hamburg', cities: [
+        { city: 'Hamburg', slug: 'hamburg' },
+      ]},
+      { name: 'Baden-Württemberg', code: 'BW', slug: 'baden-wurttemberg', cities: [
+        { city: 'Stuttgart', slug: 'stuttgart' },
+        { city: 'Karlsruhe', slug: 'karlsruhe' },
+        { city: 'Mannheim', slug: 'mannheim' },
+      ]},
+      { name: 'Saxony', code: 'SN', slug: 'saxony', cities: [
+        { city: 'Dresden', slug: 'dresden' },
+        { city: 'Leipzig', slug: 'leipzig' },
+      ]},
+    ],
+  },
+
+  FR: {
+    name: 'France', code: 'FR', currency: 'EUR', symbol: '€',
+    regions: [
+      { name: 'Île-de-France', code: 'IDF', slug: 'ile-de-france', cities: [
+        { city: 'Paris', slug: 'paris' },
+        { city: 'Versailles', slug: 'versailles' },
+        { city: 'Boulogne-Billancourt', slug: 'boulogne-billancourt' },
+      ]},
+      { name: 'Auvergne-Rhône-Alpes', code: 'ARA', slug: 'auvergne-rhone-alpes', cities: [
+        { city: 'Lyon', slug: 'lyon' },
+        { city: 'Grenoble', slug: 'grenoble' },
+        { city: 'Clermont-Ferrand', slug: 'clermont-ferrand' },
+      ]},
+      { name: 'Provence-Alpes-Côte d\'Azur', code: 'PAC', slug: 'provence-alpes-cote-dazur', cities: [
+        { city: 'Marseille', slug: 'marseille' },
+        { city: 'Nice', slug: 'nice' },
+        { city: 'Toulon', slug: 'toulon' },
+      ]},
+      { name: 'Nouvelle-Aquitaine', code: 'NAQ', slug: 'nouvelle-aquitaine', cities: [
+        { city: 'Bordeaux', slug: 'bordeaux' },
+        { city: 'Limoges', slug: 'limoges' },
+      ]},
+      { name: 'Occitanie', code: 'OCC', slug: 'occitanie', cities: [
+        { city: 'Toulouse', slug: 'toulouse' },
+        { city: 'Montpellier', slug: 'montpellier' },
+      ]},
+    ],
+  },
+
+  AE: {
+    name: 'United Arab Emirates', code: 'AE', currency: 'AED', symbol: 'AED',
+    regions: [
+      { name: 'Dubai', code: 'DU', slug: 'dubai', cities: [
+        { city: 'Dubai', slug: 'dubai' },
+        { city: 'Deira', slug: 'deira' },
+        { city: 'Business Bay', slug: 'business-bay' },
+        { city: 'Jumeirah', slug: 'jumeirah' },
+      ]},
+      { name: 'Abu Dhabi', code: 'AZ', slug: 'abu-dhabi', cities: [
+        { city: 'Abu Dhabi', slug: 'abu-dhabi' },
+        { city: 'Al Ain', slug: 'al-ain' },
+      ]},
+      { name: 'Sharjah', code: 'SH', slug: 'sharjah', cities: [
+        { city: 'Sharjah', slug: 'sharjah' },
+        { city: 'Khor Fakkan', slug: 'khor-fakkan' },
+      ]},
+      { name: 'Ajman', code: 'AJ', slug: 'ajman', cities: [
+        { city: 'Ajman', slug: 'ajman' },
+      ]},
+    ],
+  },
+
+  SG: {
+    name: 'Singapore', code: 'SG', currency: 'SGD', symbol: 'SGD $',
+    regions: [
+      { name: 'Central Region', code: 'CR', slug: 'central-region', cities: [
+        { city: 'Orchard', slug: 'orchard' },
+        { city: 'Marina Bay', slug: 'marina-bay' },
+        { city: 'Tanjong Pagar', slug: 'tanjong-pagar' },
+        { city: 'Bugis', slug: 'bugis' },
+      ]},
+      { name: 'East Region', code: 'ER', slug: 'east-region', cities: [
+        { city: 'Tampines', slug: 'tampines' },
+        { city: 'Bedok', slug: 'bedok' },
+        { city: 'Changi', slug: 'changi' },
+      ]},
+      { name: 'West Region', code: 'WR', slug: 'west-region', cities: [
+        { city: 'Jurong East', slug: 'jurong-east' },
+        { city: 'Clementi', slug: 'clementi' },
+        { city: 'Buona Vista', slug: 'buona-vista' },
+      ]},
+      { name: 'North Region', code: 'NR', slug: 'north-region', cities: [
+        { city: 'Woodlands', slug: 'woodlands' },
+        { city: 'Yishun', slug: 'yishun' },
+      ]},
+    ],
+  },
+
+  BR: {
+    name: 'Brazil', code: 'BR', currency: 'BRL', symbol: 'R$',
+    regions: [
+      { name: 'São Paulo', code: 'SP', slug: 'sao-paulo', cities: [
+        { city: 'São Paulo', slug: 'sao-paulo' },
+        { city: 'Campinas', slug: 'campinas' },
+        { city: 'Santos', slug: 'santos' },
+        { city: 'Guarulhos', slug: 'guarulhos' },
+      ]},
+      { name: 'Rio de Janeiro', code: 'RJ', slug: 'rio-de-janeiro', cities: [
+        { city: 'Rio de Janeiro', slug: 'rio-de-janeiro' },
+        { city: 'Niterói', slug: 'niteroi' },
+      ]},
+      { name: 'Minas Gerais', code: 'MG', slug: 'minas-gerais', cities: [
+        { city: 'Belo Horizonte', slug: 'belo-horizonte' },
+        { city: 'Uberlândia', slug: 'uberlandia' },
+      ]},
+      { name: 'Bahia', code: 'BA', slug: 'bahia', cities: [
+        { city: 'Salvador', slug: 'salvador' },
+        { city: 'Feira de Santana', slug: 'feira-de-santana' },
+      ]},
+      { name: 'Rio Grande do Sul', code: 'RS', slug: 'rio-grande-do-sul', cities: [
+        { city: 'Porto Alegre', slug: 'porto-alegre' },
+        { city: 'Caxias do Sul', slug: 'caxias-do-sul' },
+      ]},
+      { name: 'Paraná', code: 'PR', slug: 'parana', cities: [
+        { city: 'Curitiba', slug: 'curitiba' },
+        { city: 'Londrina', slug: 'londrina' },
+      ]},
+    ],
+  },
+
+  JP: {
+    name: 'Japan', code: 'JP', currency: 'JPY', symbol: '¥',
+    regions: [
+      { name: 'Tokyo', code: 'TK', slug: 'tokyo', cities: [
+        { city: 'Shinjuku', slug: 'shinjuku' },
+        { city: 'Shibuya', slug: 'shibuya' },
+        { city: 'Akihabara', slug: 'akihabara' },
+        { city: 'Ginza', slug: 'ginza' },
+      ]},
+      { name: 'Osaka', code: 'OS', slug: 'osaka', cities: [
+        { city: 'Osaka', slug: 'osaka' },
+        { city: 'Namba', slug: 'namba' },
+        { city: 'Umeda', slug: 'umeda' },
+      ]},
+      { name: 'Aichi', code: 'AI', slug: 'aichi', cities: [
+        { city: 'Nagoya', slug: 'nagoya' },
+        { city: 'Toyota', slug: 'toyota' },
+      ]},
+      { name: 'Kanagawa', code: 'KN', slug: 'kanagawa', cities: [
+        { city: 'Yokohama', slug: 'yokohama' },
+        { city: 'Kawasaki', slug: 'kawasaki' },
+      ]},
+      { name: 'Fukuoka', code: 'FK', slug: 'fukuoka', cities: [
+        { city: 'Fukuoka', slug: 'fukuoka' },
+        { city: 'Kitakyushu', slug: 'kitakyushu' },
+      ]},
+    ],
+  },
+
+  MX: {
+    name: 'Mexico', code: 'MX', currency: 'MXN', symbol: 'MX$',
+    regions: [
+      { name: 'Mexico City', code: 'CDMX', slug: 'mexico-city', cities: [
+        { city: 'Mexico City', slug: 'mexico-city' },
+        { city: 'Coyoacán', slug: 'coyoacan' },
+        { city: 'Polanco', slug: 'polanco' },
+      ]},
+      { name: 'Jalisco', code: 'JAL', slug: 'jalisco', cities: [
+        { city: 'Guadalajara', slug: 'guadalajara' },
+        { city: 'Zapopan', slug: 'zapopan' },
+      ]},
+      { name: 'Nuevo León', code: 'NL', slug: 'nuevo-leon', cities: [
+        { city: 'Monterrey', slug: 'monterrey' },
+        { city: 'San Pedro Garza García', slug: 'san-pedro-garza-garcia' },
+      ]},
+      { name: 'Yucatán', code: 'YUC', slug: 'yucatan', cities: [
+        { city: 'Mérida', slug: 'merida' },
+        { city: 'Cancún', slug: 'cancun' },
+      ]},
+      { name: 'Baja California', code: 'BC', slug: 'baja-california', cities: [
+        { city: 'Tijuana', slug: 'tijuana' },
+        { city: 'Ensenada', slug: 'ensenada' },
+      ]},
+    ],
+  },
+
+  ZA: {
+    name: 'South Africa', code: 'ZA', currency: 'ZAR', symbol: 'R',
+    regions: [
+      { name: 'Gauteng', code: 'GP', slug: 'gauteng', cities: [
+        { city: 'Johannesburg', slug: 'johannesburg' },
+        { city: 'Pretoria', slug: 'pretoria' },
+        { city: 'Sandton', slug: 'sandton' },
+      ]},
+      { name: 'Western Cape', code: 'WC', slug: 'western-cape', cities: [
+        { city: 'Cape Town', slug: 'cape-town' },
+        { city: 'Stellenbosch', slug: 'stellenbosch' },
+        { city: 'George', slug: 'george' },
+      ]},
+      { name: 'KwaZulu-Natal', code: 'KZN', slug: 'kwazulu-natal', cities: [
+        { city: 'Durban', slug: 'durban' },
+        { city: 'Pietermaritzburg', slug: 'pietermaritzburg' },
+      ]},
+      { name: 'Eastern Cape', code: 'EC', slug: 'eastern-cape', cities: [
+        { city: 'Port Elizabeth', slug: 'port-elizabeth' },
+        { city: 'East London', slug: 'east-london' },
+      ]},
+    ],
+  },
+
+  NL: {
+    name: 'Netherlands', code: 'NL', currency: 'EUR', symbol: '€',
+    regions: [
+      { name: 'North Holland', code: 'NH', slug: 'north-holland', cities: [
+        { city: 'Amsterdam', slug: 'amsterdam' },
+        { city: 'Haarlem', slug: 'haarlem' },
+        { city: 'Zaandam', slug: 'zaandam' },
+      ]},
+      { name: 'South Holland', code: 'ZH', slug: 'south-holland', cities: [
+        { city: 'Rotterdam', slug: 'rotterdam' },
+        { city: 'The Hague', slug: 'the-hague' },
+        { city: 'Leiden', slug: 'leiden' },
+        { city: 'Delft', slug: 'delft' },
+      ]},
+      { name: 'Utrecht', code: 'UT', slug: 'utrecht', cities: [
+        { city: 'Utrecht', slug: 'utrecht' },
+        { city: 'Amersfoort', slug: 'amersfoort' },
+      ]},
+      { name: 'North Brabant', code: 'NB', slug: 'north-brabant', cities: [
+        { city: 'Eindhoven', slug: 'eindhoven' },
+        { city: 'Tilburg', slug: 'tilburg' },
+        { city: 'Breda', slug: 'breda' },
+      ]},
+    ],
+  },
+
+  NG: {
+    name: 'Nigeria', code: 'NG', currency: 'NGN', symbol: '₦',
+    regions: [
+      { name: 'Lagos', code: 'LA', slug: 'lagos', cities: [
+        { city: 'Lagos', slug: 'lagos' },
+        { city: 'Ikeja', slug: 'ikeja' },
+        { city: 'Victoria Island', slug: 'victoria-island' },
+        { city: 'Lekki', slug: 'lekki' },
+      ]},
+      { name: 'Abuja FCT', code: 'FC', slug: 'abuja-fct', cities: [
+        { city: 'Abuja', slug: 'abuja' },
+        { city: 'Gwagwalada', slug: 'gwagwalada' },
+      ]},
+      { name: 'Kano', code: 'KN', slug: 'kano', cities: [
+        { city: 'Kano', slug: 'kano' },
+        { city: 'Kaduna', slug: 'kaduna' },
+      ]},
+      { name: 'Rivers', code: 'RI', slug: 'rivers', cities: [
+        { city: 'Port Harcourt', slug: 'port-harcourt' },
+        { city: 'Bonny', slug: 'bonny' },
+      ]},
+      { name: 'Oyo', code: 'OY', slug: 'oyo', cities: [
+        { city: 'Ibadan', slug: 'ibadan' },
+        { city: 'Ogbomosho', slug: 'ogbomosho' },
+      ]},
+    ],
+  },
+
+  KE: {
+    name: 'Kenya', code: 'KE', currency: 'KES', symbol: 'KSh',
+    regions: [
+      { name: 'Nairobi', code: 'NBI', slug: 'nairobi', cities: [
+        { city: 'Nairobi', slug: 'nairobi' },
+        { city: 'Westlands', slug: 'westlands' },
+        { city: 'Karen', slug: 'karen' },
+        { city: 'Kilimani', slug: 'kilimani' },
+      ]},
+      { name: 'Coast', code: 'CST', slug: 'coast', cities: [
+        { city: 'Mombasa', slug: 'mombasa' },
+        { city: 'Malindi', slug: 'malindi' },
+      ]},
+      { name: 'Rift Valley', code: 'RV', slug: 'rift-valley', cities: [
+        { city: 'Nakuru', slug: 'nakuru' },
+        { city: 'Eldoret', slug: 'eldoret' },
+      ]},
+      { name: 'Central', code: 'CEN', slug: 'central', cities: [
+        { city: 'Thika', slug: 'thika' },
+        { city: 'Nyeri', slug: 'nyeri' },
+      ]},
+    ],
+  },
+
+  ES: {
+    name: 'Spain', code: 'ES', currency: 'EUR', symbol: '€',
+    regions: [
+      { name: 'Community of Madrid', code: 'MD', slug: 'madrid', cities: [
+        { city: 'Madrid', slug: 'madrid' },
+        { city: 'Alcalá de Henares', slug: 'alcala-de-henares' },
+      ]},
+      { name: 'Catalonia', code: 'CT', slug: 'catalonia', cities: [
+        { city: 'Barcelona', slug: 'barcelona' },
+        { city: 'Girona', slug: 'girona' },
+        { city: 'Tarragona', slug: 'tarragona' },
+      ]},
+      { name: 'Andalusia', code: 'AN', slug: 'andalusia', cities: [
+        { city: 'Seville', slug: 'seville' },
+        { city: 'Málaga', slug: 'malaga' },
+        { city: 'Granada', slug: 'granada' },
+      ]},
+      { name: 'Valencia', code: 'VC', slug: 'valencia', cities: [
+        { city: 'Valencia', slug: 'valencia' },
+        { city: 'Alicante', slug: 'alicante' },
+      ]},
+      { name: 'Basque Country', code: 'PV', slug: 'basque-country', cities: [
+        { city: 'Bilbao', slug: 'bilbao' },
+        { city: 'San Sebastián', slug: 'san-sebastian' },
+      ]},
+    ],
+  },
+
+  IT: {
+    name: 'Italy', code: 'IT', currency: 'EUR', symbol: '€',
+    regions: [
+      { name: 'Lombardy', code: 'LOM', slug: 'lombardy', cities: [
+        { city: 'Milan', slug: 'milan' },
+        { city: 'Bergamo', slug: 'bergamo' },
+        { city: 'Brescia', slug: 'brescia' },
+      ]},
+      { name: 'Lazio', code: 'LAZ', slug: 'lazio', cities: [
+        { city: 'Rome', slug: 'rome' },
+        { city: 'Viterbo', slug: 'viterbo' },
+      ]},
+      { name: 'Campania', code: 'CAM', slug: 'campania', cities: [
+        { city: 'Naples', slug: 'naples' },
+        { city: 'Salerno', slug: 'salerno' },
+      ]},
+      { name: 'Veneto', code: 'VEN', slug: 'veneto', cities: [
+        { city: 'Venice', slug: 'venice' },
+        { city: 'Verona', slug: 'verona' },
+        { city: 'Padua', slug: 'padua' },
+      ]},
+      { name: 'Tuscany', code: 'TUS', slug: 'tuscany', cities: [
+        { city: 'Florence', slug: 'florence' },
+        { city: 'Siena', slug: 'siena' },
+        { city: 'Pisa', slug: 'pisa' },
+      ]},
+    ],
+  },
+
+  PH: {
+    name: 'Philippines', code: 'PH', currency: 'PHP', symbol: '₱',
+    regions: [
+      { name: 'Metro Manila', code: 'NCR', slug: 'metro-manila', cities: [
+        { city: 'Makati', slug: 'makati' },
+        { city: 'BGC (Taguig)', slug: 'bgc-taguig' },
+        { city: 'Quezon City', slug: 'quezon-city' },
+        { city: 'Pasig', slug: 'pasig' },
+      ]},
+      { name: 'Central Visayas', code: 'VII', slug: 'central-visayas', cities: [
+        { city: 'Cebu City', slug: 'cebu-city' },
+        { city: 'Mandaue', slug: 'mandaue' },
+      ]},
+      { name: 'Davao Region', code: 'XI', slug: 'davao-region', cities: [
+        { city: 'Davao City', slug: 'davao-city' },
+        { city: 'Tagum', slug: 'tagum' },
+      ]},
+      { name: 'Central Luzon', code: 'III', slug: 'central-luzon', cities: [
+        { city: 'Angeles City', slug: 'angeles-city' },
+        { city: 'San Fernando', slug: 'san-fernando' },
+      ]},
+    ],
+  },
+
+  PK: {
+    name: 'Pakistan', code: 'PK', currency: 'PKR', symbol: '₨',
+    regions: [
+      { name: 'Punjab', code: 'PB', slug: 'punjab', cities: [
+        { city: 'Lahore', slug: 'lahore' },
+        { city: 'Faisalabad', slug: 'faisalabad' },
+        { city: 'Rawalpindi', slug: 'rawalpindi' },
+        { city: 'Multan', slug: 'multan' },
+      ]},
+      { name: 'Sindh', code: 'SD', slug: 'sindh', cities: [
+        { city: 'Karachi', slug: 'karachi' },
+        { city: 'Hyderabad', slug: 'hyderabad-pk' },
+        { city: 'Sukkur', slug: 'sukkur' },
+      ]},
+      { name: 'Islamabad Capital Territory', code: 'IS', slug: 'islamabad', cities: [
+        { city: 'Islamabad', slug: 'islamabad' },
+      ]},
+      { name: 'Khyber Pakhtunkhwa', code: 'KP', slug: 'khyber-pakhtunkhwa', cities: [
+        { city: 'Peshawar', slug: 'peshawar' },
+        { city: 'Abbottabad', slug: 'abbottabad' },
+      ]},
+    ],
+  },
 };
 
 export function getCountry(countryCode: string): IntlCountry | undefined {
