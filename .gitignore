@@ -5,3 +5,4 @@ frontend/build/
 .env
 .env.local
 *.log
+.claude/
