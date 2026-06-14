@@ -23,6 +23,8 @@ const COUNTRIES = [
   { code: 'IT', name: 'Italy' },
   { code: 'PH', name: 'Philippines' },
   { code: 'PK', name: 'Pakistan' },
+  { code: 'CN', name: 'China' },
+  { code: 'ID', name: 'Indonesia' },
 ];
 
 const INTERNATIONAL_REGIONS = {
@@ -732,6 +734,97 @@ const INTERNATIONAL_REGIONS = {
       { name: 'Islamabad Blue Area', postalAreas: ['44000','44220','44230'] },
       { name: 'F-7 / F-8', postalAreas: ['44000','44090'] },
       { name: 'DHA Islamabad', postalAreas: ['44000','44100'] },
+    ]},
+  ],
+  CN: [
+    { code: 'GD', name: 'Guangdong', cities: [
+      { name: 'Shenzhen', postalAreas: ['518000','518001','518100'] },
+      { name: 'Guangzhou', postalAreas: ['510000','510001','510100'] },
+      { name: 'Dongguan', postalAreas: ['523000','523001','523100'] },
+      { name: 'Foshan', postalAreas: ['528000','528001','528100'] },
+      { name: 'Zhuhai', postalAreas: ['519000','519001','519100'] },
+    ]},
+    { code: 'SH', name: 'Shanghai', cities: [
+      { name: 'Shanghai Puxi', postalAreas: ['200000','200001','200002'] },
+      { name: 'Shanghai Pudong', postalAreas: ['200120','200121','200122'] },
+      { name: 'Minhang', postalAreas: ['201100','201101','201102'] },
+    ]},
+    { code: 'BJ', name: 'Beijing', cities: [
+      { name: 'Beijing CBD', postalAreas: ['100000','100001','100020'] },
+      { name: 'Zhongguancun', postalAreas: ['100080','100081','100082'] },
+      { name: 'Chaoyang', postalAreas: ['100020','100021','100022'] },
+    ]},
+    { code: 'ZJ', name: 'Zhejiang', cities: [
+      { name: 'Hangzhou', postalAreas: ['310000','310001','310002'] },
+      { name: 'Ningbo', postalAreas: ['315000','315001','315100'] },
+      { name: 'Wenzhou', postalAreas: ['325000','325001','325100'] },
+      { name: 'Yiwu', postalAreas: ['322000','322001','322100'] },
+    ]},
+    { code: 'JS', name: 'Jiangsu', cities: [
+      { name: 'Nanjing', postalAreas: ['210000','210001','210002'] },
+      { name: 'Suzhou', postalAreas: ['215000','215001','215100'] },
+      { name: 'Wuxi', postalAreas: ['214000','214001','214100'] },
+    ]},
+    { code: 'SC', name: 'Sichuan', cities: [
+      { name: 'Chengdu', postalAreas: ['610000','610001','610041'] },
+      { name: 'Mianyang', postalAreas: ['621000','621001','621100'] },
+    ]},
+    { code: 'HB', name: 'Hubei', cities: [
+      { name: 'Wuhan', postalAreas: ['430000','430001','430070'] },
+      { name: 'Yichang', postalAreas: ['443000','443001','443100'] },
+    ]},
+    { code: 'SN', name: 'Shaanxi', cities: [
+      { name: "Xi'an", postalAreas: ['710000','710001','710054'] },
+      { name: 'Xianyang', postalAreas: ['712000','712001','712100'] },
+    ]},
+    { code: 'CQ', name: 'Chongqing', cities: [
+      { name: 'Chongqing Central', postalAreas: ['400000','400001','400020'] },
+      { name: 'Jiangbei', postalAreas: ['400020','400021','400022'] },
+    ]},
+    { code: 'FJ', name: 'Fujian', cities: [
+      { name: 'Xiamen', postalAreas: ['361000','361001','361100'] },
+      { name: 'Fuzhou', postalAreas: ['350000','350001','350100'] },
+      { name: 'Quanzhou', postalAreas: ['362000','362001','362100'] },
+    ]},
+  ],
+  ID: [
+    { code: 'JK', name: 'DKI Jakarta', cities: [
+      { name: 'Jakarta Pusat', postalAreas: ['10000','10110','10120'] },
+      { name: 'Jakarta Selatan', postalAreas: ['12000','12110','12160'] },
+      { name: 'Jakarta Barat', postalAreas: ['11000','11110','11140'] },
+    ]},
+    { code: 'JB', name: 'Jawa Barat', cities: [
+      { name: 'Bandung', postalAreas: ['40111','40112','40113'] },
+      { name: 'Bekasi', postalAreas: ['17110','17111','17112'] },
+      { name: 'Depok', postalAreas: ['16411','16412','16413'] },
+      { name: 'Bogor', postalAreas: ['16111','16112','16113'] },
+    ]},
+    { code: 'JT', name: 'Jawa Tengah', cities: [
+      { name: 'Semarang', postalAreas: ['50111','50112','50113'] },
+      { name: 'Solo', postalAreas: ['57111','57112','57113'] },
+      { name: 'Yogyakarta', postalAreas: ['55111','55112','55113'] },
+    ]},
+    { code: 'JI', name: 'Jawa Timur', cities: [
+      { name: 'Surabaya', postalAreas: ['60111','60112','60113'] },
+      { name: 'Malang', postalAreas: ['65111','65112','65113'] },
+      { name: 'Sidoarjo', postalAreas: ['61211','61212','61213'] },
+    ]},
+    { code: 'BA', name: 'Bali', cities: [
+      { name: 'Denpasar', postalAreas: ['80111','80112','80113'] },
+      { name: 'Badung', postalAreas: ['80351','80352','80353'] },
+      { name: 'Ubud', postalAreas: ['80571','80572','80573'] },
+    ]},
+    { code: 'SU', name: 'Sumatera Utara', cities: [
+      { name: 'Medan', postalAreas: ['20111','20112','20113'] },
+      { name: 'Binjai', postalAreas: ['20711','20712','20713'] },
+    ]},
+    { code: 'SN', name: 'Sulawesi Selatan', cities: [
+      { name: 'Makassar', postalAreas: ['90111','90112','90113'] },
+      { name: 'Parepare', postalAreas: ['91111','91112','91113'] },
+    ]},
+    { code: 'KT', name: 'Kalimantan Timur', cities: [
+      { name: 'Balikpapan', postalAreas: ['76111','76112','76113'] },
+      { name: 'Samarinda', postalAreas: ['75111','75112','75113'] },
     ]},
   ],
 };

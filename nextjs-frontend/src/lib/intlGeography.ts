@@ -678,6 +678,206 @@ export const INTL_GEO: Record<string, IntlCountry> = {
       ]},
     ],
   },
+
+  CN: {
+    name: 'China', code: 'CN', currency: 'CNY', symbol: '¥',
+    regions: [
+      { name: 'Guangdong', code: 'GD', slug: 'guangdong', cities: [
+        { city: 'Shenzhen', slug: 'shenzhen' },
+        { city: 'Guangzhou', slug: 'guangzhou' },
+        { city: 'Dongguan', slug: 'dongguan' },
+        { city: 'Foshan', slug: 'foshan' },
+        { city: 'Zhuhai', slug: 'zhuhai' },
+      ]},
+      { name: 'Jiangsu', code: 'JS', slug: 'jiangsu', cities: [
+        { city: 'Nanjing', slug: 'nanjing' },
+        { city: 'Suzhou', slug: 'suzhou' },
+        { city: 'Wuxi', slug: 'wuxi' },
+        { city: 'Changzhou', slug: 'changzhou' },
+        { city: 'Nantong', slug: 'nantong' },
+      ]},
+      { name: 'Shandong', code: 'SD', slug: 'shandong', cities: [
+        { city: 'Qingdao', slug: 'qingdao' },
+        { city: 'Jinan', slug: 'jinan' },
+        { city: 'Yantai', slug: 'yantai' },
+        { city: 'Weifang', slug: 'weifang' },
+        { city: 'Zibo', slug: 'zibo' },
+      ]},
+      { name: 'Zhejiang', code: 'ZJ', slug: 'zhejiang', cities: [
+        { city: 'Hangzhou', slug: 'hangzhou' },
+        { city: 'Ningbo', slug: 'ningbo' },
+        { city: 'Wenzhou', slug: 'wenzhou' },
+        { city: 'Yiwu', slug: 'yiwu' },
+        { city: 'Shaoxing', slug: 'shaoxing' },
+      ]},
+      { name: 'Sichuan', code: 'SC', slug: 'sichuan', cities: [
+        { city: 'Chengdu', slug: 'chengdu' },
+        { city: 'Mianyang', slug: 'mianyang' },
+        { city: 'Yibin', slug: 'yibin' },
+        { city: 'Leshan', slug: 'leshan' },
+      ]},
+      { name: 'Henan', code: 'HA', slug: 'henan', cities: [
+        { city: 'Zhengzhou', slug: 'zhengzhou' },
+        { city: 'Luoyang', slug: 'luoyang' },
+        { city: 'Kaifeng', slug: 'kaifeng' },
+        { city: 'Anyang', slug: 'anyang' },
+      ]},
+      { name: 'Hubei', code: 'HB', slug: 'hubei', cities: [
+        { city: 'Wuhan', slug: 'wuhan' },
+        { city: 'Yichang', slug: 'yichang' },
+        { city: 'Xiangyang', slug: 'xiangyang' },
+      ]},
+      { name: 'Fujian', code: 'FJ', slug: 'fujian', cities: [
+        { city: 'Xiamen', slug: 'xiamen' },
+        { city: 'Fuzhou', slug: 'fuzhou' },
+        { city: 'Quanzhou', slug: 'quanzhou' },
+        { city: 'Zhangzhou', slug: 'zhangzhou' },
+      ]},
+      { name: 'Shanghai', code: 'SH', slug: 'shanghai', cities: [
+        { city: 'Pudong', slug: 'pudong' },
+        { city: 'Jing\'an', slug: 'jingan' },
+        { city: 'Minhang', slug: 'minhang' },
+        { city: 'Lingang', slug: 'lingang' },
+      ]},
+      { name: 'Beijing', code: 'BJ', slug: 'beijing', cities: [
+        { city: 'Haidian', slug: 'haidian' },
+        { city: 'Chaoyang', slug: 'chaoyang' },
+        { city: 'Zhongguancun', slug: 'zhongguancun' },
+        { city: 'Yizhuang', slug: 'yizhuang' },
+      ]},
+      { name: 'Chongqing', code: 'CQ', slug: 'chongqing', cities: [
+        { city: 'Chongqing', slug: 'chongqing' },
+        { city: 'Jiangbei', slug: 'jiangbei' },
+        { city: 'Yubei', slug: 'yubei' },
+      ]},
+      { name: 'Hunan', code: 'HN', slug: 'hunan', cities: [
+        { city: 'Changsha', slug: 'changsha' },
+        { city: 'Zhuzhou', slug: 'zhuzhou' },
+        { city: 'Hengyang', slug: 'hengyang' },
+      ]},
+      { name: 'Guangxi', code: 'GX', slug: 'guangxi', cities: [
+        { city: 'Nanning', slug: 'nanning' },
+        { city: 'Guilin', slug: 'guilin' },
+        { city: 'Liuzhou', slug: 'liuzhou' },
+      ]},
+      { name: 'Yunnan', code: 'YN', slug: 'yunnan', cities: [
+        { city: 'Kunming', slug: 'kunming' },
+        { city: 'Dali', slug: 'dali' },
+        { city: 'Lijiang', slug: 'lijiang' },
+      ]},
+      { name: 'Shaanxi', code: 'SN', slug: 'shaanxi', cities: [
+        { city: 'Xi\'an', slug: 'xian' },
+        { city: 'Baoji', slug: 'baoji' },
+        { city: 'Xianyang', slug: 'xianyang' },
+      ]},
+      { name: 'Anhui', code: 'AH', slug: 'anhui', cities: [
+        { city: 'Hefei', slug: 'hefei' },
+        { city: 'Wuhu', slug: 'wuhu' },
+        { city: 'Maanshan', slug: 'maanshan' },
+      ]},
+      { name: 'Hainan', code: 'HI', slug: 'hainan', cities: [
+        { city: 'Haikou', slug: 'haikou' },
+        { city: 'Sanya', slug: 'sanya' },
+        { city: 'Danzhou', slug: 'danzhou' },
+      ]},
+      { name: 'Liaoning', code: 'LN', slug: 'liaoning', cities: [
+        { city: 'Shenyang', slug: 'shenyang' },
+        { city: 'Dalian', slug: 'dalian' },
+        { city: 'Anshan', slug: 'anshan' },
+      ]},
+      { name: 'Jiangxi', code: 'JX', slug: 'jiangxi', cities: [
+        { city: 'Nanchang', slug: 'nanchang' },
+        { city: 'Ganzhou', slug: 'ganzhou' },
+        { city: 'Jingdezhen', slug: 'jingdezhen' },
+      ]},
+    ],
+  },
+
+  ID: {
+    name: 'Indonesia', code: 'ID', currency: 'IDR', symbol: 'Rp',
+    regions: [
+      { name: 'DKI Jakarta', code: 'JK', slug: 'dki-jakarta', cities: [
+        { city: 'Jakarta Pusat', slug: 'jakarta-pusat' },
+        { city: 'Jakarta Selatan', slug: 'jakarta-selatan' },
+        { city: 'Jakarta Barat', slug: 'jakarta-barat' },
+        { city: 'Jakarta Utara', slug: 'jakarta-utara' },
+      ]},
+      { name: 'Jawa Barat', code: 'JB', slug: 'jawa-barat', cities: [
+        { city: 'Bandung', slug: 'bandung' },
+        { city: 'Bekasi', slug: 'bekasi' },
+        { city: 'Depok', slug: 'depok' },
+        { city: 'Bogor', slug: 'bogor' },
+        { city: 'Cirebon', slug: 'cirebon' },
+      ]},
+      { name: 'Jawa Tengah', code: 'JT', slug: 'jawa-tengah', cities: [
+        { city: 'Semarang', slug: 'semarang' },
+        { city: 'Solo', slug: 'solo' },
+        { city: 'Pekalongan', slug: 'pekalongan' },
+        { city: 'Magelang', slug: 'magelang' },
+      ]},
+      { name: 'Jawa Timur', code: 'JI', slug: 'jawa-timur', cities: [
+        { city: 'Surabaya', slug: 'surabaya' },
+        { city: 'Malang', slug: 'malang' },
+        { city: 'Sidoarjo', slug: 'sidoarjo' },
+        { city: 'Gresik', slug: 'gresik' },
+      ]},
+      { name: 'DI Yogyakarta', code: 'YO', slug: 'di-yogyakarta', cities: [
+        { city: 'Yogyakarta', slug: 'yogyakarta' },
+        { city: 'Sleman', slug: 'sleman' },
+        { city: 'Bantul', slug: 'bantul' },
+      ]},
+      { name: 'Banten', code: 'BT', slug: 'banten', cities: [
+        { city: 'Tangerang', slug: 'tangerang' },
+        { city: 'Tangerang Selatan', slug: 'tangerang-selatan' },
+        { city: 'Serang', slug: 'serang' },
+        { city: 'Cilegon', slug: 'cilegon' },
+      ]},
+      { name: 'Bali', code: 'BA', slug: 'bali', cities: [
+        { city: 'Denpasar', slug: 'denpasar' },
+        { city: 'Kuta', slug: 'kuta' },
+        { city: 'Ubud', slug: 'ubud' },
+        { city: 'Seminyak', slug: 'seminyak' },
+      ]},
+      { name: 'Sumatera Utara', code: 'SU', slug: 'sumatera-utara', cities: [
+        { city: 'Medan', slug: 'medan' },
+        { city: 'Pematangsiantar', slug: 'pematangsiantar' },
+        { city: 'Binjai', slug: 'binjai' },
+      ]},
+      { name: 'Sumatera Selatan', code: 'SS', slug: 'sumatera-selatan', cities: [
+        { city: 'Palembang', slug: 'palembang' },
+        { city: 'Lubuklinggau', slug: 'lubuklinggau' },
+        { city: 'Prabumulih', slug: 'prabumulih' },
+      ]},
+      { name: 'Riau', code: 'RI', slug: 'riau', cities: [
+        { city: 'Pekanbaru', slug: 'pekanbaru' },
+        { city: 'Dumai', slug: 'dumai' },
+        { city: 'Batam', slug: 'batam' },
+      ]},
+      { name: 'Lampung', code: 'LA', slug: 'lampung', cities: [
+        { city: 'Bandar Lampung', slug: 'bandar-lampung' },
+        { city: 'Metro', slug: 'metro' },
+      ]},
+      { name: 'Sulawesi Selatan', code: 'SN', slug: 'sulawesi-selatan', cities: [
+        { city: 'Makassar', slug: 'makassar' },
+        { city: 'Parepare', slug: 'parepare' },
+        { city: 'Palopo', slug: 'palopo' },
+      ]},
+      { name: 'Kalimantan Timur', code: 'KT', slug: 'kalimantan-timur', cities: [
+        { city: 'Samarinda', slug: 'samarinda' },
+        { city: 'Balikpapan', slug: 'balikpapan' },
+        { city: 'Bontang', slug: 'bontang' },
+      ]},
+      { name: 'Kalimantan Barat', code: 'KB', slug: 'kalimantan-barat', cities: [
+        { city: 'Pontianak', slug: 'pontianak' },
+        { city: 'Singkawang', slug: 'singkawang' },
+      ]},
+      { name: 'Papua', code: 'PA', slug: 'papua', cities: [
+        { city: 'Jayapura', slug: 'jayapura' },
+        { city: 'Sorong', slug: 'sorong' },
+        { city: 'Merauke', slug: 'merauke' },
+      ]},
+    ],
+  },
 };
 
 export function getCountry(countryCode: string): IntlCountry | undefined {
