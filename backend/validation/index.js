@@ -12,8 +12,12 @@ const validationCache = new NodeCache({ stdTTL: 86400, checkperiod: 3600 });
 async function buildValidationPayload(sector, city, country = 'US') {
   const cacheKey = `${sector}:${city}:${country}`.toLowerCase();
   const cached   = validationCache.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`[validation] cache HIT for ${cacheKey}`);
+    return cached;
+  }
 
+  console.log(`[validation] running signals for: ${sector} / ${city} / ${country}`);
   const keyword = `${sector} ${city}`.trim();
 
   const [redditResult, trendsResult, reviewsResult, searchResult] = await Promise.allSettled([
@@ -30,6 +34,12 @@ async function buildValidationPayload(sector, city, country = 'US') {
     search:       searchResult.status  === 'fulfilled' ? searchResult.value  : null,
     generatedAt:  new Date().toISOString(),
   };
+
+  console.log(`[validation] results — reddit:${payload.reddit?.length ?? 'null'} trends:${payload.trends?.trend ?? 'null'} reviews:${payload.reviews?.reviewCount ?? 'null'} search:${payload.search?.totalMonthlySearches ?? 'null'}`);
+  if (redditResult.status  === 'rejected') console.warn('[validation] reddit FAILED:', redditResult.reason?.message);
+  if (trendsResult.status  === 'rejected') console.warn('[validation] trends FAILED:', trendsResult.reason?.message);
+  if (reviewsResult.status === 'rejected') console.warn('[validation] reviews FAILED:', reviewsResult.reason?.message);
+  if (searchResult.status  === 'rejected') console.warn('[validation] search FAILED:', searchResult.reason?.message);
 
   // Only cache if at least one signal succeeded
   const hasData = Object.values(payload).some(v => v && v !== null && typeof v === 'object' && !('toISOString' in v));
