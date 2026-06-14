@@ -1,0 +1,130 @@
+.wrapper {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 8px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.headerTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.01em;
+}
+
+.gradeBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: #fff;
+}
+
+.grade {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.gradeScore {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.verdict {
+  font-size: 13px;
+  color: #4b5563;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.risk {
+  color: #c2410c;
+  font-weight: 600;
+}
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .chips { grid-template-columns: 1fr; }
+}
+
+.chip {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.chipLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.chipValue {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.chipSub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.chipMeta {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 3px;
+}
+
+.conf {
+  color: #9ca3af;
+}
+
+.barWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.barTrack {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.barLabel {
+  font-size: 14px;
+  font-weight: 800;
+  min-width: 36px;
+  text-align: right;
+}

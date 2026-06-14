@@ -505,10 +505,20 @@ MANDATORY INDONESIA RULES:
   const somExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM (1% of TAM)';
 
   const { buildValidationPayload, buildValidationPromptBlock } = require('./validation/index');
+  const { scoreOpportunity } = require('./scoring/index');
   const validationPayload = await buildValidationPayload(sector, city || '', country || 'US');
+  const opportunityScores = scoreOpportunity(sector, validationPayload);
   const validationBlock   = buildValidationPromptBlock(validationPayload);
 
-  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}${indiaCtx}${validationBlock}
+  // Inject scores into the prompt so Claude references them naturally
+  const scoreCtx = opportunityScores.demand ? `\nSCORING CONTEXT (pre-computed — reference these naturally, do not recalculate):
+- Demand Score: ${opportunityScores.demand.score}/10 (${opportunityScores.demand.label}) — ${opportunityScores.demand.confidence} confidence
+- Competition: ${opportunityScores.competition?.level || 'Unknown'} (entry barrier: ${opportunityScores.competition?.entryBarrier || 'Unknown'})
+- Monetisation: ${opportunityScores.monetisation?.level || 'Unknown'} (avg ticket ~$${opportunityScores.monetisation?.avgTicket || 'N/A'}, ${opportunityScores.monetisation?.recurring ? 'recurring' : 'one-off'})
+- BIG Viability: ${opportunityScores.viability.score}/10 — "${opportunityScores.viability.verdict}"
+Briefly mention these scores in whyItWorks. Keep it one sentence.\n` : '';
+
+  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}${indiaCtx}${validationBlock}${scoreCtx}
 Return ONLY a valid JSON object with exactly these fields (no markdown, no explanation, just raw JSON):${currencyNote}
 
 {
@@ -542,6 +552,7 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
     const idea = await callClaude(client, prompt, budget);
     idea.aiGenerated = true;
     idea.validationSignals = validationPayload;
+    idea.opportunityScores = opportunityScores;
     res.json(idea);
   } catch (err) {
     console.error('generate-idea error:', err.message);
@@ -662,7 +673,9 @@ MANDATORY INDONESIA RULES:
   const boSomExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM';
 
   const { buildValidationPayload: _bvp, buildValidationPromptBlock: _bvpb } = require('./validation/index');
+  const { scoreOpportunity: _so } = require('./scoring/index');
   const boValidationPayload = await _bvp(sector, city || '', country || 'US');
+  const boOpportunityScores = _so(sector, boValidationPayload);
   const boValidationBlock   = _bvpb(boValidationPayload);
 
   const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
@@ -711,6 +724,7 @@ The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values 
     idea.blueOcean = true;
     idea.topCompetitors = [];
     idea.validationSignals = boValidationPayload;
+    idea.opportunityScores = boOpportunityScores;
     res.json(idea);
   } catch (err) {
     console.error('generate-blue-ocean error:', err.message);

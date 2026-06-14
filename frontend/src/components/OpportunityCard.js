@@ -4,6 +4,7 @@ import styles from './OpportunityCard.module.css';
 import SaveButton from './SaveButton';
 import ShareButton from './ShareButton';
 import BusinessPlan from './BusinessPlan';
+import ScoreBadge from './ScoreBadge';
 
 const LEGEND = [
   { abbr: 'TAM', full: 'Total Addressable Market', desc: 'The entire revenue opportunity if 100% market share were captured.' },
@@ -409,11 +410,12 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
   const o = {
     ...raw,
     score: typeof raw.score === 'string' ? parseFloat(raw.score) : (raw.score || 0),
-    profitDrivers: Array.isArray(raw.profitDrivers) ? raw.profitDrivers : [],
-    greenSignals: Array.isArray(raw.greenSignals) ? raw.greenSignals : [],
-    keyRisks: Array.isArray(raw.keyRisks) ? raw.keyRisks : [],
-    watchpoints: Array.isArray(raw.watchpoints) ? raw.watchpoints : [],
-    topCompetitors: Array.isArray(raw.topCompetitors) ? raw.topCompetitors : [],
+    profitDrivers:    Array.isArray(raw.profitDrivers)   ? raw.profitDrivers   : [],
+    greenSignals:     Array.isArray(raw.greenSignals)    ? raw.greenSignals    : [],
+    keyRisks:         Array.isArray(raw.keyRisks)        ? raw.keyRisks        : [],
+    watchpoints:      Array.isArray(raw.watchpoints)     ? raw.watchpoints     : [],
+    topCompetitors:   Array.isArray(raw.topCompetitors)  ? raw.topCompetitors  : [],
+    opportunityScores: raw.opportunityScores || null,
     compareData,
   };
 
@@ -483,6 +485,12 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
             </div>
           ))}
         </div>
+
+        {o.opportunityScores && (
+          <div className={styles.section} style={{ paddingTop: 0 }}>
+            <ScoreBadge scores={o.opportunityScores} />
+          </div>
+        )}
 
         {o.whyItWorks && (
           <div className={styles.section}>
