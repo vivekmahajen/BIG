@@ -351,6 +351,20 @@ app.get('/api/sector-opportunities', auth, (req, res) => {
   res.json(opps);
 });
 
+// Pre-fetch validation signals (cacheable, no credit cost)
+app.post('/api/validate', auth, async (req, res) => {
+  const { sector, city, country } = req.body;
+  if (!sector) return res.status(400).json({ error: 'sector required' });
+  try {
+    const { buildValidationPayload } = require('./validation/index');
+    const payload = await buildValidationPayload(sector, city || '', country || 'US');
+    res.json(payload);
+  } catch (err) {
+    console.error('validate error:', err.message);
+    res.status(500).json({ error: 'Validation fetch failed' });
+  }
+});
+
 app.post('/api/generate-idea', auth, async (req, res) => {
   const { sector, zip, city, state, budget, country } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });
@@ -468,8 +482,11 @@ MANDATORY INDONESIA RULES:
   const samExample = country === 'IN' ? '₹X,XXX crore (10% of TAM)' : country === 'CN' ? '¥X亿 (10% of TAM)' : country === 'ID' ? 'Rp X miliar (10% of TAM)' : '$XM (10% of TAM)';
   const somExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM (1% of TAM)';
 
-  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}${indiaCtx}
+  const { buildValidationPayload, buildValidationPromptBlock } = require('./validation/index');
+  const validationPayload = await buildValidationPayload(sector, city || '', country || 'US');
+  const validationBlock   = buildValidationPromptBlock(validationPayload);
 
+  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}${indiaCtx}${validationBlock}
 Return ONLY a valid JSON object with exactly these fields (no markdown, no explanation, just raw JSON):${currencyNote}
 
 {
@@ -502,6 +519,7 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
   try {
     const idea = await callClaude(client, prompt, budget);
     idea.aiGenerated = true;
+    idea.validationSignals = validationPayload;
     res.json(idea);
   } catch (err) {
     console.error('generate-idea error:', err.message);
@@ -621,9 +639,13 @@ MANDATORY INDONESIA RULES:
   const boSamExample = country === 'IN' ? '₹X,XXX crore (10% of TAM)' : country === 'CN' ? '¥X亿 (10% of TAM)' : country === 'ID' ? 'Rp X miliar (10% of TAM)' : '$XM';
   const boSomExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM';
 
+  const { buildValidationPayload: _bvp, buildValidationPromptBlock: _bvpb } = require('./validation/index');
+  const boValidationPayload = await _bvp(sector, city || '', country || 'US');
+  const boValidationBlock   = _bvpb(boValidationPayload);
+
   const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
 
-CRITICAL REQUIREMENTS:${budgetCtx}${boIndiaCtx}
+CRITICAL REQUIREMENTS:${budgetCtx}${boIndiaCtx}${boValidationBlock}
 - The idea must serve a customer need that is currently UNMET or UNDERSERVED with zero established competition
 - It must NOT be a "better version" of an existing business — it must create a NEW category or market
 - Explain specifically WHY no competitors exist yet (timing, technology gap, overlooked segment, regulatory change, etc.)
@@ -666,6 +688,7 @@ The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values 
     idea.aiGenerated = true;
     idea.blueOcean = true;
     idea.topCompetitors = [];
+    idea.validationSignals = boValidationPayload;
     res.json(idea);
   } catch (err) {
     console.error('generate-blue-ocean error:', err.message);
