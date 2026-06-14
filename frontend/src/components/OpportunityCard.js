@@ -509,6 +509,89 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
           </div>
         )}
 
+        {o.validationSignals && (() => {
+          const v = o.validationSignals;
+          const hasReddit  = v.reddit  && v.reddit.length  > 0;
+          const hasTrends  = v.trends  && v.trends.growthPercent != null;
+          const hasReviews = v.reviews && v.reviews.topPainThemes?.length > 0;
+          const hasSearch  = v.search  && v.search.totalMonthlySearches > 0;
+          if (!hasReddit && !hasTrends && !hasReviews && !hasSearch) return null;
+          return (
+            <div className={styles.section}>
+              <details open>
+                <summary className={styles.sectionTitle} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  📡 Real Market Evidence
+                </summary>
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {hasReddit && (
+                    <div style={{ background: '#fff7ed', borderRadius: '8px', padding: '12px', border: '1px solid #fed7aa' }}>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#c2410c', marginBottom: '8px' }}>
+                        🔴 Reddit Pain Points — {v.reddit.length} posts
+                      </div>
+                      {v.reddit.slice(0, 3).map((p, i) => (
+                        <div key={i} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: i < 2 ? '1px solid #fed7aa' : 'none' }}>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{p.subreddit} · {p.upvotes} upvotes · {p.comments} comments</div>
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                            <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: '#6366f1', textDecoration: 'none' }}>"{p.title.slice(0, 100)}{p.title.length > 100 ? '…' : ''}"</a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {hasTrends && (
+                    <div style={{ background: '#f0fdf4', borderRadius: '8px', padding: '12px', border: '1px solid #bbf7d0' }}>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#15803d', marginBottom: '6px' }}>
+                        📈 Google Trends — "{v.trends.keyword}"
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#374151' }}>
+                        <strong>{v.trends.trend}</strong> &nbsp;
+                        <span style={{ color: v.trends.growthPercent >= 0 ? '#15803d' : '#dc2626' }}>
+                          {v.trends.growthPercent > 0 ? '+' : ''}{v.trends.growthPercent}% YoY
+                        </span>
+                        &nbsp;· Current interest: {v.trends.currentScore}/100
+                      </div>
+                      {v.trends.risingQueries?.length > 0 && (
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                          Rising: {v.trends.risingQueries.map(q => `"${q.query}" +${q.value}%`).join(' · ')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {hasReviews && (
+                    <div style={{ background: '#fef9c3', borderRadius: '8px', padding: '12px', border: '1px solid #fde047' }}>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#a16207', marginBottom: '6px' }}>
+                        ⭐ Competitor Review Intelligence — {v.reviews.reviewCount} negative reviews
+                      </div>
+                      {v.reviews.topPainThemes.map((t, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#374151', marginBottom: '3px' }}>
+                          <span>{t.theme.replace(/_/g, ' ')}</span>
+                          <span style={{ fontWeight: 600 }}>{t.pct}% of complaints</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {hasSearch && (
+                    <div style={{ background: '#eff6ff', borderRadius: '8px', padding: '12px', border: '1px solid #bfdbfe' }}>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#1d4ed8', marginBottom: '6px' }}>
+                        🔍 Search Demand — {v.search.verdict}
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#374151', marginBottom: '4px' }}>
+                        <strong>{v.search.totalMonthlySearches.toLocaleString()}</strong> monthly searches
+                        {v.search.cpc > 0 && <> · CPC ${v.search.cpc} (commercial intent)</>}
+                      </div>
+                      {v.search.keywords?.slice(0, 3).map((k, i) => (
+                        <div key={i} style={{ fontSize: '12px', color: '#6b7280' }}>
+                          "{k.keyword}": {k.monthlyVolume.toLocaleString()}/mo
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </details>
+            </div>
+          );
+        })()}
+
         {o.keyRisks.length > 0 && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>⚠️ Key Risks</h3>
