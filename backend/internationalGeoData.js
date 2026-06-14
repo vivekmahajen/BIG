@@ -156,40 +156,184 @@ const INTERNATIONAL_REGIONS = {
 
   IN: [
     { code: 'IN-MH', name: 'Maharashtra', cities: [
-      { name: 'Mumbai', postalAreas: ['400001','400051','400063','400098'] },
-      { name: 'Pune', postalAreas: ['411001','411004','411014','411028'] },
-      { name: 'Nagpur', postalAreas: ['440001','440010','440015'] },
-      { name: 'Nashik', postalAreas: ['422001','422008'] },
+      { name: 'Mumbai', postalAreas: ['400001', '400002', '400050', '400051', '400063', '400064', '400070', '400076'] },
+      { name: 'Pune', postalAreas: ['411001', '411002', '411005', '411007', '411028', '411045'] },
+      { name: 'Nagpur', postalAreas: ['440001', '440002', '440010', '440012', '440022'] },
+      { name: 'Nashik', postalAreas: ['422001', '422002', '422005', '422011'] },
+      { name: 'Aurangabad', postalAreas: ['431001', '431003', '431005'] },
+    ]},
+    { code: 'IN-DL', name: 'Delhi', cities: [
+      { name: 'New Delhi', postalAreas: ['110001', '110002', '110003', '110006', '110011', '110021', '110029', '110070'] },
+      { name: 'Delhi', postalAreas: ['110031', '110032', '110051', '110052', '110053', '110085', '110086', '110092'] },
     ]},
     { code: 'IN-KA', name: 'Karnataka', cities: [
-      { name: 'Bangalore', postalAreas: ['560001','560008','560025','560038','560095'] },
-      { name: 'Mysore', postalAreas: ['570001','570007','570019'] },
-      { name: 'Mangalore', postalAreas: ['575001','575003','574152'] },
-      { name: 'Hubli', postalAreas: ['580020','580023'] },
-    ]},
-    { code: 'IN-DL', name: 'Delhi (NCR)', cities: [
-      { name: 'New Delhi', postalAreas: ['110001','110011','110024','110049'] },
-      { name: 'Gurugram', postalAreas: ['122001','122002','122011'] },
-      { name: 'Noida', postalAreas: ['201301','201304','201301'] },
-      { name: 'Faridabad', postalAreas: ['121001','121003'] },
+      { name: 'Bengaluru', postalAreas: ['560001', '560002', '560011', '560017', '560029', '560037', '560068', '560100'] },
+      { name: 'Mysuru', postalAreas: ['570001', '570002', '570004', '570008', '570010'] },
+      { name: 'Mangaluru', postalAreas: ['575001', '575002', '575003', '575006'] },
+      { name: 'Hubballi', postalAreas: ['580020', '580021', '580023', '580025', '580028', '580029', '580031'] },
     ]},
     { code: 'IN-TN', name: 'Tamil Nadu', cities: [
-      { name: 'Chennai', postalAreas: ['600001','600006','600018','600031'] },
-      { name: 'Coimbatore', postalAreas: ['641001','641004','641018'] },
-      { name: 'Madurai', postalAreas: ['625001','625009','625014'] },
-    ]},
-    { code: 'IN-TS', name: 'Telangana', cities: [
-      { name: 'Hyderabad', postalAreas: ['500001','500003','500016','500081'] },
-      { name: 'Warangal', postalAreas: ['506001','506002'] },
+      { name: 'Chennai', postalAreas: ['600001', '600002', '600006', '600017', '600028', '600040', '600078', '600096'] },
+      { name: 'Coimbatore', postalAreas: ['641001', '641002', '641004', '641011', '641018', '641021'] },
+      { name: 'Madurai', postalAreas: ['625001', '625002', '625003', '625009', '625016'] },
+      { name: 'Tiruchirappalli', postalAreas: ['620001', '620002', '620003', '620008', '620017'] },
     ]},
     { code: 'IN-GJ', name: 'Gujarat', cities: [
-      { name: 'Ahmedabad', postalAreas: ['380001','380006','380015','380052'] },
-      { name: 'Surat', postalAreas: ['395001','395002','395007'] },
-      { name: 'Vadodara', postalAreas: ['390001','390005','390007'] },
+      { name: 'Ahmedabad', postalAreas: ['380001', '380002', '380006', '380009', '380013', '380015', '380051', '380063'] },
+      { name: 'Surat', postalAreas: ['395001', '395002', '395003', '395004', '395005', '395006', '395007'] },
+      { name: 'Vadodara', postalAreas: ['390001', '390002', '390003', '390007', '390011', '390019'] },
+      { name: 'Rajkot', postalAreas: ['360001', '360002', '360003', '360004', '360005', '360006'] },
+    ]},
+    { code: 'IN-RJ', name: 'Rajasthan', cities: [
+      { name: 'Jaipur', postalAreas: ['302001', '302002', '302003', '302004', '302006', '302011', '302012', '302017'] },
+      { name: 'Jodhpur', postalAreas: ['342001', '342002', '342003', '342005', '342006', '342008'] },
+      { name: 'Udaipur', postalAreas: ['313001', '313002', '313004', '313011'] },
+      { name: 'Kota', postalAreas: ['324001', '324002', '324003', '324005', '324006', '324007', '324010'] },
+    ]},
+    { code: 'IN-UP', name: 'Uttar Pradesh', cities: [
+      { name: 'Lucknow', postalAreas: ['226001', '226002', '226003', '226004', '226005', '226010', '226012', '226016'] },
+      { name: 'Kanpur', postalAreas: ['208001', '208002', '208003', '208004', '208005', '208006', '208011'] },
+      { name: 'Agra', postalAreas: ['282001', '282002', '282003', '282004', '282005', '282006', '282007', '282010'] },
+      { name: 'Varanasi', postalAreas: ['221001', '221002', '221003', '221004', '221005', '221006', '221007', '221010'] },
+      { name: 'Noida', postalAreas: ['201301', '201302', '201303', '201304', '201305', '201306', '201307', '201308'] },
     ]},
     { code: 'IN-WB', name: 'West Bengal', cities: [
-      { name: 'Kolkata', postalAreas: ['700001','700013','700027','700091'] },
-      { name: 'Howrah', postalAreas: ['711101','711104'] },
+      { name: 'Kolkata', postalAreas: ['700001', '700002', '700012', '700017', '700019', '700029', '700040', '700064'] },
+      { name: 'Howrah', postalAreas: ['711101', '711102', '711103', '711104', '711106'] },
+      { name: 'Durgapur', postalAreas: ['713201', '713202', '713203', '713204', '713205', '713206'] },
+      { name: 'Asansol', postalAreas: ['713301', '713302', '713303', '713304', '713305', '713306'] },
+    ]},
+    { code: 'IN-TS', name: 'Telangana', cities: [
+      { name: 'Hyderabad', postalAreas: ['500001', '500002', '500003', '500004', '500028', '500034', '500072', '500081'] },
+      { name: 'Warangal', postalAreas: ['506001', '506002', '506003', '506004', '506005', '506006'] },
+      { name: 'Nizamabad', postalAreas: ['503001', '503002', '503003', '503006', '503007'] },
+      { name: 'Karimnagar', postalAreas: ['505001', '505002', '505003', '505004', '505186'] },
+    ]},
+    { code: 'IN-AP', name: 'Andhra Pradesh', cities: [
+      { name: 'Visakhapatnam', postalAreas: ['530001', '530002', '530003', '530004', '530017', '530020', '530022', '530040'] },
+      { name: 'Vijayawada', postalAreas: ['520001', '520002', '520003', '520004', '520007', '520010', '520012'] },
+      { name: 'Guntur', postalAreas: ['522001', '522002', '522003', '522004', '522006', '522007'] },
+      { name: 'Tirupati', postalAreas: ['517501', '517502', '517503', '517504', '517505', '517507'] },
+    ]},
+    { code: 'IN-KL', name: 'Kerala', cities: [
+      { name: 'Kochi', postalAreas: ['682001', '682002', '682005', '682011', '682016', '682017', '682018', '682020'] },
+      { name: 'Thiruvananthapuram', postalAreas: ['695001', '695002', '695003', '695004', '695011', '695014', '695016'] },
+      { name: 'Kozhikode', postalAreas: ['673001', '673002', '673003', '673004', '673005', '673006', '673009'] },
+      { name: 'Thrissur', postalAreas: ['680001', '680002', '680003', '680004', '680005', '680006', '680007'] },
+    ]},
+    { code: 'IN-MP', name: 'Madhya Pradesh', cities: [
+      { name: 'Bhopal', postalAreas: ['462001', '462002', '462003', '462011', '462016', '462021', '462023', '462026'] },
+      { name: 'Indore', postalAreas: ['452001', '452002', '452003', '452006', '452007', '452008', '452010', '452011'] },
+      { name: 'Gwalior', postalAreas: ['474001', '474002', '474003', '474004', '474005', '474006', '474010', '474011'] },
+      { name: 'Jabalpur', postalAreas: ['482001', '482002', '482003', '482004', '482005', '482006', '482007', '482008'] },
+    ]},
+    { code: 'IN-PB', name: 'Punjab', cities: [
+      { name: 'Chandigarh', postalAreas: ['160001', '160002', '160003', '160009', '160010', '160011', '160014', '160015'] },
+      { name: 'Ludhiana', postalAreas: ['141001', '141002', '141003', '141004', '141008', '141010', '141012', '141013'] },
+      { name: 'Amritsar', postalAreas: ['143001', '143002', '143003', '143004', '143005', '143006', '143007', '143008'] },
+      { name: 'Jalandhar', postalAreas: ['144001', '144002', '144003', '144004', '144005', '144006', '144007', '144008'] },
+    ]},
+    { code: 'IN-HR', name: 'Haryana', cities: [
+      { name: 'Gurugram', postalAreas: ['122001', '122002', '122003', '122004', '122006', '122007', '122008', '122009'] },
+      { name: 'Faridabad', postalAreas: ['121001', '121002', '121003', '121004', '121005', '121006', '121007'] },
+      { name: 'Panipat', postalAreas: ['132001', '132103', '132104', '132105', '132106', '132107'] },
+      { name: 'Ambala', postalAreas: ['134001', '134002', '134003', '134004', '134005', '134007', '134008'] },
+    ]},
+    { code: 'IN-BR', name: 'Bihar', cities: [
+      { name: 'Patna', postalAreas: ['800001', '800002', '800003', '800004', '800005', '800006', '800007', '800009'] },
+      { name: 'Gaya', postalAreas: ['823001', '823002', '823003', '823004', '823005', '823006'] },
+      { name: 'Muzaffarpur', postalAreas: ['842001', '842002', '842003', '842004', '842005', '842006'] },
+      { name: 'Bhagalpur', postalAreas: ['812001', '812002', '812003', '812004', '812005', '812007'] },
+    ]},
+    { code: 'IN-OR', name: 'Odisha', cities: [
+      { name: 'Bhubaneswar', postalAreas: ['751001', '751002', '751003', '751006', '751007', '751010', '751012', '751015'] },
+      { name: 'Cuttack', postalAreas: ['753001', '753002', '753003', '753004', '753005', '753006', '753007', '753008'] },
+      { name: 'Rourkela', postalAreas: ['769001', '769002', '769003', '769004', '769005', '769006', '769007'] },
+      { name: 'Berhampur', postalAreas: ['760001', '760002', '760003', '760004', '760006', '760007', '760010'] },
+    ]},
+    { code: 'IN-JH', name: 'Jharkhand', cities: [
+      { name: 'Ranchi', postalAreas: ['834001', '834002', '834003', '834004', '834005', '834006', '834008', '834009'] },
+      { name: 'Jamshedpur', postalAreas: ['831001', '831002', '831003', '831004', '831005', '831006', '831009'] },
+      { name: 'Dhanbad', postalAreas: ['826001', '826002', '826003', '826004', '826005', '826006', '826007'] },
+      { name: 'Bokaro', postalAreas: ['827001', '827002', '827003', '827004', '827006', '827009', '827010'] },
+    ]},
+    { code: 'IN-AS', name: 'Assam', cities: [
+      { name: 'Guwahati', postalAreas: ['781001', '781002', '781003', '781004', '781005', '781007', '781011', '781021'] },
+      { name: 'Silchar', postalAreas: ['788001', '788002', '788003', '788004', '788005', '788006', '788007'] },
+      { name: 'Dibrugarh', postalAreas: ['786001', '786002', '786003', '786004', '786005', '786006'] },
+      { name: 'Jorhat', postalAreas: ['785001', '785002', '785003', '785004', '785005', '785006', '785007'] },
+    ]},
+    { code: 'IN-CG', name: 'Chhattisgarh', cities: [
+      { name: 'Raipur', postalAreas: ['492001', '492002', '492003', '492004', '492005', '492006', '492007', '492009'] },
+      { name: 'Bhilai', postalAreas: ['490001', '490006', '490007', '490009', '490011', '490020', '490021', '490022'] },
+      { name: 'Bilaspur', postalAreas: ['495001', '495002', '495003', '495004', '495006', '495007', '495008'] },
+      { name: 'Korba', postalAreas: ['495450', '495451', '495452', '495453', '495454', '495455'] },
+    ]},
+    { code: 'IN-UK', name: 'Uttarakhand', cities: [
+      { name: 'Dehradun', postalAreas: ['248001', '248002', '248003', '248006', '248007', '248009', '248010', '248011'] },
+      { name: 'Haridwar', postalAreas: ['249401', '249402', '249403', '249404', '249405', '249406', '249407', '249408'] },
+      { name: 'Roorkee', postalAreas: ['247667', '247668', '247670', '247671', '247672', '247675', '247677'] },
+      { name: 'Haldwani', postalAreas: ['263139', '263140', '263141', '263142', '263143', '263144', '263145'] },
+    ]},
+    { code: 'IN-HP', name: 'Himachal Pradesh', cities: [
+      { name: 'Shimla', postalAreas: ['171001', '171002', '171003', '171004', '171005', '171006', '171007', '171008'] },
+      { name: 'Manali', postalAreas: ['175131', '175132', '175133', '175134', '175136'] },
+      { name: 'Dharamshala', postalAreas: ['176215', '176216', '176217', '176218', '176219'] },
+      { name: 'Solan', postalAreas: ['173001', '173002', '173003', '173005', '173006', '173007', '173008', '173009'] },
+    ]},
+    { code: 'IN-GA', name: 'Goa', cities: [
+      { name: 'Panaji', postalAreas: ['403001', '403002', '403003', '403004', '403005', '403006'] },
+      { name: 'Margao', postalAreas: ['403601', '403602', '403603', '403604', '403605', '403606', '403607'] },
+      { name: 'Vasco da Gama', postalAreas: ['403802', '403803', '403804', '403806', '403807'] },
+      { name: 'Mapusa', postalAreas: ['403507', '403508', '403509', '403510', '403511', '403512'] },
+    ]},
+    { code: 'IN-MN', name: 'Manipur', cities: [
+      { name: 'Imphal', postalAreas: ['795001', '795002', '795003', '795004', '795005', '795006', '795007', '795008'] },
+    ]},
+    { code: 'IN-TR', name: 'Tripura', cities: [
+      { name: 'Agartala', postalAreas: ['799001', '799002', '799003', '799004', '799005', '799006', '799007', '799010'] },
+    ]},
+    { code: 'IN-ML', name: 'Meghalaya', cities: [
+      { name: 'Shillong', postalAreas: ['793001', '793002', '793003', '793004', '793005', '793006', '793007', '793008'] },
+    ]},
+    { code: 'IN-NL', name: 'Nagaland', cities: [
+      { name: 'Kohima', postalAreas: ['797001', '797002', '797003', '797004', '797005'] },
+      { name: 'Dimapur', postalAreas: ['797112', '797113', '797114', '797115', '797116', '797117'] },
+    ]},
+    { code: 'IN-AR', name: 'Arunachal Pradesh', cities: [
+      { name: 'Itanagar', postalAreas: ['791111', '791112', '791113', '791114', '791115'] },
+    ]},
+    { code: 'IN-MZ', name: 'Mizoram', cities: [
+      { name: 'Aizawl', postalAreas: ['796001', '796002', '796003', '796004', '796005', '796006', '796007'] },
+    ]},
+    { code: 'IN-SK', name: 'Sikkim', cities: [
+      { name: 'Gangtok', postalAreas: ['737101', '737102', '737103', '737104', '737106', '737107'] },
+    ]},
+    { code: 'IN-JK', name: 'Jammu & Kashmir', cities: [
+      { name: 'Srinagar', postalAreas: ['190001', '190002', '190003', '190004', '190005', '190006', '190007', '190008'] },
+      { name: 'Jammu', postalAreas: ['180001', '180002', '180003', '180004', '180005', '180006', '180007', '180012'] },
+    ]},
+    { code: 'IN-LA', name: 'Ladakh', cities: [
+      { name: 'Leh', postalAreas: ['194101', '194102', '194103', '194104', '194105', '194106'] },
+      { name: 'Kargil', postalAreas: ['194103', '194201', '194202', '194203', '194204'] },
+    ]},
+    { code: 'IN-CH', name: 'Chandigarh', cities: [
+      { name: 'Chandigarh', postalAreas: ['160001', '160002', '160003', '160009', '160010', '160011', '160014', '160015'] },
+    ]},
+    { code: 'IN-PY', name: 'Puducherry', cities: [
+      { name: 'Puducherry', postalAreas: ['605001', '605002', '605003', '605004', '605005', '605006', '605007', '605008'] },
+      { name: 'Karaikal', postalAreas: ['609601', '609602', '609603', '609604', '609605', '609606'] },
+    ]},
+    { code: 'IN-AN', name: 'Andaman & Nicobar Islands', cities: [
+      { name: 'Port Blair', postalAreas: ['744101', '744102', '744103', '744104', '744105', '744106'] },
+    ]},
+    { code: 'IN-LD', name: 'Lakshadweep', cities: [
+      { name: 'Kavaratti', postalAreas: ['682555', '682556', '682557', '682559'] },
+    ]},
+    { code: 'IN-DN', name: 'Dadra & Nagar Haveli and Daman & Diu', cities: [
+      { name: 'Silvassa', postalAreas: ['396230', '396231', '396232', '396233', '396235', '396236'] },
+      { name: 'Daman', postalAreas: ['396210', '396211', '396212', '396213', '396215', '396220'] },
+      { name: 'Diu', postalAreas: ['362520', '362521', '362522', '362523', '362524', '362526'] },
     ]},
   ],
 

@@ -373,17 +373,49 @@ app.post('/api/generate-idea', auth, async (req, res) => {
   const { getCountryName } = require('./internationalGeoData');
   const countryLabel = country && country !== 'US' ? getCountryName(country) : null;
   const locationCtx = [city, state, countryLabel, zip].filter(Boolean).join(', ');
+
+  let indiaCtx = '';
+  let currencyNote = '';
+  if (country === 'IN') {
+    const { NIC_INDUSTRY_MAP, detectCityTier, getIndiaStateByCode, getRelevantSchemes } = require('./config/indiaData');
+    const stateData = getIndiaStateByCode(state);
+    const cityTier = detectCityTier(city);
+    const nicInfo = NIC_INDUSTRY_MAP[sector] || {};
+    const schemes = getRelevantSchemes(0); // get all major schemes
+    indiaCtx = `
+INDIA-SPECIFIC CONTEXT:
+- State Economic Profile: ${stateData?.economicProfile || 'Emerging market with growth potential'}
+- City Tier: Tier ${cityTier} city (${cityTier === 1 ? 'Metro — high competition, high purchasing power' : cityTier === 2 ? 'Emerging city — growing middle class, lower costs' : 'Smaller city — underserved market, cost advantages'})
+- NIC 2008 Industry Code: ${nicInfo.nic || 'N/A'} — ${nicInfo.nicDesc || sector}
+- GST Note: ${stateData?.gstThresholdNote || 'GST registration required above ₹20L turnover'}
+- Business Registration: Udyam Portal (udyamregistration.gov.in) for MSME, MCA21 for Pvt Ltd/OPC
+- Applicable Government Schemes: ${schemes.map(s => s.name).join(', ')}
+
+MANDATORY INDIA RULES:
+1. ALL monetary values MUST be in Indian Rupees (₹). NEVER use USD/$/dollars.
+2. Use Indian number format: ₹1,00,000 (one lakh) NOT ₹100,000.
+3. Use Indian business terms: "lakh" for 1,00,000 and "crore" for 1,00,00,000.
+4. Startup costs should reflect Indian market rates (labour, rent, materials significantly lower than US).
+5. Mention relevant government schemes (MUDRA, PMEGP, Stand-Up India, etc.) in funding section.
+6. Consider local competition from unorganised sector, kirana stores, local service providers.
+7. Registration path: Udyam (MSME) → GST → Shop & Establishment Act → any sector-specific licence.
+`;
+    currencyNote = ' Use ₹ (Indian Rupees) for ALL monetary values. Indian number format: ₹1,00,000 = one lakh.';
+  }
+
   const budgetCtx = budget
     ? `\n\nCRITICAL BUDGET CONSTRAINT: The total startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design the entire business model around this budget — choose a lean, capital-efficient approach that is genuinely viable at this funding level. Do NOT suggest a business that requires more capital than this.`
     : '';
 
-  const startupCostExample = budget
-    ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
-    : '"$XK–$YK"';
+  const startupCostExample = country === 'IN'
+    ? '"₹X lakh–₹Y lakh"'
+    : budget
+      ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+      : '"$XK–$YK"';
 
-  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}
+  const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}${indiaCtx}
 
-Return ONLY a valid JSON object with exactly these fields (no markdown, no explanation, just raw JSON):
+Return ONLY a valid JSON object with exactly these fields (no markdown, no explanation, just raw JSON):${currencyNote}
 
 {
   "name": "Specific Business Name (4-7 words)",
@@ -391,11 +423,11 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
   "startupCost": ${startupCostExample},
   "grossMargin": "XX–YY%",
   "timeToProfit": "X–Y months",
-  "tam": "$XB or $XM",
-  "revenueYr1": "$XK–$YK",
-  "revenueYr3": "$XM–$YM",
+  "tam": "${country === 'IN' ? '₹X,XX,XXX crore or ₹X,XXX crore' : '$XB or $XM'}",
+  "revenueYr1": "${country === 'IN' ? '₹X lakh–₹Y lakh' : '$XK–$YK'}",
+  "revenueYr3": "${country === 'IN' ? '₹X crore–₹Y crore' : '$XM–$YM'}",
   "score": 8.5,
-  "exitVal": "$XM–$YM",
+  "exitVal": "${country === 'IN' ? '₹X crore–₹Y crore' : '$XM–$YM'}",
   "whyItWorks": "2-3 sentence explanation of why this business makes money, specific market dynamics, and why now is the right time.",
   "profitDrivers": ["driver 1", "driver 2", "driver 3"],
   "greenSignals": ["positive market signal 1", "signal 2", "signal 3"],
@@ -405,8 +437,8 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
   "topCompetitors": ["Competitor A", "Competitor B", "Competitor C"],
   "ltv_cac": "X:1",
   "paybackMonths": 8,
-  "sam": "$XM (10% of TAM)",
-  "som": "$XM (1% of TAM)",
+  "sam": "${country === 'IN' ? '₹X,XXX crore (10% of TAM)' : '$XM (10% of TAM)'}",
+  "som": "${country === 'IN' ? '₹XXX crore (1% of TAM)' : '$XM (1% of TAM)'}",
   "bestZip": "${zip || '78701'}"
 }
 
@@ -444,23 +476,56 @@ app.post('/api/generate-blue-ocean', auth, async (req, res) => {
   const { getCountryName: _gcn } = require('./internationalGeoData');
   const _countryLabel = country && country !== 'US' ? _gcn(country) : null;
   const locationCtx = [city, state, _countryLabel, zip].filter(Boolean).join(', ');
+
+  // India-specific context for blue ocean
+  let boIndiaCtx = '';
+  let boCurrencyNote = '';
+  if (country === 'IN') {
+    const { NIC_INDUSTRY_MAP, detectCityTier, getIndiaStateByCode, getRelevantSchemes } = require('./config/indiaData');
+    const stateData = getIndiaStateByCode(state);
+    const cityTier = detectCityTier(city);
+    const nicInfo = NIC_INDUSTRY_MAP[sector] || {};
+    const schemes = getRelevantSchemes(0); // get all major schemes
+    boIndiaCtx = `
+INDIA-SPECIFIC CONTEXT:
+- State Economic Profile: ${stateData?.economicProfile || 'Emerging market with growth potential'}
+- City Tier: Tier ${cityTier} city (${cityTier === 1 ? 'Metro — high competition, high purchasing power' : cityTier === 2 ? 'Emerging city — growing middle class, lower costs' : 'Smaller city — underserved market, cost advantages'})
+- NIC 2008 Industry Code: ${nicInfo.nic || 'N/A'} — ${nicInfo.nicDesc || sector}
+- GST Note: ${stateData?.gstThresholdNote || 'GST registration required above ₹20L turnover'}
+- Business Registration: Udyam Portal (udyamregistration.gov.in) for MSME, MCA21 for Pvt Ltd/OPC
+- Applicable Government Schemes: ${schemes.map(s => s.name).join(', ')}
+
+MANDATORY INDIA RULES:
+1. ALL monetary values MUST be in Indian Rupees (₹). NEVER use USD/$/dollars.
+2. Use Indian number format: ₹1,00,000 (one lakh) NOT ₹100,000.
+3. Use Indian business terms: "lakh" for 1,00,000 and "crore" for 1,00,00,000.
+4. Startup costs should reflect Indian market rates (labour, rent, materials significantly lower than US).
+5. Mention relevant government schemes (MUDRA, PMEGP, Stand-Up India, etc.) in funding section.
+6. Consider local competition from unorganised sector, kirana stores, local service providers.
+7. Registration path: Udyam (MSME) → GST → Shop & Establishment Act → any sector-specific licence.
+`;
+    boCurrencyNote = ' Use ₹ (Indian Rupees) for ALL monetary values. Indian number format: ₹1,00,000 = one lakh.';
+  }
+
   const budgetCtx = budget
     ? `\n- CRITICAL BUDGET CONSTRAINT: Startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design for this exact funding level — choose a genuinely low-cost approach.`
     : '';
 
-  const blueOceanStartupCostExample = budget
-    ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
-    : '"$XK–$YK"';
+  const blueOceanStartupCostExample = country === 'IN'
+    ? '"₹X lakh–₹Y lakh"'
+    : budget
+      ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+      : '"$XK–$YK"';
 
   const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
 
-CRITICAL REQUIREMENTS:${budgetCtx}
+CRITICAL REQUIREMENTS:${budgetCtx}${boIndiaCtx}
 - The idea must serve a customer need that is currently UNMET or UNDERSERVED with zero established competition
 - It must NOT be a "better version" of an existing business — it must create a NEW category or market
 - Explain specifically WHY no competitors exist yet (timing, technology gap, overlooked segment, regulatory change, etc.)
 - The idea must be genuinely viable and profit-making, not a gimmick
 
-Return ONLY a valid JSON object (no markdown, no explanation):
+Return ONLY a valid JSON object (no markdown, no explanation):${boCurrencyNote}
 
 {
   "name": "Specific Business Name (4-7 words)",
@@ -468,11 +533,11 @@ Return ONLY a valid JSON object (no markdown, no explanation):
   "startupCost": ${blueOceanStartupCostExample},
   "grossMargin": "XX–YY%",
   "timeToProfit": "X–Y months",
-  "tam": "$XB or $XM",
-  "revenueYr1": "$XK–$YK",
-  "revenueYr3": "$XM–$YM",
+  "tam": "${country === 'IN' ? '₹X,XX,XXX crore or ₹X,XXX crore' : '$XB or $XM'}",
+  "revenueYr1": "${country === 'IN' ? '₹X lakh–₹Y lakh' : '$XK–$YK'}",
+  "revenueYr3": "${country === 'IN' ? '₹X crore–₹Y crore' : '$XM–$YM'}",
   "score": 9.0,
-  "exitVal": "$XM–$YM",
+  "exitVal": "${country === 'IN' ? '₹X crore–₹Y crore' : '$XM–$YM'}",
   "whyItWorks": "2-3 sentences: the unmet need, why it's profitable, and why NOW is the right time to enter.",
   "blueOceanReason": "Specific explanation of why NO competitors exist: what gap in the market, technology, regulation, or customer insight makes this space completely empty.",
   "firstMoverAdvantage": "Concrete advantages of being first: network effects, switching costs, brand, data, regulatory moat, etc.",
@@ -484,13 +549,13 @@ Return ONLY a valid JSON object (no markdown, no explanation):
   "topCompetitors": [],
   "ltv_cac": "X:1",
   "paybackMonths": 8,
-  "sam": "$XM",
-  "som": "$XM",
+  "sam": "${country === 'IN' ? '₹X,XXX crore (10% of TAM)' : '$XM'}",
+  "som": "${country === 'IN' ? '₹XXX crore (1% of TAM)' : '$XM'}",
   "bestZip": "${zip || '78701'}",
   "blueOcean": true
 }
 
-The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values concise — under 40 words each. Be specific with dollar numbers.`;
+The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values concise — under 40 words each. Be specific with numbers.`;
 
   try {
     const idea = await callClaude(client, prompt, budget);
