@@ -32,7 +32,7 @@ const STATUS_META = {
   none:    { label: 'None',    color: '#475569', bg: 'rgba(71,85,105,0.1)',   icon: '○○○' },
 };
 
-function ScoreBadge({ score }) {
+function StarBadge({ score }) {
   if (!score) return null;
   const color = score >= 9.0 ? '#10b981' : score >= 8.0 ? '#f59e0b' : '#94a3b8';
   return (
@@ -457,7 +457,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
             <p className={styles.model}>{o.model}</p>
           </div>
           <div className={styles.heroRight}>
-            <ScoreBadge score={o.score} />
+            <StarBadge score={o.score} />
             <div className={styles.exitVal}>
               <span className={styles.exitLabel}>Projected Exit</span>
               <span className={styles.exitNum}>{o.exitVal}</span>
