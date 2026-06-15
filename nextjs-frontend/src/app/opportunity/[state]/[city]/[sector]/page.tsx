@@ -131,6 +131,8 @@ export default async function OpportunityPage({ params }: { params: Promise<{ st
               </p>
             </div>
           </aside>
+        </div>
+
         <RelatedPages
           countrySlug="us"
           stateSlug={state.slug}
