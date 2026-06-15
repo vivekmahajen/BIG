@@ -481,28 +481,40 @@ MANDATORY INDONESIA RULES:
 7. Registration: OSS-RBA NIB → NPWP → PKP (if VAT applicable) → sector-specific permit (izin usaha).
 `;
     currencyNote = ' Use Rp (Indonesian Rupiah/IDR) for ALL monetary values. Format: Rp X juta (millions) or Rp X miliar (billions).';
+  } else {
+    // All other international countries — inject locale context from countryConfig
+    const { getCountryConfig } = require('./config/countryConfig');
+    const cc = getCountryConfig(country);
+    if (cc) {
+      indiaCtx = cc.contextBlock;
+      currencyNote = cc.currencyNote;
+    }
   }
 
   const budgetCtx = budget
     ? `\n\nCRITICAL BUDGET CONSTRAINT: The total startup cost MUST be between $${budget.min.toLocaleString()} and $${budget.max.toLocaleString()}. The startupCost field MUST have its upper bound at or below $${budget.max.toLocaleString()}. Design the entire business model around this budget — choose a lean, capital-efficient approach that is genuinely viable at this funding level. Do NOT suggest a business that requires more capital than this.`
     : '';
 
+  // Format examples — use countryConfig for non-core countries
+  const _ccFmt = (() => { try { return require('./config/countryConfig').getCountryConfig(country); } catch { return null; } })();
   const startupCostExample = country === 'IN'
     ? '"₹X lakh–₹Y lakh"'
     : country === 'CN'
       ? '"¥X万–¥Y万"'
       : country === 'ID'
         ? '"Rp X juta–Rp Y juta"'
-        : budget
-          ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
-          : '"$XK–$YK"';
+        : _ccFmt?.formatExamples?.startup
+          ? _ccFmt.formatExamples.startup
+          : budget
+            ? `"$${Math.round(budget.min + (budget.max - budget.min) * 0.3).toLocaleString()}–$${Math.round(budget.min + (budget.max - budget.min) * 0.8).toLocaleString()}"`
+            : '"$XK–$YK"';
 
-  const tamExample = country === 'IN' ? '₹X,XX,XXX crore or ₹X,XXX crore' : country === 'CN' ? '¥X亿 or ¥X百亿' : country === 'ID' ? 'Rp X triliun or Rp X miliar' : '$XB or $XM';
-  const revYr1Example = country === 'IN' ? '₹X lakh–₹Y lakh' : country === 'CN' ? '¥X万–¥Y万' : country === 'ID' ? 'Rp X juta–Rp Y juta' : '$XK–$YK';
-  const revYr3Example = country === 'IN' ? '₹X crore–₹Y crore' : country === 'CN' ? '¥X百万–¥Y百万' : country === 'ID' ? 'Rp X miliar–Rp Y miliar' : '$XM–$YM';
-  const exitValExample = country === 'IN' ? '₹X crore–₹Y crore' : country === 'CN' ? '¥X亿–¥Y亿' : country === 'ID' ? 'Rp X miliar–Rp Y miliar' : '$XM–$YM';
-  const samExample = country === 'IN' ? '₹X,XXX crore (10% of TAM)' : country === 'CN' ? '¥X亿 (10% of TAM)' : country === 'ID' ? 'Rp X miliar (10% of TAM)' : '$XM (10% of TAM)';
-  const somExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM (1% of TAM)';
+  const tamExample     = country === 'IN' ? '₹X,XX,XXX crore or ₹X,XXX crore' : country === 'CN' ? '¥X亿 or ¥X百亿' : country === 'ID' ? 'Rp X triliun or Rp X miliar' : (_ccFmt?.formatExamples?.tam     || '$XB or $XM');
+  const revYr1Example  = country === 'IN' ? '₹X lakh–₹Y lakh'                  : country === 'CN' ? '¥X万–¥Y万'       : country === 'ID' ? 'Rp X juta–Rp Y juta'            : (_ccFmt?.formatExamples?.revYr1   || '$XK–$YK');
+  const revYr3Example  = country === 'IN' ? '₹X crore–₹Y crore'                : country === 'CN' ? '¥X百万–¥Y百万'   : country === 'ID' ? 'Rp X miliar–Rp Y miliar'         : (_ccFmt?.formatExamples?.revYr3   || '$XM–$YM');
+  const exitValExample = country === 'IN' ? '₹X crore–₹Y crore'                : country === 'CN' ? '¥X亿–¥Y亿'       : country === 'ID' ? 'Rp X miliar–Rp Y miliar'         : (_ccFmt?.formatExamples?.exitVal  || '$XM–$YM');
+  const samExample     = country === 'IN' ? '₹X,XXX crore (10% of TAM)'        : country === 'CN' ? '¥X亿 (10% of TAM)': country === 'ID' ? 'Rp X miliar (10% of TAM)'       : (_ccFmt?.formatExamples?.sam      || '$XM (10% of TAM)');
+  const somExample     = country === 'IN' ? '₹XXX crore (1% of TAM)'           : country === 'CN' ? '¥X千万 (1% of TAM)': country === 'ID' ? 'Rp X miliar (1% of TAM)'       : (_ccFmt?.formatExamples?.som      || '$XM (1% of TAM)');
 
   let validationPayload = null;
   let opportunityScores = null;
