@@ -2,7 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const NodeCache = require('node-cache');
 const { CREDIT_COSTS, TIERS, CREDIT_PACKS } = require('./credits');
+const { discoverCompetitors } = require('./competitive/discovery');
+const { profileCompetitors } = require('./competitive/profiler');
+const { synthesiseCompetitiveAnalysis } = require('./competitive/synthesis');
+
+const competitiveCache = new NodeCache({ stdTTL: 172800 });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1070,97 +1076,32 @@ Include exactly 5 capabilities that truly differentiate leaders in this market. 
 });
 
 app.post('/api/competitive-analysis', auth, async (req, res) => {
-  const { business, competitors, functions: fns, scoring, horizon, priorityFocus, outputFormat, context } = req.body;
-  if (!business || !business.name) return res.status(400).json({ error: 'business.name required' });
+  const { industry, city, country = 'US' } = req.body;
+  if (!industry || !city) return res.status(400).json({ error: 'industry and city are required' });
+
+  const cacheKey = `ca:${industry}:${city}:${country}`;
+  const cached = competitiveCache.get(cacheKey);
+  if (cached) return res.json(cached);
 
   const user = getUser(req.user.id);
   if (!user || !deductCredits(user, 'competitive-analysis')) {
     return res.status(402).json({
-      error: `Not enough credits. Full competitive analysis costs ${CREDIT_COSTS['competitive-analysis']} credits.`,
+      error: `Not enough credits. Competitive analysis costs ${CREDIT_COSTS['competitive-analysis']} credits.`,
       creditsRequired: CREDIT_COSTS['competitive-analysis'],
       creditsAvailable: user ? user.credits + (user.packCredits || 0) : 0,
     });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(503).json({ error: 'AI generation not configured (ANTHROPIC_API_KEY missing)' });
-
-  const Anthropic = require('@anthropic-ai/sdk');
-  const client = new Anthropic({ apiKey });
-
-  const competitorList = (competitors || []).filter(c => c.name)
-    .map((c, i) => `   ${i+1}. ${c.name}${c.strengths ? ` — known for: ${c.strengths}` : ''}`).join('\n');
-
-  const fnList = (fns || []).map((f, i) => `   ${i+1}. ${f}`).join('\n');
-
-  const prompt = `# Comprehensive competitive analysis + roadmap to #1
-
-## Business overview
-- **Name:** ${business.name}
-- **Industry:** ${business.industry || 'Not specified'}
-- **Geography:** ${business.geography || 'Not specified'}
-- **Stage:** ${business.stage || 'Not specified'}
-- **Description:** ${business.description || 'Not specified'}
-
-## Competitors to analyze
-${competitorList || '   Not specified — please identify 3–5 likely competitors based on the industry and geography.'}
-
-## Business functions to assess
-For each function, provide:
-- What best-in-class looks like in this industry
-- A ${scoring || '1–10 numeric score'} for ${business.name} vs. each competitor
-- The 2–3 specific actions to move ${business.name} to leading this function
-
-${fnList || '   1. Operations & processes\n   2. Sales & business development\n   3. Marketing & brand\n   4. Customer experience & retention\n   5. Technology & software stack\n   6. Pricing & revenue model\n   7. Talent & team structure\n   8. Finance & unit economics'}
-
-## Competitive scorecard
-Produce a side-by-side scorecard table with ${business.name} and each competitor as columns, the business functions as rows, and a ${scoring || '1–10 score'} in each cell. Include a total/overall score row at the bottom. Call out the top 3 functions where ${business.name} has an advantage and the top 3 where it has the greatest gap.
-
-## Competitive positioning narrative
-For each competitor, write a 2–3 sentence summary covering:
-- Their primary competitive strengths
-- Their most significant weaknesses or blind spots
-- The most effective counter-positioning move ${business.name} should make against them specifically
-
-## Gap analysis: highest-leverage opportunities
-Identify the 5–7 highest-leverage improvement opportunities — the specific changes with greatest competitive impact, weighted by: (1) ease of execution, (2) speed to customer impact, (3) long-term moat-building potential.
-For each, specify: which function, which competitor(s) it counters, estimated time to implement, and a measurable success metric.
-
-## The #1 definition
-State clearly: what does it mean to be #1 in this specific market? Define it across 3–5 measurable dimensions (market share %, NPS vs. industry, revenue per customer, brand recognition, operational efficiency metrics).
-
-## Roadmap to #1: ${horizon || '90-day / 12-month / 3-year'}
-
-### Phase 1 — Foundation & quick wins
-- 5–8 specific, executable actions with owners, success metrics, and deadlines
-- Focus: ${priorityFocus || 'biggest gaps vs. top competitor'}
-- Expected outcome: what competitive position does ${business.name} hold after this phase?
-
-### Phase 2 — Growth & differentiation
-- 5–8 actions building on Phase 1 momentum
-- Focus: extending leads in strong functions, closing critical gaps
-- Expected outcome: measurable gain vs. top competitor?
-
-### Phase 3 — Market leadership
-- 5–8 actions establishing durable market leadership
-- Focus: moat-building, category ownership
-- Expected outcome: how does ${business.name} define "#1" and know when it has achieved it?
-
-${context ? `## Additional context\n${context}` : ''}
-
-## Output format
-Deliver as a ${outputFormat || 'full structured report with tables, scorecards, and milestone lists'}. Use specific numbers, named metrics, and actionable language throughout. Every recommendation must be specific enough that a team member can act on it without further clarification. Use markdown formatting with clear section headers, tables, and bullet points.`;
-
   try {
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    res.json({ analysis: message.content[0].text, business: business.name });
+    const competitors = await discoverCompetitors(industry, city, country);
+    const profiled = await profileCompetitors(competitors);
+    const synthesis = await synthesiseCompetitiveAnalysis(profiled, industry, city, country);
+    const result = { ...synthesis, profileData: profiled };
+    competitiveCache.set(cacheKey, result);
+    res.json(result);
   } catch (err) {
     console.error('competitive-analysis error:', err.message);
-    res.status(500).json({ error: 'Failed to generate analysis: ' + err.message });
+    res.status(500).json({ error: 'Failed to generate competitive analysis: ' + err.message });
   }
 });
 
