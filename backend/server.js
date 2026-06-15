@@ -508,12 +508,15 @@ MANDATORY INDONESIA RULES:
   let opportunityScores = null;
   let validationBlock   = '';
   let scoreCtx          = '';
+  let idea_whyItExists  = null;
   try {
     const { buildValidationPayload, buildValidationPromptBlock } = require('./validation/index');
     const { scoreOpportunity } = require('./scoring/index');
+    const { buildEvidenceBlock } = require('./validation/evidenceFormatter');
     validationPayload = await buildValidationPayload(sector, city || '', country || 'US');
     opportunityScores = scoreOpportunity(sector, validationPayload);
     validationBlock   = buildValidationPromptBlock(validationPayload);
+    idea_whyItExists  = buildEvidenceBlock(validationPayload, sector, city || '');
     if (opportunityScores?.demand) {
       scoreCtx = `\nSCORING CONTEXT (pre-computed — reference these naturally, do not recalculate):
 - Demand Score: ${opportunityScores.demand.score}/10 (${opportunityScores.demand.label}) — ${opportunityScores.demand.confidence} confidence
@@ -561,6 +564,7 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
     idea.aiGenerated = true;
     idea.validationSignals = validationPayload;
     idea.opportunityScores = opportunityScores;
+    idea.whyItExists = idea_whyItExists;
     res.json(idea);
   } catch (err) {
     console.error('generate-idea error:', err.message);
@@ -683,12 +687,15 @@ MANDATORY INDONESIA RULES:
   let boValidationPayload = null;
   let boOpportunityScores = null;
   let boValidationBlock   = '';
+  let boWhyItExists       = null;
   try {
     const { buildValidationPayload: _bvp, buildValidationPromptBlock: _bvpb } = require('./validation/index');
     const { scoreOpportunity: _so } = require('./scoring/index');
+    const { buildEvidenceBlock: _beb } = require('./validation/evidenceFormatter');
     boValidationPayload = await _bvp(sector, city || '', country || 'US');
     boOpportunityScores = _so(sector, boValidationPayload);
     boValidationBlock   = _bvpb(boValidationPayload);
+    boWhyItExists       = _beb(boValidationPayload, sector, city || '');
   } catch (err) {
     console.error('[validation/scoring] blue-ocean failed (non-fatal):', err.message);
   }
@@ -740,6 +747,7 @@ The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values 
     idea.topCompetitors = [];
     idea.validationSignals = boValidationPayload;
     idea.opportunityScores = boOpportunityScores;
+    idea.whyItExists = boWhyItExists;
     res.json(idea);
   } catch (err) {
     console.error('generate-blue-ocean error:', err.message);

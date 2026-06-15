@@ -5,6 +5,7 @@ import SaveButton from './SaveButton';
 import ShareButton from './ShareButton';
 import BusinessPlan from './BusinessPlan';
 import ScoreBadge from './ScoreBadge';
+import WhyThisIdeaExists from './WhyThisIdeaExists';
 
 const LEGEND = [
   { abbr: 'TAM', full: 'Total Addressable Market', desc: 'The entire revenue opportunity if 100% market share were captured.' },
@@ -416,6 +417,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
     watchpoints:      Array.isArray(raw.watchpoints)     ? raw.watchpoints     : [],
     topCompetitors:   Array.isArray(raw.topCompetitors)  ? raw.topCompetitors  : [],
     opportunityScores: raw.opportunityScores || null,
+    whyItExists: raw.whyItExists || null,
     compareData,
   };
 
@@ -489,6 +491,12 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
         {o.opportunityScores && (
           <div className={styles.section} style={{ paddingTop: 0 }}>
             <ScoreBadge scores={o.opportunityScores} />
+          </div>
+        )}
+
+        {o.whyItExists && (
+          <div className={styles.section} style={{ paddingTop: 0 }}>
+            <WhyThisIdeaExists data={o.whyItExists} />
           </div>
         )}
 
