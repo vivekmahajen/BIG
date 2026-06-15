@@ -12,6 +12,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Homepage
   urls.push({ url: SITE_URL, lastModified: now, changeFrequency: 'weekly', priority: 1.0 });
 
+  // Country hub pages
+  for (const slug of ['in', 'id', 'cn', 'br', 'de', 'ca', 'gb', 'au', 'mx']) {
+    urls.push({ url: `${SITE_URL}/opportunity/${slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 });
+  }
+
   // State pages — all 50
   for (const state of STATES) {
     urls.push({
