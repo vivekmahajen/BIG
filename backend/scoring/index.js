@@ -41,9 +41,10 @@ function calculateViability(demand, competition, monetisation) {
  * Master scoring function — call after buildValidationPayload()
  */
 function scoreOpportunity(sector, validationPayload) {
-  const demand       = calculateDemandScore(validationPayload);
-  const competition  = calculateCompetitionScore(validationPayload);
-  const monetisation = calculateMonetisationScore(sector, validationPayload);
+  const vp = validationPayload || {};
+  const demand       = calculateDemandScore(vp);
+  const competition  = calculateCompetitionScore(vp);
+  const monetisation = calculateMonetisationScore(sector, vp);
   const viability    = calculateViability(demand, competition, monetisation);
 
   return { demand, competition, monetisation, viability };

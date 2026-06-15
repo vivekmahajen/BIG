@@ -39,12 +39,13 @@ const SECTOR_PROFILES = {
 const LEVEL_RANK = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
 
 function calculateMonetisationScore(sector, validationPayload) {
+  const vp = validationPayload || {};
   const profile = SECTOR_PROFILES[sector] || { avgTicket: 200, recurring: false, ltvLevel: 'Medium', level: 'Medium' };
 
   // CPC boost: if advertisers pay > $3/click, there's proven commercial value
-  const avgCPC = (validationPayload.search?.keywords || [])
+  const avgCPC = (vp.search?.keywords || [])
     .reduce((s, k) => s + (k.cpc || 0), 0) /
-    Math.max((validationPayload.search?.keywords || []).length, 1);
+    Math.max((vp.search?.keywords || []).length, 1);
 
   const baseRank   = LEVEL_RANK[profile.level] || 2;
   const boostedRank = avgCPC > 3 ? Math.min(4, baseRank + 1) : baseRank;

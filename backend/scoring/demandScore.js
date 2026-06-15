@@ -5,6 +5,7 @@
  * Derived entirely from live validation signals — no static data needed.
  */
 function calculateDemandScore(validationPayload) {
+  if (!validationPayload) return null;
   const scores = {};
 
   // Search volume component (30%)

@@ -5,6 +5,7 @@
  * Derived from: competitor count, review volume, CPC (ad spend proxy).
  */
 function calculateCompetitionScore(validationPayload) {
+  if (!validationPayload) return null;
   let score = 0;
   let factors = 0;
 
