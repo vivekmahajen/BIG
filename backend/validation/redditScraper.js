@@ -1,5 +1,7 @@
 'use strict';
 
+const axios = require('axios');
+
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -14,13 +16,8 @@ const PAIN_KEYWORDS = [
   'no options','no good','where can i','does anyone know','struggling',
 ];
 
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function randomUA() {
-  return USER_AGENTS[randInt(0, USER_AGENTS.length - 1)];
-}
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randomUA() { return USER_AGENTS[randInt(0, USER_AGENTS.length - 1)]; }
 
 function buildQueries(sector, city) {
   return [
@@ -46,29 +43,22 @@ async function scrapeRedditPainPoints(sector, city) {
 
   for (const query of queries) {
     try {
-      // Random delay 1.5–3.5s between queries to avoid rate limiting
       await new Promise(r => setTimeout(r, randInt(1500, 3500)));
 
-      const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=relevance&t=year&limit=25&raw_json=1`;
-      const resp = await fetch(url, {
+      const { data, status } = await axios.get('https://www.reddit.com/search.json', {
+        params: { q: query, sort: 'relevance', t: 'year', limit: 25, raw_json: 1 },
         headers: {
           'User-Agent': randomUA(),
           'Accept': 'application/json',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Cache-Control': 'no-cache',
         },
-        signal: AbortSignal.timeout(10000),
+        timeout: 10000,
+        validateStatus: s => s < 500,
       });
 
-      if (resp.status === 429) {
-        console.warn('[reddit] rate limited, skipping remaining queries');
-        break;
-      }
-      if (!resp.ok) continue;
+      if (status === 429) { console.warn('[reddit] rate limited, stopping'); break; }
+      if (status !== 200) continue;
 
-      const data = await resp.json();
       const posts = data?.data?.children ?? [];
-
       for (const { data: p } of posts) {
         if (seen.has(p.id)) continue;
         seen.add(p.id);
@@ -87,7 +77,7 @@ async function scrapeRedditPainPoints(sector, city) {
         }
       }
     } catch (err) {
-      if (err.name !== 'AbortError') console.warn('[reddit] query failed:', err.message);
+      console.warn('[reddit] query failed:', err.message);
     }
   }
 
