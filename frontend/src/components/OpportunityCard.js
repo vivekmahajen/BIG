@@ -6,6 +6,8 @@ import ShareButton from './ShareButton';
 import BusinessPlan from './BusinessPlan';
 import ScoreBadge from './ScoreBadge';
 import WhyThisIdeaExists from './WhyThisIdeaExists';
+import IterationPanel from './IterationPanel';
+import IdeaComparison from './IdeaComparison';
 
 const LEGEND = [
   { abbr: 'TAM', full: 'Total Addressable Market', desc: 'The entire revenue opportunity if 100% market share were captured.' },
@@ -387,12 +389,14 @@ function CompetitorCompare({ businessName, sector, competitors, onCompareReady }
   );
 }
 
-export default function OpportunityCard({ opportunity: raw, zip, sector, state, city, sectorLabel, onNavigate, savedOpportunityId: initialSavedId, user }) {
+export default function OpportunityCard({ opportunity: raw, zip, sector, state, city, sectorLabel, onNavigate, savedOpportunityId: initialSavedId, user, allIdeas, onRefined }) {
   const [compareData, setCompareData] = useState(null);
   const [savedOpportunityId, setSavedOpportunityId] = useState(initialSavedId || null);
   const [plan, setPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(false);
   const [planError, setPlanError] = useState('');
+  const [ideaComparison, setIdeaComparison] = useState(null);
+  const [comparedPair, setComparedPair] = useState(null);
 
   async function handleBuildPlan() {
     setPlanLoading(true);
@@ -789,6 +793,26 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
           plan={plan}
           analysisId={raw._savedId || raw.bestZip || 'plan'}
           onClose={() => setPlan(null)}
+        />
+      )}
+
+      <IterationPanel
+        idea={raw}
+        allIdeas={allIdeas || []}
+        location={{ city, state, zip, country: raw.country || 'US' }}
+        onRefined={onRefined}
+        onCompared={(comparison, i1, i2) => {
+          setIdeaComparison(comparison);
+          setComparedPair({ idea1: i1, idea2: i2 });
+        }}
+      />
+
+      {ideaComparison && comparedPair && (
+        <IdeaComparison
+          comparison={ideaComparison}
+          idea1={comparedPair.idea1}
+          idea2={comparedPair.idea2}
+          onClose={() => { setIdeaComparison(null); setComparedPair(null); }}
         />
       )}
     </div>

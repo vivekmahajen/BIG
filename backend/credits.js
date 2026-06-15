@@ -6,6 +6,8 @@ const CREDIT_COSTS = {
   'competitor-compare': 2,      // AI analysis
   'competitive-analysis': 5,    // deep AI roadmap
   'business-plan': 3,           // investor-ready business plan generation
+  'refine-idea': 1,             // refine existing idea with instruction
+  'compare-ideas': 2,           // side-by-side idea comparison
 };
 
 // Subscription tiers

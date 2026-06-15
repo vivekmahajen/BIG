@@ -111,4 +111,10 @@ export const api = {
 
   generateBusinessPlan: (analysis, location) =>
     request('/business-plan', { method: 'POST', body: JSON.stringify({ analysis, location }) }),
+
+  refineIdea: (originalIdea, instruction, sector, city, country) =>
+    request('/refine-idea', { method: 'POST', body: JSON.stringify({ originalIdea, instruction, sector, city, country }) }),
+
+  compareIdeas: (idea1, idea2, city, country) =>
+    request('/compare-ideas', { method: 'POST', body: JSON.stringify({ idea1, idea2, city, country }) }),
 };
