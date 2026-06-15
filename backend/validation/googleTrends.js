@@ -1,6 +1,7 @@
 'use strict';
 
-// Maps BIG country codes → SerpAPI geo codes
+const axios = require('axios');
+
 const GEO_MAP = {
   US: 'US', CA: 'CA', GB: 'GB', AU: 'AU', IN: 'IN',
   DE: 'DE', FR: 'FR', AE: 'AE', SG: 'SG', BR: 'BR',
@@ -14,12 +15,11 @@ async function getTrendData(keyword, countryCode = 'US') {
   if (!apiKey) return null;
 
   const geo = GEO_MAP[countryCode] || 'US';
-  const url = `https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(keyword)}&geo=${geo}&date=${encodeURIComponent('today 12-m')}&api_key=${apiKey}`;
-
   try {
-    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (!resp.ok) return null;
-    const data = await resp.json();
+    const { data } = await axios.get('https://serpapi.com/search.json', {
+      params: { engine: 'google_trends', q: keyword, geo, date: 'today 12-m', api_key: apiKey },
+      timeout: 12000,
+    });
 
     const timeline = data?.interest_over_time?.timeline_data ?? [];
     if (timeline.length < 4) return null;
@@ -32,24 +32,19 @@ async function getTrendData(keyword, countryCode = 'US') {
 
     const current = values[values.length - 1];
     const peak    = Math.max(...values);
-
-    // Related rising queries
-    const risingQueries = (data?.related_queries?.rising ?? [])
-      .slice(0, 4)
+    const risingQueries = (data?.related_queries?.rising ?? []).slice(0, 4)
       .map(q => ({ query: q.query, value: q.value }));
 
     return {
-      keyword,
-      geo,
-      growthPercent: growthPct,
-      trend:         growthPct > 15 ? 'Rising ↑' : growthPct < -15 ? 'Declining ↓' : 'Stable →',
-      currentScore:  current,
-      peakScore:     peak,
-      atPeak:        current >= peak * 0.9,
-      sparkline:     values.slice(-12),
+      keyword, geo, growthPercent: growthPct,
+      trend: growthPct > 15 ? 'Rising ↑' : growthPct < -15 ? 'Declining ↓' : 'Stable →',
+      currentScore: current, peakScore: peak,
+      atPeak: current >= peak * 0.9,
+      sparkline: values.slice(-12),
       risingQueries,
     };
-  } catch (_) {
+  } catch (err) {
+    console.warn('[trends] failed:', err.message);
     return null;
   }
 }

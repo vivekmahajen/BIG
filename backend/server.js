@@ -504,19 +504,27 @@ MANDATORY INDONESIA RULES:
   const samExample = country === 'IN' ? '₹X,XXX crore (10% of TAM)' : country === 'CN' ? '¥X亿 (10% of TAM)' : country === 'ID' ? 'Rp X miliar (10% of TAM)' : '$XM (10% of TAM)';
   const somExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM (1% of TAM)';
 
-  const { buildValidationPayload, buildValidationPromptBlock } = require('./validation/index');
-  const { scoreOpportunity } = require('./scoring/index');
-  const validationPayload = await buildValidationPayload(sector, city || '', country || 'US');
-  const opportunityScores = scoreOpportunity(sector, validationPayload);
-  const validationBlock   = buildValidationPromptBlock(validationPayload);
-
-  // Inject scores into the prompt so Claude references them naturally
-  const scoreCtx = opportunityScores.demand ? `\nSCORING CONTEXT (pre-computed — reference these naturally, do not recalculate):
+  let validationPayload = null;
+  let opportunityScores = null;
+  let validationBlock   = '';
+  let scoreCtx          = '';
+  try {
+    const { buildValidationPayload, buildValidationPromptBlock } = require('./validation/index');
+    const { scoreOpportunity } = require('./scoring/index');
+    validationPayload = await buildValidationPayload(sector, city || '', country || 'US');
+    opportunityScores = scoreOpportunity(sector, validationPayload);
+    validationBlock   = buildValidationPromptBlock(validationPayload);
+    if (opportunityScores?.demand) {
+      scoreCtx = `\nSCORING CONTEXT (pre-computed — reference these naturally, do not recalculate):
 - Demand Score: ${opportunityScores.demand.score}/10 (${opportunityScores.demand.label}) — ${opportunityScores.demand.confidence} confidence
 - Competition: ${opportunityScores.competition?.level || 'Unknown'} (entry barrier: ${opportunityScores.competition?.entryBarrier || 'Unknown'})
 - Monetisation: ${opportunityScores.monetisation?.level || 'Unknown'} (avg ticket ~$${opportunityScores.monetisation?.avgTicket || 'N/A'}, ${opportunityScores.monetisation?.recurring ? 'recurring' : 'one-off'})
 - BIG Viability: ${opportunityScores.viability.score}/10 — "${opportunityScores.viability.verdict}"
-Briefly mention these scores in whyItWorks. Keep it one sentence.\n` : '';
+Briefly mention these scores in whyItWorks. Keep it one sentence.\n`;
+    }
+  } catch (err) {
+    console.error('[validation/scoring] failed (non-fatal):', err.message);
+  }
 
   const prompt = `You are a business opportunity analyst. Generate ONE original, specific, and highly actionable business idea for the "${sector}" sector${locationCtx ? ` targeting the ${locationCtx} market` : ''}.${budgetCtx}${indiaCtx}${validationBlock}${scoreCtx}
 Return ONLY a valid JSON object with exactly these fields (no markdown, no explanation, just raw JSON):${currencyNote}
@@ -672,11 +680,18 @@ MANDATORY INDONESIA RULES:
   const boSamExample = country === 'IN' ? '₹X,XXX crore (10% of TAM)' : country === 'CN' ? '¥X亿 (10% of TAM)' : country === 'ID' ? 'Rp X miliar (10% of TAM)' : '$XM';
   const boSomExample = country === 'IN' ? '₹XXX crore (1% of TAM)' : country === 'CN' ? '¥X千万 (1% of TAM)' : country === 'ID' ? 'Rp X miliar (1% of TAM)' : '$XM';
 
-  const { buildValidationPayload: _bvp, buildValidationPromptBlock: _bvpb } = require('./validation/index');
-  const { scoreOpportunity: _so } = require('./scoring/index');
-  const boValidationPayload = await _bvp(sector, city || '', country || 'US');
-  const boOpportunityScores = _so(sector, boValidationPayload);
-  const boValidationBlock   = _bvpb(boValidationPayload);
+  let boValidationPayload = null;
+  let boOpportunityScores = null;
+  let boValidationBlock   = '';
+  try {
+    const { buildValidationPayload: _bvp, buildValidationPromptBlock: _bvpb } = require('./validation/index');
+    const { scoreOpportunity: _so } = require('./scoring/index');
+    boValidationPayload = await _bvp(sector, city || '', country || 'US');
+    boOpportunityScores = _so(sector, boValidationPayload);
+    boValidationBlock   = _bvpb(boValidationPayload);
+  } catch (err) {
+    console.error('[validation/scoring] blue-ocean failed (non-fatal):', err.message);
+  }
 
   const prompt = `You are a blue ocean strategy expert. Generate ONE truly original business idea for the "${sector}" sector${locationCtx ? ` in ${locationCtx}` : ''} that operates in UNCONTESTED MARKET SPACE with NO direct competitors.
 
