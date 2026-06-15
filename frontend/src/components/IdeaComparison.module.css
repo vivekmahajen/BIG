@@ -1,0 +1,146 @@
+.wrapper {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+.ideaName {
+  flex: 1;
+  font-weight: 700;
+  font-size: 15px;
+  text-align: center;
+}
+
+.vs {
+  font-size: 13px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 2px;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.closeBtn:hover { color: #e2e8f0; }
+
+.winnerBanner {
+  padding: 10px 20px;
+  background: #0d2318;
+  border-bottom: 1px solid #1e293b;
+  font-size: 14px;
+  border-left: 3px solid;
+}
+
+.winnerLabel {
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.winnerReason {
+  color: #94a3b8;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead tr {
+  background: #1e293b;
+}
+
+.table th {
+  padding: 10px 14px;
+  text-align: left;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dimHead { width: 22%; }
+.colHead { width: 30%; }
+.advHead { width: 18%; }
+
+.rowEven { background: #0f172a; }
+.rowOdd  { background: #111827; }
+
+.dimCell {
+  padding: 10px 14px;
+  color: #94a3b8;
+  font-weight: 500;
+  vertical-align: top;
+}
+
+.valCell {
+  padding: 10px 14px;
+  color: #cbd5e1;
+  vertical-align: top;
+}
+
+.valCell.winner {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.advCell {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.verdict {
+  padding: 16px 20px;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bestFor {
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.bestForLabel {
+  font-weight: 700;
+}
+
+.bestForText {
+  color: #94a3b8;
+}
+
+.rec {
+  margin-top: 4px;
+  padding: 12px 16px;
+  background: #1e293b;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 14px;
+  line-height: 1.5;
+}

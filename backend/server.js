@@ -585,6 +585,90 @@ Make the idea genuinely different from common ideas. Be specific with numbers. S
   }
 });
 
+// ── Refine Idea (1 credit) ─────────────────────────────────────────────────
+app.post('/api/refine-idea', auth, async (req, res) => {
+  const { originalIdea, instruction, sector, city, country } = req.body;
+  if (!originalIdea || !instruction) return res.status(400).json({ error: 'originalIdea and instruction required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'refine-idea')) {
+    return res.status(402).json({ error: 'Not enough credits. Refining an idea costs 1 credit.', required: 1 });
+  }
+
+  const currencyHint = country === 'IN' ? 'Use ₹ (Indian Rupees), lakh/crore format.'
+    : country === 'CN' ? 'Use ¥ (Chinese Yuan), 万/亿 format.'
+    : country === 'ID' ? 'Use Rp (Indonesian Rupiah), juta/miliar format.'
+    : (() => { try { return require('./config/countryConfig').getCountryConfig(country)?.currencyNote || ''; } catch { return ''; } })();
+
+  const prompt = `You are refining an existing business idea based on user feedback.
+Keep the exact same JSON field structure as the original idea.
+Make specific, meaningful changes based on the instruction — restructure the business model if needed.
+Preserve what was strong about the original idea.${currencyHint ? `\n${currencyHint}` : ''}
+
+Original idea:
+${JSON.stringify(originalIdea, null, 2)}
+
+User's refinement instruction: "${instruction}"
+
+Return ONLY valid JSON with the same fields as the original idea. No markdown, no explanation.`;
+
+  try {
+    const refined = await callClaude(client, prompt, null);
+    refined.aiGenerated = true;
+    refined.refinedFrom = originalIdea.name;
+    refined.refinementInstruction = instruction;
+    res.json(refined);
+  } catch (err) {
+    console.error('refine-idea error:', err.message);
+    res.status(500).json({ error: 'Failed to refine idea: ' + err.message });
+  }
+});
+
+// ── Compare Ideas (2 credits) ──────────────────────────────────────────────
+app.post('/api/compare-ideas', auth, async (req, res) => {
+  const { idea1, idea2, city, country } = req.body;
+  if (!idea1 || !idea2) return res.status(400).json({ error: 'idea1 and idea2 required' });
+
+  const user = getUser(req.user.id);
+  if (!user || !deductCredits(user, 'compare-ideas')) {
+    return res.status(402).json({ error: 'Not enough credits. Comparing ideas costs 2 credits.', required: 2 });
+  }
+
+  const locationCtx = city ? ` for ${city}${country && country !== 'US' ? `, ${country}` : ''}` : '';
+  const prompt = `You are a business advisor comparing two business ideas side by side${locationCtx}.
+Be honest about trade-offs. Use specific numbers from the ideas.
+Return ONLY valid JSON — no markdown, no explanation.
+
+Idea 1: ${JSON.stringify(idea1)}
+Idea 2: ${JSON.stringify(idea2)}
+
+Return this exact JSON structure:
+{
+  "winner": null,
+  "winnerReason": "One sentence or null if genuinely too close to call",
+  "comparisonTable": [
+    { "dimension": "Startup cost",               "idea1": "...", "idea2": "...", "advantage": "idea1" },
+    { "dimension": "Time to first revenue",       "idea1": "...", "idea2": "...", "advantage": "idea2" },
+    { "dimension": "Revenue at 12 months",        "idea1": "...", "idea2": "...", "advantage": "tie"   },
+    { "dimension": "Gross margin",                "idea1": "...", "idea2": "...", "advantage": "idea1" },
+    { "dimension": "Competition level",           "idea1": "...", "idea2": "...", "advantage": "idea2" },
+    { "dimension": "Skill requirements",          "idea1": "...", "idea2": "...", "advantage": "tie"   },
+    { "dimension": "Scalability (3 years)",       "idea1": "...", "idea2": "...", "advantage": "idea2" }
+  ],
+  "idea1BestFor": "Short description of who should pick Idea 1",
+  "idea2BestFor": "Short description of who should pick Idea 2",
+  "recommendation": "2-3 sentence balanced recommendation"
+}`;
+
+  try {
+    const comparison = await callClaude(client, prompt, null);
+    res.json(comparison);
+  } catch (err) {
+    console.error('compare-ideas error:', err.message);
+    res.status(500).json({ error: 'Failed to compare ideas: ' + err.message });
+  }
+});
+
 app.post('/api/generate-blue-ocean', auth, async (req, res) => {
   const { sector, zip, city, state, budget, country } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });
