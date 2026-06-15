@@ -41,7 +41,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
   }
 
-  // International pages — CA, GB, AU
+  // International pages — all countries in INTL_GEO (CA, GB, AU, IN, DE, FR, etc. + CN, ID)
   for (const [countrySlug, country] of Object.entries(INTL_GEO)) {
     const cc = countrySlug.toLowerCase();
     for (const region of country.regions) {

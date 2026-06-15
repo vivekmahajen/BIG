@@ -4,6 +4,7 @@ import Script from 'next/script';
 import { SECTORS, getSectorById } from '@/lib/sectors';
 import { STATES, getStateBySlug, getCityBySlug, getTopCityCombinations } from '@/lib/geography';
 import { buildOpportunityMetadata, buildOpportunityJsonLd } from '@/lib/seo';
+import RelatedPages from '@/components/RelatedPages';
 
 export const revalidate = 86400;
 export const dynamicParams = true;
@@ -130,7 +131,17 @@ export default async function OpportunityPage({ params }: { params: Promise<{ st
               </p>
             </div>
           </aside>
-        </div>
+        <RelatedPages
+          countrySlug="us"
+          stateSlug={state.slug}
+          stateName={state.name}
+          citySlug={city.slug}
+          cityName={city.city}
+          sectorId={sectorId}
+          sectorLabel={sector.label}
+          otherSectors={otherSectors}
+          otherCities={otherCities}
+        />
       </div>
     </>
   );

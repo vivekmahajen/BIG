@@ -1272,4 +1272,56 @@ Set isWildcard: true on the 4th idea only. Use real, accurate URLs. Be specific 
   }
 });
 
+// ── OG Image (social share previews) ─────────────────────────────────────────
+app.get('/api/og/:publicId', async (req, res) => {
+  try {
+    const { getPublicAnalysis } = require('./repositories/shareRepo');
+    const row = await getPublicAnalysis(req.params.publicId, users);
+    const card = row?.card_data || {};
+    const name     = (card.name || 'Business Analysis').slice(0, 55);
+    const city     = row?.city || '';
+    const sector   = row?.sector_label || row?.sector || '';
+    const score    = card.score ? parseFloat(card.score).toFixed(1) : null;
+    const why      = (card.whyItWorks || '').slice(0, 120);
+    const scoreColor = score >= 9 ? '#10b981' : score >= 8 ? '#f59e0b' : '#94a3b8';
+
+    const locationLine = [sector, city].filter(Boolean).join(' · ');
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#07090d"/>
+      <stop offset="100%" style="stop-color:#0d1829"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Top bar -->
+  <text x="60" y="80" font-family="Arial,sans-serif" font-size="28" font-weight="900" fill="#f5b731">BIG</text>
+  <text x="105" y="80" font-family="Arial,sans-serif" font-size="14" fill="#435870" letter-spacing="2">BUSINESS OPPORTUNITY INTELLIGENCE</text>
+  <!-- Location / sector pill -->
+  ${locationLine ? `<rect x="60" y="100" width="${Math.min(locationLine.length * 9 + 40, 600)}" height="32" rx="16" fill="#1e3a5f"/>
+  <text x="80" y="122" font-family="Arial,sans-serif" font-size="14" fill="#7db4e8">${locationLine.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text>` : ''}
+  <!-- Idea name -->
+  <text x="60" y="210" font-family="Arial,sans-serif" font-size="42" font-weight="700" fill="#eaf0f8"
+    textLength="${Math.min(name.length * 24, 1080)}" lengthAdjust="spacingAndGlyphs">${name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text>
+  <!-- Why it works -->
+  ${why ? `<text x="60" y="270" font-family="Arial,sans-serif" font-size="18" fill="#8ba0bc" width="1000">${why.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0, 100)}…</text>` : ''}
+  <!-- Score chip -->
+  ${score ? `<rect x="60" y="340" width="200" height="100" rx="12" fill="#111620" stroke="#1a2535"/>
+  <text x="80" y="375" font-family="Arial,sans-serif" font-size="12" fill="#435870" letter-spacing="1">BIG SCORE</text>
+  <text x="80" y="425" font-family="Arial,sans-serif" font-size="48" font-weight="900" fill="${scoreColor}">${score}</text>
+  <text x="165" y="425" font-family="Arial,sans-serif" font-size="24" fill="${scoreColor}">/10</text>` : ''}
+  <!-- CTA -->
+  <text x="60" y="590" font-family="Arial,sans-serif" font-size="14" fill="#435870">big-eosin.vercel.app · Generate your own free analysis →</text>
+</svg>`;
+
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(svg);
+  } catch (err) {
+    console.error('[og] failed:', err.message);
+    res.status(500).send('OG image error');
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => console.log(`BIG backend running on 0.0.0.0:${PORT}`));

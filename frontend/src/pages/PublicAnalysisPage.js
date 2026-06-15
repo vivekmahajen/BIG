@@ -13,6 +13,17 @@ if (REF_CODE) {
   sessionStorage.setItem('big_ref_public_id', PUBLIC_ID);
 }
 
+function setMeta(name, content) {
+  let el = document.querySelector(`meta[name="${name}"]`);
+  if (!el) { el = document.createElement('meta'); el.name = name; document.head.appendChild(el); }
+  el.content = content;
+}
+function setMetaProp(prop, content) {
+  let el = document.querySelector(`meta[property="${prop}"]`);
+  if (!el) { el = document.createElement('meta'); el.setAttribute('property', prop); document.head.appendChild(el); }
+  el.content = content;
+}
+
 function ScoreBadge({ score }) {
   if (!score) return null;
   const s = typeof score === 'string' ? parseFloat(score) : score;
@@ -142,8 +153,45 @@ export default function PublicAnalysisPage() {
     getPublicAnalysis(PUBLIC_ID)
       .then(result => {
         setData(result);
-        const cardName = result.card_data?.name || 'Business Analysis';
-        document.title = `${cardName} — BIG Business Intelligence`;
+        const card = result.card_data || {};
+        const cardName = card.name || 'Business Analysis';
+        const city = result.city || '';
+        const sector = result.sector || '';
+        const score = card.score ? `★ ${parseFloat(card.score).toFixed(1)}/10` : '';
+
+        const titleFull = city && sector
+          ? `${cardName} — ${sector} in ${city} ${score} | BIG`
+          : `${cardName} — BIG Business Intelligence`;
+        const desc = card.whyItWorks
+          ? card.whyItWorks.slice(0, 160)
+          : `AI-powered business opportunity analysis for ${sector || 'this sector'}${city ? ` in ${city}` : ''}.`;
+        const ogImage = `https://big-hm1k.onrender.com/api/og/${PUBLIC_ID}`;
+
+        document.title = titleFull;
+        setMeta('description', desc);
+        setMetaProp('og:title', titleFull);
+        setMetaProp('og:description', desc);
+        setMetaProp('og:url', window.location.href);
+        setMetaProp('og:image', ogImage);
+        setMetaProp('twitter:title', titleFull);
+        setMetaProp('twitter:description', desc);
+        setMetaProp('twitter:image', ogImage);
+
+        // JSON-LD for analysis page
+        const existing = document.getElementById('big-analysis-jsonld');
+        if (existing) existing.remove();
+        const script = document.createElement('script');
+        script.id = 'big-analysis-jsonld';
+        script.type = 'application/ld+json';
+        script.text = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: titleFull,
+          description: desc,
+          url: window.location.href,
+          author: { '@type': 'Organization', name: 'BIG — Business Opportunity Intelligence' },
+        });
+        document.head.appendChild(script);
       })
       .catch(err => setError(err.message || 'Failed to load analysis'))
       .finally(() => setLoading(false));
