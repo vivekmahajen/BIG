@@ -8,6 +8,7 @@ import ScoreBadge from './ScoreBadge';
 import WhyThisIdeaExists from './WhyThisIdeaExists';
 import IterationPanel from './IterationPanel';
 import IdeaComparison from './IdeaComparison';
+import CompetitiveAnalysisPanel from './CompetitiveAnalysisPanel';
 
 const LEGEND = [
   { abbr: 'TAM', full: 'Total Addressable Market', desc: 'The entire revenue opportunity if 100% market share were captured.' },
@@ -503,6 +504,14 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
             <WhyThisIdeaExists data={o.whyItExists} />
           </div>
         )}
+
+        <div className={styles.section} style={{ paddingTop: 0 }}>
+          <CompetitiveAnalysisPanel
+            industry={sector}
+            city={city}
+            country={raw.country || 'US'}
+          />
+        </div>
 
         {o.whyItWorks && (
           <div className={styles.section}>

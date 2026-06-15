@@ -1,0 +1,257 @@
+.wrapper {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  color: #e2e8f0;
+  font-family: inherit;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #e2e8f0;
+  flex: 1;
+}
+
+.strength {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gapScore {
+  font-size: 13px;
+  color: #94a3b8;
+  background: #1e293b;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #334155;
+}
+
+.summary {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+/* Gaps */
+.gapsSection {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.gapsTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 10px;
+}
+
+.gapRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #0f172a;
+}
+
+.gapRow:last-child {
+  border-bottom: none;
+}
+
+.gapDot {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.gapText {
+  flex: 1;
+  font-size: 13px;
+  color: #e2e8f0;
+}
+
+.gapFreq {
+  font-size: 11px;
+  color: #64748b;
+  background: #0f172a;
+  padding: 2px 7px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+/* Competitor cards */
+.competitorList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.compCard {
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.compCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: #1e293b;
+  border: none;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  color: #e2e8f0;
+  transition: background 0.15s;
+}
+
+.compCardHeader:hover {
+  background: #263548;
+}
+
+.compRank {
+  font-size: 11px;
+  font-weight: 800;
+  color: #6366f1;
+  min-width: 24px;
+}
+
+.compName {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.compRating {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.compRevenue {
+  font-size: 12px;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.chevron {
+  font-size: 10px;
+  color: #475569;
+}
+
+.compCardBody {
+  background: #0f172a;
+  padding: 14px;
+  border-top: 1px solid #1e293b;
+}
+
+.compCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+  .compCols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.compCol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.colLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.compItem {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.vulnerability {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #c7d2fe;
+  line-height: 1.5;
+}
+
+/* Entry angle */
+.entryAngle {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.entryAngleLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #10b981;
+  margin-bottom: 6px;
+}
+
+.entryAngleText {
+  font-size: 14px;
+  color: #e2e8f0;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* Red flags */
+.redFlags {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.redFlagsLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
+.redFlag {
+  font-size: 13px;
+  color: #fca5a5;
+  line-height: 1.6;
+  padding: 3px 0;
+}
