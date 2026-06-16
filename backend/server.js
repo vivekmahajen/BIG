@@ -619,7 +619,9 @@ User's refinement instruction: "${instruction}"
 Return ONLY valid JSON with the same fields as the original idea. No markdown, no explanation.`;
 
   try {
-    const refined = await callClaude(client, prompt, null);
+    const { Anthropic: AnthropicSDK } = require('@anthropic-ai/sdk');
+    const _client = new AnthropicSDK({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const refined = await callClaude(_client, prompt, null);
     refined.aiGenerated = true;
     refined.refinedFrom = originalIdea.name;
     refined.refinementInstruction = instruction;
@@ -667,7 +669,9 @@ Return this exact JSON structure:
 }`;
 
   try {
-    const comparison = await callClaude(client, prompt, null);
+    const { Anthropic: AnthropicSDK2 } = require('@anthropic-ai/sdk');
+    const _client2 = new AnthropicSDK2({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const comparison = await callClaude(_client2, prompt, null);
     res.json(comparison);
   } catch (err) {
     console.error('compare-ideas error:', err.message);
