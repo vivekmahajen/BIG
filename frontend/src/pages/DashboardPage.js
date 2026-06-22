@@ -155,15 +155,22 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   }, [preselect.region, preselect.state, states]);
 
   useEffect(() => {
-    setSelectedState(''); setSelectedStateName(''); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
-    setCities([]); setZips([]); setSectors([]);
+    // Don't wipe out preselect cascade — it sets state via applyPreselect independently
+    if (!preselectApplied.current) {
+      setSelectedState(''); setSelectedStateName(''); setSelectedCity(''); setSelectedZip(''); setSelectedSector('');
+      setCities([]); setZips([]); setSectors([]);
+    }
     api.states(selectedCountry).then(setStates).catch(() => setStates([]));
   }, [selectedCountry]);
 
   useEffect(() => {
-    if (!selectedState) { setCities([]); setSelectedCity(''); return; }
+    if (!selectedState) {
+      if (!preselectApplied.current) { setCities([]); setSelectedCity(''); }
+      return;
+    }
     const stateName = states.find(s => s.code === selectedState)?.name || selectedState;
     setSelectedStateName(stateName);
+    if (preselectApplied.current) return; // applyPreselect handles cities itself
     api.cities(selectedState, selectedCountry).then(data => {
       setCities(data);
       if (preselect.city) {
@@ -175,7 +182,11 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   }, [selectedState, selectedCountry]);
 
   useEffect(() => {
-    if (!selectedState || !selectedCity) { setZips([]); setSelectedZip(''); return; }
+    if (!selectedState || !selectedCity) {
+      if (!preselectApplied.current) { setZips([]); setSelectedZip(''); }
+      return;
+    }
+    if (preselectApplied.current) return; // applyPreselect handles zips itself
     api.zips(selectedState, selectedCity, selectedCountry).then(data => {
       setZips(data);
       if (data.length > 0 && preselect.city) { setSelectedZip(data[0]); return; }
