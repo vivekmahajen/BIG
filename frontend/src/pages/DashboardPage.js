@@ -90,7 +90,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       // Step 1: Load states/regions for the country
       let stateList = [];
       try { stateList = await api.states(country); } catch (e) { console.log('[preselect] states error', e); }
-      console.log('[preselect] stateList.length', stateList.length);
+      console.log('[preselect] states', stateList.length);
       if (!stateList.length) return;
       setStates(stateList);
 
@@ -108,7 +108,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       // Step 3: Load cities for region
       let cityList = [];
       try { cityList = await api.cities(matchedState.code, country); } catch (e) { console.log('[preselect] cities error', e); }
-      console.log('[preselect] cityList.length', cityList.length);
+      console.log('[preselect] cities', cityList.length);
       if (!cityList.length) return;
       setCities(cityList);
 
@@ -123,7 +123,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       // Step 5: Load zips/postal areas
       let zipList = [];
       try { zipList = await api.zips(matchedState.code, matchedCity.name, country); } catch (e) { console.log('[preselect] zips error', e); }
-      console.log('[preselect] zipList', zipList);
+      console.log('[preselect] zips', zipList);
       if (!zipList.length) return;
       setZips(zipList);
       setSelectedZip(zipList[0]);
@@ -131,7 +131,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       // Step 6: Load sectors
       let sectorList = [];
       try { sectorList = await api.sectors(zipList[0]); } catch (e) { console.log('[preselect] sectors error', e); }
-      console.log('[preselect] sectorList.length', sectorList.length);
+      console.log('[preselect] sectors', sectorList.length);
       if (!sectorList.length) return;
       setSectors(sectorList);
 
