@@ -85,10 +85,12 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     async function applyPreselect() {
       preselectApplied.current = true;
       const country = preselect.country || 'US';
+      console.log('[preselect] start', { country, regionParam, city: preselect.city, sector: preselect.sector });
 
       // Step 1: Load states/regions for the country
       let stateList = [];
-      try { stateList = await api.states(country); } catch {}
+      try { stateList = await api.states(country); } catch (e) { console.log('[preselect] states error', e); }
+      console.log('[preselect] states', stateList.length);
       if (!stateList.length) return;
       setStates(stateList);
 
@@ -98,13 +100,15 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
         s.code?.toLowerCase() === regionParam?.toLowerCase() ||
         s.code?.endsWith('-' + regionParam?.toUpperCase())
       );
+      console.log('[preselect] matchedState', matchedState);
       if (!matchedState) return;
       setSelectedState(matchedState.code);
       setSelectedStateName(matchedState.name);
 
       // Step 3: Load cities for region
       let cityList = [];
-      try { cityList = await api.cities(matchedState.code, country); } catch {}
+      try { cityList = await api.cities(matchedState.code, country); } catch (e) { console.log('[preselect] cities error', e); }
+      console.log('[preselect] cities', cityList.length);
       if (!cityList.length) return;
       setCities(cityList);
 
@@ -112,19 +116,22 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       const matchedCity = preselect.city
         ? cityList.find(c => c.name === preselect.city || c.name?.toLowerCase() === preselect.city.toLowerCase())
         : null;
+      console.log('[preselect] matchedCity', matchedCity);
       if (!matchedCity) return;
       setSelectedCity(matchedCity.name);
 
       // Step 5: Load zips/postal areas
       let zipList = [];
-      try { zipList = await api.zips(matchedState.code, matchedCity.name, country); } catch {}
+      try { zipList = await api.zips(matchedState.code, matchedCity.name, country); } catch (e) { console.log('[preselect] zips error', e); }
+      console.log('[preselect] zips', zipList);
       if (!zipList.length) return;
       setZips(zipList);
       setSelectedZip(zipList[0]);
 
       // Step 6: Load sectors
       let sectorList = [];
-      try { sectorList = await api.sectors(zipList[0]); } catch {}
+      try { sectorList = await api.sectors(zipList[0]); } catch (e) { console.log('[preselect] sectors error', e); }
+      console.log('[preselect] sectors', sectorList.length);
       if (!sectorList.length) return;
       setSectors(sectorList);
 
@@ -134,8 +141,10 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
         const matchedSector = sectorList.find(s =>
           s.name === backendName || s.name?.toLowerCase() === backendName.toLowerCase()
         );
+        console.log('[preselect] matchedSector', matchedSector, 'for', backendName);
         if (matchedSector) setSelectedSector(matchedSector.name);
       }
+      console.log('[preselect] done');
     }
 
     applyPreselect();
