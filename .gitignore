@@ -6,3 +6,4 @@ frontend/build/
 .env.local
 *.log
 .claude/settings.local.json
+.claude/worktrees/

@@ -64,7 +64,84 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     api.countries().then(setCountries).catch(() => {});
   }, []);
 
-  // Auto-select state/region from URL param once states are loaded
+  // Single sequential preselect: when URL params are present, drive the form directly
+  const preselectApplied = useRef(false);
+  useEffect(() => {
+    const regionParam = preselect.region || preselect.state;
+    if (!regionParam && !preselect.city && !preselect.sector) return;
+    if (preselectApplied.current) return;
+
+    const SEO_SECTOR_MAP = {
+      food_beverage: 'Food & Beverage', technology: 'Technology & Software',
+      healthcare: 'Healthcare & Life Sciences', financial_services: 'Financial Services & Fintech',
+      retail: 'Retail & E-Commerce', real_estate: 'Real Estate & Construction',
+      education: 'Education & EdTech', manufacturing: 'Manufacturing & Logistics',
+      wellness: 'Wellness & Fitness', hospitality: 'Hospitality & Tourism',
+      energy: 'Energy & Sustainability', professional_services: 'Professional Services',
+      transportation: 'Transportation & Mobility', media_entertainment: 'Media & Entertainment',
+      agriculture: 'Agriculture & AgTech', government: 'Government & Public Sector',
+    };
+
+    async function applyPreselect() {
+      preselectApplied.current = true;
+      const country = preselect.country || 'US';
+
+      // Step 1: Load states/regions for the country
+      let stateList = [];
+      try { stateList = await api.states(country); } catch {}
+      if (!stateList.length) return;
+      setStates(stateList);
+
+      // Step 2: Find matching region
+      const matchedState = stateList.find(s =>
+        s.code === regionParam ||
+        s.code?.toLowerCase() === regionParam?.toLowerCase() ||
+        s.code?.endsWith('-' + regionParam?.toUpperCase())
+      );
+      if (!matchedState) return;
+      setSelectedState(matchedState.code);
+      setSelectedStateName(matchedState.name);
+
+      // Step 3: Load cities for region
+      let cityList = [];
+      try { cityList = await api.cities(matchedState.code, country); } catch {}
+      if (!cityList.length) return;
+      setCities(cityList);
+
+      // Step 4: Match city
+      const matchedCity = preselect.city
+        ? cityList.find(c => c.name === preselect.city || c.name?.toLowerCase() === preselect.city.toLowerCase())
+        : null;
+      if (!matchedCity) return;
+      setSelectedCity(matchedCity.name);
+
+      // Step 5: Load zips/postal areas
+      let zipList = [];
+      try { zipList = await api.zips(matchedState.code, matchedCity.name, country); } catch {}
+      if (!zipList.length) return;
+      setZips(zipList);
+      setSelectedZip(zipList[0]);
+
+      // Step 6: Load sectors
+      let sectorList = [];
+      try { sectorList = await api.sectors(zipList[0]); } catch {}
+      if (!sectorList.length) return;
+      setSectors(sectorList);
+
+      // Step 7: Match sector
+      if (preselect.sector) {
+        const backendName = SEO_SECTOR_MAP[preselect.sector] || preselect.sector;
+        const matchedSector = sectorList.find(s =>
+          s.name === backendName || s.name?.toLowerCase() === backendName.toLowerCase()
+        );
+        if (matchedSector) setSelectedSector(matchedSector.name);
+      }
+    }
+
+    applyPreselect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-select state/region from URL param once states are loaded (user-driven flow)
   useEffect(() => {
     const regionParam = preselect.region || preselect.state;
     if (regionParam && states.length > 0 && !selectedState) {
@@ -297,6 +374,9 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
               <label>Country</label>
               <div className={styles.selectWrap}>
                 <select value={selectedCountry} onChange={e => setSelectedCountry(e.target.value)}>
+                  {countries.length === 0 && selectedCountry
+                    ? <option value={selectedCountry}>{selectedCountry}</option>
+                    : null}
                   {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
                 </select>
               </div>
