@@ -150,7 +150,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     }
 
     applyPreselect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line
 
   // Auto-select state/region from URL param once states are loaded (user-driven flow)
   useEffect(() => {
