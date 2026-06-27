@@ -3,6 +3,7 @@ import { api } from '../api';
 import OpportunityCard from '../components/OpportunityCard';
 import Disclaimer from '../components/Disclaimer';
 import CreditsDisplay from '../components/CreditsDisplay';
+import IdeaValidator from '../components/IdeaValidator';
 import SaveButton from '../components/SaveButton';
 import { saveReport, loadReports, deleteReport, makeId } from '../savedReports';
 import styles from './DashboardPage.module.css';
@@ -51,6 +52,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showValidator, setShowValidator] = useState(false);
 
   const resultsRef = useRef(null);
   const selectedBudgetRef = useRef(selectedBudget);
@@ -527,17 +529,31 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
 
           {/* ── Generate buttons — always visible when sector is selected ── */}
           {!loading && view === 'list' && selectedSector && (
-            <div className={styles.generateGroup} style={{ marginTop: 16 }}>
-              <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
-                🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
-              </button>
-              <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
-                ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
-              </button>
-              <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
-                ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
-              </button>
-            </div>
+            <>
+              <div className={styles.generateGroup} style={{ marginTop: 16 }}>
+                <button className={styles.liveBtn} onClick={handleLiveAnalysis} title="Real-time AI analysis with Census, BLS & Trends data">
+                  🔴 Live Analysis <span className={styles.creditTag}>3 credits</span>
+                </button>
+                <button className={styles.generateBtn} onClick={() => handleGenerateIdea(false)}>
+                  ✦ Generate New Idea <span className={styles.creditTag}>3 credits</span>
+                </button>
+                <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
+                  ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
+                </button>
+                <button className={styles.validateIdeaBtn} onClick={() => setShowValidator(v => !v)}>
+                  {showValidator ? '✕ Close Validator' : '✦ Validate My Idea'} <span className={styles.creditTag}>5 credits</span>
+                </button>
+              </div>
+              {showValidator && (
+                <IdeaValidator
+                  sector={selectedSector}
+                  city={selectedCity}
+                  state={selectedStateName || selectedState}
+                  zip={selectedZip}
+                  onNavigate={onNavigate}
+                />
+              )}
+            </>
           )}
 
           {liveStep > 0 && (
@@ -576,6 +592,9 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
                     ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
                   </button>
+                  <button className={styles.validateIdeaBtn} onClick={() => setShowValidator(v => !v)}>
+                    {showValidator ? '✕ Close Validator' : '✦ Validate My Idea'} <span className={styles.creditTag}>5 credits</span>
+                  </button>
                   <SaveButton
                     cardData={activeOpp}
                     state={states.find(s => s.code === selectedState)?.name || selectedState}
@@ -588,6 +607,15 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                 </div>
               </div>
               {generateError && <div className={styles.generateError}>{generateError}</div>}
+              {showValidator && (
+                <IdeaValidator
+                  sector={selectedSector}
+                  city={selectedCity}
+                  state={selectedStateName || selectedState}
+                  zip={selectedZip}
+                  onNavigate={onNavigate}
+                />
+              )}
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
                 <OpportunityCard
                   opportunity={activeOpp}

@@ -8,6 +8,7 @@ const CREDIT_COSTS = {
   'business-plan': 3,           // investor-ready business plan generation
   'refine-idea': 1,             // refine existing idea with instruction
   'compare-ideas': 2,           // side-by-side idea comparison
+  'validate-idea': 5,           // honest data-grounded idea assessment
 };
 
 // Subscription tiers

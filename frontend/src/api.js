@@ -117,4 +117,7 @@ export const api = {
 
   compareIdeas: (idea1, idea2, city, country) =>
     request('/compare-ideas', { method: 'POST', body: JSON.stringify({ idea1, idea2, city, country }) }),
+
+  validateIdea: (idea, targetCustomer, geography, pricePoint) =>
+    request('/validate-idea', { method: 'POST', body: JSON.stringify({ idea, targetCustomer, geography, pricePoint }) }),
 };
