@@ -66,8 +66,12 @@ export const api = {
   sectors: (zip) => request(`/sectors?zip=${zip}`),
   opportunity: (zip, sector) =>
     request(`/opportunity?zip=${encodeURIComponent(zip)}&sector=${encodeURIComponent(sector)}`),
-  sectorOpportunities: (sector) =>
-    request(`/sector-opportunities?sector=${encodeURIComponent(sector)}`),
+  sectorOpportunities: (sector, zip, state) => {
+    let url = `/sector-opportunities?sector=${encodeURIComponent(sector)}`;
+    if (zip) url += `&zip=${encodeURIComponent(zip)}`;
+    if (state) url += `&state=${encodeURIComponent(state)}`;
+    return request(url);
+  },
 
   generateIdea: (sector, zip, city, state, budget, country) =>
     generateWithBudgetCheck('/generate-idea', { sector, zip, city, state, budget, country }, budget),

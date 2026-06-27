@@ -232,11 +232,12 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     if (!selectedSector) { setSectorOpportunities([]); setView('list'); setActiveOpp(null); return; }
     setLoading(true);
     setError('');
-    api.sectorOpportunities(selectedSector)
+    const stateName = states.find(s => s.code === selectedState)?.name || selectedState;
+    api.sectorOpportunities(selectedSector, selectedZip || undefined, stateName || undefined)
       .then(data => { setSectorOpportunities(data); setView('list'); setActiveOpp(null); })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [selectedSector]);
+  }, [selectedSector, selectedZip, selectedState]); // eslint-disable-line
 
   // Parse a startup cost string like "$25K–$75K" or "$1.2M" into a max dollar value
   function parseStartupCostMax(str) {
@@ -502,7 +503,8 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                 <p className={styles.rankedSub}>Ranked by conviction score. Click any row to view the full intelligence report.</p>
               </div>
               {filteredOpportunities.map((opp, idx) => {
-                const color = opp.score >= 9.0 ? '#10b981' : opp.score >= 8.0 ? '#f59e0b' : '#94a3b8';
+                const displayScore = opp.adjustedScore ?? opp.score;
+                const color = displayScore >= 9.0 ? '#10b981' : displayScore >= 8.0 ? '#f59e0b' : displayScore >= 6.0 ? '#f97316' : '#94a3b8';
                 return (
                   <button key={opp.name} className={styles.rankedItem} onClick={() => openDetail(opp)}>
                     <span className={styles.rankedRank}>#{idx + 1}</span>
@@ -517,9 +519,14 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                         <span className={styles.rankedDot}>·</span>
                         <span>Yr1: {opp.revenueYr1}</span>
                       </div>
+                      {opp.localWarning && (
+                        <div className={styles.localWarning} title={opp.localWarning}>
+                          ⚠ Small local market — revenue projections may not hold for {selectedCity}
+                        </div>
+                      )}
                     </div>
                     <span className={styles.rankedScore} style={{ background: `${color}22`, color, borderColor: `${color}44` }}>
-                      ★ {opp.score.toFixed(1)}
+                      ★ {displayScore.toFixed(1)}
                     </span>
                   </button>
                 );

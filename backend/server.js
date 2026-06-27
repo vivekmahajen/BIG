@@ -348,13 +348,56 @@ app.get('/api/opportunity', auth, (req, res) => {
   res.json(opp);
 });
 
-app.get('/api/sector-opportunities', auth, (req, res) => {
-  const { sector } = req.query;
+app.get('/api/sector-opportunities', auth, async (req, res) => {
+  const { sector, zip, state, country } = req.query;
   if (!sector) return res.status(400).json({ error: 'sector query param required' });
   const { REPORT_DATA } = require('./reportData');
   const opps = REPORT_DATA[sector];
   if (!opps) return res.status(404).json({ error: 'Sector not found' });
-  res.json(opps);
+
+  // Without location data, return as-is (national ranking)
+  if (!zip || !state || (country && country !== 'US')) {
+    return res.json(opps);
+  }
+
+  // Geo-adjust scores using real Census establishment counts for the sector
+  try {
+    const { getBusinessDensity } = require('./services/censusService');
+    const { SECTOR_MAP } = require('./config/sectorMap');
+    const naicsCode = SECTOR_MAP[sector]?.naics || '54';
+
+    const density = await getBusinessDensity(zip, state, naicsCode);
+    const estab = density?.estab;
+
+    if (!estab) {
+      // No Census data — return national ranking unchanged
+      return res.json(opps);
+    }
+
+    // Derive local establishment estimate
+    // ZIP-level data is for the zip only; statewide is for the whole state (divide by ~5 to estimate metro share)
+    const localEstab = density.statewide ? Math.round(estab / 5) : estab;
+
+    // localScore: 1.0 at 150+ establishments (healthy market), scales down linearly
+    const localScore = Math.min(1.0, localEstab / 150);
+
+    // Adjusted score: national quality (60%) + local market fit (40%)
+    // Worst case: score drops to 60% of original. Best case: unchanged.
+    const adjusted = opps.map(opp => {
+      const adjustedScore = Math.round((0.6 * opp.score + 0.4 * opp.score * localScore) * 10) / 10;
+      const localWarning = localScore < 0.5
+        ? `Only ~${localEstab} ${sector} businesses in this area${density.statewide ? ' (metro estimate)' : ''} — revenue projections assume a larger market`
+        : null;
+      return { ...opp, adjustedScore, localScore: Math.round(localScore * 100) / 100, localEstab, localWarning };
+    });
+
+    // Sort by geo-adjusted score (honest local ranking)
+    adjusted.sort((a, b) => b.adjustedScore - a.adjustedScore);
+    return res.json(adjusted);
+  } catch {
+    // Census call failed — fall back to national ranking silently
+    return res.json(opps);
+  }
 });
 
 // Public test endpoint — no auth, no credits — hit in browser to verify signals

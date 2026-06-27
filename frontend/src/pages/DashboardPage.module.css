@@ -281,6 +281,13 @@
   color: var(--border);
 }
 
+.localWarning {
+  font-size: 11px;
+  color: #f97316;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
 .rankedScore {
   font-size: 13px;
   font-weight: 700;
