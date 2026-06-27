@@ -284,13 +284,13 @@ app.post('/api/buy-pack', auth, (req, res) => {
   res.json({ success: true, added: pack.credits, user: userPublic(user) });
 });
 
-// Geo data
-app.get('/api/geo/countries', auth, (req, res) => {
+// Geo data — public endpoints, no auth required
+app.get('/api/geo/countries', (req, res) => {
   const { COUNTRIES } = require('./internationalGeoData');
   res.json(COUNTRIES);
 });
 
-app.get('/api/geo/states', auth, (req, res) => {
+app.get('/api/geo/states', (req, res) => {
   const { country } = req.query;
   if (!country || country === 'US') {
     const { geoData } = require('./geoData');
@@ -301,7 +301,7 @@ app.get('/api/geo/states', auth, (req, res) => {
   res.json(regions.map(r => ({ code: r.code, name: r.name })));
 });
 
-app.get('/api/geo/cities', auth, (req, res) => {
+app.get('/api/geo/cities', (req, res) => {
   const { stateCode, country } = req.query;
   if (!country || country === 'US') {
     const { geoData } = require('./geoData');
@@ -314,7 +314,7 @@ app.get('/api/geo/cities', auth, (req, res) => {
   res.json(cities.map(c => ({ name: c.name })));
 });
 
-app.get('/api/geo/zips', auth, (req, res) => {
+app.get('/api/geo/zips', (req, res) => {
   const { stateCode, city, country } = req.query;
   if (!country || country === 'US') {
     const { geoData } = require('./geoData');
@@ -329,7 +329,7 @@ app.get('/api/geo/zips', auth, (req, res) => {
   res.json(areas);
 });
 
-app.get('/api/sectors', auth, (req, res) => {
+app.get('/api/sectors', (req, res) => {
   const { zip } = req.query;
   const { getSectorsForZip, SECTORS } = require('./geoData');
   // Non-US postal areas won't be in our ZIP database — return all sectors
