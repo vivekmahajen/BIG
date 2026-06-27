@@ -233,7 +233,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
     setLoading(true);
     setError('');
     const stateName = states.find(s => s.code === selectedState)?.name || selectedState;
-    api.sectorOpportunities(selectedSector, selectedZip || undefined, stateName || undefined)
+    api.sectorOpportunities(selectedSector, selectedZip || undefined, stateName || undefined, selectedCity || undefined)
       .then(data => { setSectorOpportunities(data); setView('list'); setActiveOpp(null); })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));

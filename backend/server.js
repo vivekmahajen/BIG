@@ -360,42 +360,54 @@ app.get('/api/sector-opportunities', auth, async (req, res) => {
     return res.json(opps);
   }
 
-  // Geo-adjust scores using real Census establishment counts for the sector
+  // Geo-adjust scores using local market size
   try {
+    const { getLocalScore, getCityMetroPop } = require('./config/cityPopulation');
     const { getBusinessDensity } = require('./services/censusService');
     const { SECTOR_MAP } = require('./config/sectorMap');
+
+    // Extract city name from state param (state passed as state name from frontend)
+    // city comes from req.query directly
+    const city = req.query.city || '';
+
+    // Try Census first (most accurate); fall back to population-based estimate
+    let localScore;
+    let localEstab = null;
+    let sourceLabel = '';
+
     const naicsCode = SECTOR_MAP[sector]?.naics || '54';
+    const density = await getBusinessDensity(zip, state, naicsCode).catch(() => null);
 
-    const density = await getBusinessDensity(zip, state, naicsCode);
-    const estab = density?.estab;
-
-    if (!estab) {
-      // No Census data — return national ranking unchanged
-      return res.json(opps);
+    if (density?.estab) {
+      const estabForZip = density.statewide ? Math.round(density.estab / 5) : density.estab;
+      localEstab = estabForZip;
+      localScore = Math.min(1.0, estabForZip / 150);
+      sourceLabel = density.statewide ? 'Census (statewide estimate)' : 'Census (ZIP-level)';
+    } else {
+      // No Census data — use population-based local score (always available)
+      localScore = city ? getLocalScore(city) : 0.7; // conservative default if no city
+      const metroPop = city ? getCityMetroPop(city) : 250000;
+      sourceLabel = `metro population ~${(metroPop / 1000).toFixed(0)}k`;
     }
 
-    // Derive local establishment estimate
-    // ZIP-level data is for the zip only; statewide is for the whole state (divide by ~5 to estimate metro share)
-    const localEstab = density.statewide ? Math.round(estab / 5) : estab;
-
-    // localScore: 1.0 at 150+ establishments (healthy market), scales down linearly
-    const localScore = Math.min(1.0, localEstab / 150);
-
     // Adjusted score: national quality (60%) + local market fit (40%)
-    // Worst case: score drops to 60% of original. Best case: unchanged.
     const adjusted = opps.map(opp => {
       const adjustedScore = Math.round((0.6 * opp.score + 0.4 * opp.score * localScore) * 10) / 10;
       const localWarning = localScore < 0.5
-        ? `Only ~${localEstab} ${sector} businesses in this area${density.statewide ? ' (metro estimate)' : ''} — revenue projections assume a larger market`
+        ? `Market may be too small for this opportunity in ${city || 'this area'} (${sourceLabel}) — revenue projections assume a larger market`
         : null;
-      return { ...opp, adjustedScore, localScore: Math.round(localScore * 100) / 100, localEstab, localWarning };
+      return {
+        ...opp,
+        adjustedScore,
+        localScore: Math.round(localScore * 100) / 100,
+        ...(localEstab !== null ? { localEstab } : {}),
+        localWarning,
+      };
     });
 
-    // Sort by geo-adjusted score (honest local ranking)
     adjusted.sort((a, b) => b.adjustedScore - a.adjustedScore);
     return res.json(adjusted);
   } catch {
-    // Census call failed — fall back to national ranking silently
     return res.json(opps);
   }
 });
