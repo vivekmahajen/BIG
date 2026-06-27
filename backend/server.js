@@ -366,11 +366,7 @@ app.get('/api/sector-opportunities', auth, async (req, res) => {
     const { getBusinessDensity } = require('./services/censusService');
     const { SECTOR_MAP } = require('./config/sectorMap');
 
-    // Extract city name from state param (state passed as state name from frontend)
-    // city comes from req.query directly
     const city = req.query.city || '';
-
-    // Try Census first (most accurate); fall back to population-based estimate
     let localScore;
     let localEstab = null;
     let sourceLabel = '';
@@ -384,13 +380,11 @@ app.get('/api/sector-opportunities', auth, async (req, res) => {
       localScore = Math.min(1.0, estabForZip / 150);
       sourceLabel = density.statewide ? 'Census (statewide estimate)' : 'Census (ZIP-level)';
     } else {
-      // No Census data — use population-based local score (always available)
-      localScore = city ? getLocalScore(city) : 0.7; // conservative default if no city
+      localScore = city ? getLocalScore(city) : 0.7;
       const metroPop = city ? getCityMetroPop(city) : 250000;
       sourceLabel = `metro population ~${(metroPop / 1000).toFixed(0)}k`;
     }
 
-    // Adjusted score: national quality (60%) + local market fit (40%)
     const adjusted = opps.map(opp => {
       const adjustedScore = Math.round((0.6 * opp.score + 0.4 * opp.score * localScore) * 10) / 10;
       const localWarning = localScore < 0.5
