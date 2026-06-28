@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS saved_opportunities (
   -- Denormalized fields for fast dashboard sorting
   score           SMALLINT     NOT NULL DEFAULT 0 CHECK (score BETWEEN 0 AND 10),
   conviction      VARCHAR(20),
-  verdict         VARCHAR(10),
+  verdict         VARCHAR(50),
 
   -- User annotations
   notes           TEXT,
