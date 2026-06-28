@@ -282,7 +282,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
       name: opp.name,
       sector: selectedSector,
       zip: selectedZip,
-      score: typeof opp.score === 'string' ? parseFloat(opp.score) : (opp.score || 0),
+      score: opp.preValidation ? parseFloat((opp.preValidation.score / 10).toFixed(1)) : (typeof opp.score === 'string' ? parseFloat(opp.score) : (opp.score || 0)),
       timestamp: Date.now(),
       data: oppWithId,
     };
