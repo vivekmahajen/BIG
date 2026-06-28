@@ -716,6 +716,16 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   savedOpportunityId={activeOpp?._savedId}
                 />
               </CardErrorBoundary>
+              {showValidator && (
+                <IdeaValidator
+                  sector={selectedSector}
+                  city={selectedCity}
+                  state={selectedStateName || selectedState}
+                  zip={selectedZip}
+                  onNavigate={onNavigate}
+                  prefill={validatorPrefill}
+                />
+              )}
             </div>
           )}
 
