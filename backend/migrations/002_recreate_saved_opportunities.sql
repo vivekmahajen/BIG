@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS saved_opportunities (
   card_data       JSONB        NOT NULL,
   score           SMALLINT     NOT NULL DEFAULT 0 CHECK (score BETWEEN 0 AND 10),
   conviction      VARCHAR(20),
-  verdict         VARCHAR(10),
+  verdict         VARCHAR(50),
   notes           TEXT,
   tags            TEXT[],
   is_watchlisted  BOOLEAN      NOT NULL DEFAULT FALSE,
