@@ -442,6 +442,36 @@ app.post('/api/validate', auth, async (req, res) => {
   }
 });
 
+// ── Internal idea pre-validation (no credits charged, lightweight) ────────────
+// Returns { score, verdict } or null on failure. Used to filter generated ideas.
+async function validateIdeaInternal(ideaText, geography, client) {
+  const prompt = `You are a startup validator. Score this business idea briefly.
+
+IDEA: "${ideaText.slice(0, 800)}"
+GEOGRAPHY: ${geography || 'US'}
+
+Score it 0–100 and assign a verdict. Be honest and strict.
+- 70–100: Promising (clear demand, differentiation, viable unit economics)
+- 45–69: Conditional (real potential but significant blockers)
+- 20–44: Weak (fundamental problems — crowded, no moat, weak demand)
+- 0–19: Don't build (fatal flaw — will very likely fail regardless of execution)
+
+Return ONLY this JSON:
+{"score": 0, "verdict": "Promising | Conditional | Weak | Don't build (as stated)", "bearCase": "one sentence on the strongest reason it fails"}`;
+
+  try {
+    const msg = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const raw = msg.content[0].text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 app.post('/api/generate-idea', auth, async (req, res) => {
   const { sector, zip, city, state, budget, country } = req.body;
   if (!sector) return res.status(400).json({ error: 'sector required' });
@@ -627,11 +657,26 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
 Make the idea genuinely different from common ideas. Be specific with numbers. Score should reflect real conviction (7.0–9.5 range).`;
 
   try {
-    const idea = await callClaude(client, prompt, budget);
+    const geography = [city, state, country !== 'US' ? country : ''].filter(Boolean).join(', ');
+    let idea;
+    let preValidation = null;
+    const MAX_ATTEMPTS = 3;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      idea = await callClaude(client, attempt === 0 ? prompt : prompt + '\n\nIMPORTANT: Generate a DIFFERENT, more viable idea than your previous attempt. Focus on locally proven demand and clear differentiation.', budget);
+      preValidation = await validateIdeaInternal(
+        [idea.name, idea.whyItWorks, idea.model].filter(Boolean).join('. '),
+        geography,
+        client
+      );
+      if (!preValidation || preValidation.score >= 45) break;
+    }
+
     idea.aiGenerated = true;
     idea.validationSignals = validationPayload;
     idea.opportunityScores = opportunityScores;
     idea.whyItExists = idea_whyItExists;
+    if (preValidation) idea.preValidation = preValidation;
     res.json(idea);
   } catch (err) {
     console.error('generate-idea error:', err.message);
@@ -1113,13 +1158,28 @@ Return ONLY a valid JSON object (no markdown, no explanation):${boCurrencyNote}
 The topCompetitors array MUST be empty. Score 8.5–9.5. Keep ALL string values concise — under 40 words each. Be specific with numbers.`;
 
   try {
-    const idea = await callClaude(client, prompt, budget);
+    const geography = [city, state, country !== 'US' ? country : ''].filter(Boolean).join(', ');
+    let idea;
+    let preValidation = null;
+    const MAX_ATTEMPTS = 3;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      idea = await callClaude(client, attempt === 0 ? prompt : prompt + '\n\nIMPORTANT: Generate a DIFFERENT blue ocean idea. The previous attempt did not validate well. Find a genuinely underserved gap with real local demand.', budget);
+      preValidation = await validateIdeaInternal(
+        [idea.name, idea.whyItWorks, idea.model].filter(Boolean).join('. '),
+        geography,
+        client
+      );
+      if (!preValidation || preValidation.score >= 45) break;
+    }
+
     idea.aiGenerated = true;
     idea.blueOcean = true;
     idea.topCompetitors = [];
     idea.validationSignals = boValidationPayload;
     idea.opportunityScores = boOpportunityScores;
     idea.whyItExists = boWhyItExists;
+    if (preValidation) idea.preValidation = preValidation;
     res.json(idea);
   } catch (err) {
     console.error('generate-blue-ocean error:', err.message);

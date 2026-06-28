@@ -423,6 +423,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
     topCompetitors:   Array.isArray(raw.topCompetitors)  ? raw.topCompetitors  : [],
     opportunityScores: raw.opportunityScores || null,
     whyItExists: raw.whyItExists || null,
+    preValidation: raw.preValidation || null,
     compareData,
   };
 
@@ -493,6 +494,20 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
           ))}
         </div>
 
+        {o.preValidation && (
+          <div style={{
+            margin: '0 0 12px',
+            padding: '10px 14px',
+            borderRadius: 8,
+            background: o.preValidation.score >= 70 ? 'rgba(16,185,129,0.1)' : o.preValidation.score >= 45 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.08)',
+            border: `1px solid ${o.preValidation.score >= 70 ? 'rgba(16,185,129,0.3)' : o.preValidation.score >= 45 ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)'}`,
+            fontSize: 13,
+            color: o.preValidation.score >= 70 ? '#10b981' : o.preValidation.score >= 45 ? '#f59e0b' : '#ef4444',
+          }}>
+            <strong>Pre-validated {o.preValidation.score}/100 — {o.preValidation.verdict}</strong>
+            {o.preValidation.bearCase && <span style={{ color: '#94a3b8', marginLeft: 8 }}>· {o.preValidation.bearCase}</span>}
+          </div>
+        )}
         {o.opportunityScores && (
           <div className={styles.section} style={{ paddingTop: 0 }}>
             <ScoreBadge scores={o.opportunityScores} />
