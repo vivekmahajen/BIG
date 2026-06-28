@@ -134,8 +134,6 @@ function getCityMetroPop(city) {
 
 // localScore: steeper tiers so small markets drop scores aggressively.
 // Major metros (5M+) stay at 1.0; mid-size cities land in 0.4-0.6 range.
-// Combined with the pure-local formula (score × localScore) this brings
-// Anchorage-class markets from ~7.7 down to ~3-4, matching validate signal.
 function getLocalScore(city) {
   const pop = getCityMetroPop(city);
   if (pop >= 5000000) return 1.0;
