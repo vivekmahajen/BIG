@@ -558,6 +558,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   city={selectedCity}
                   state={selectedStateName || selectedState}
                   zip={selectedZip}
+                  country={selectedCountry}
                   onNavigate={onNavigate}
                   prefill={validatorPrefill}
                 />
@@ -622,6 +623,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   city={selectedCity}
                   state={selectedStateName || selectedState}
                   zip={selectedZip}
+                  country={selectedCountry}
                   onNavigate={onNavigate}
                   prefill={validatorPrefill}
                 />
@@ -722,6 +724,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   city={selectedCity}
                   state={selectedStateName || selectedState}
                   zip={selectedZip}
+                  country={selectedCountry}
                   onNavigate={onNavigate}
                   prefill={validatorPrefill}
                 />
