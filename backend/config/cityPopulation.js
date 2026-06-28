@@ -132,16 +132,20 @@ function getCityMetroPop(city) {
   return CITY_METRO_POP[city] || 250000; // default: small-medium city
 }
 
-// localScore: 1.0 at 1M+ metro pop, scales linearly down to 0.2 at 50k
-// This mirrors typical SMB addressable market density
+// localScore: steeper tiers so small markets drop scores aggressively.
+// Major metros (5M+) stay at 1.0; mid-size cities land in 0.4-0.6 range.
+// Combined with the pure-local formula (score × localScore) this brings
+// Anchorage-class markets from ~7.7 down to ~3-4, matching validate signal.
 function getLocalScore(city) {
   const pop = getCityMetroPop(city);
-  if (pop >= 1000000) return 1.0;
-  if (pop >= 500000)  return 0.8;
-  if (pop >= 300000)  return 0.65;
-  if (pop >= 150000)  return 0.5;
-  if (pop >= 75000)   return 0.35;
-  return 0.2;
+  if (pop >= 5000000) return 1.0;
+  if (pop >= 2000000) return 0.9;
+  if (pop >= 1000000) return 0.75;
+  if (pop >= 500000)  return 0.6;
+  if (pop >= 300000)  return 0.45;
+  if (pop >= 150000)  return 0.3;
+  if (pop >= 75000)   return 0.2;
+  return 0.1;
 }
 
 module.exports = { getCityMetroPop, getLocalScore, CITY_METRO_POP };
