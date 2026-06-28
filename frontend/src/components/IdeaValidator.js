@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../api';
 import styles from './IdeaValidator.module.css';
 import SaveButton from './SaveButton';
@@ -52,17 +52,33 @@ function DimensionRow({ dim }) {
   );
 }
 
-export default function IdeaValidator({ sector, city, state, zip, onNavigate }) {
-  const [idea, setIdea] = useState('');
-  const [targetCustomer, setTargetCustomer] = useState('');
+export default function IdeaValidator({ sector, city, state, zip, onNavigate, prefill }) {
+  const [idea, setIdea] = useState(prefill?.idea || '');
+  const [targetCustomer, setTargetCustomer] = useState(prefill?.targetCustomer || '');
   const [geography, setGeography] = useState('');
-  const [pricePoint, setPricePoint] = useState('');
+  const [pricePoint, setPricePoint] = useState(prefill?.pricePoint || '');
   const [showNudges, setShowNudges] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!prefill);
   const [result, setResult] = useState(null);
   const [needsDetail, setNeedsDetail] = useState(null);
   const [error, setError] = useState('');
   const [savedOpportunityId, setSavedOpportunityId] = useState(null);
+
+  // Auto-submit when opened with a prefilled idea (e.g. from generated card)
+  useEffect(() => {
+    if (!prefill?.idea) return;
+    const geoHint = [city, state].filter(Boolean).join(', ');
+    api.validateIdea(prefill.idea, prefill.targetCustomer || undefined, geoHint || undefined, prefill.pricePoint || undefined)
+      .then(data => {
+        if (data.error === 'needs-detail') setNeedsDetail(data);
+        else setResult(data);
+      })
+      .catch(err => {
+        if (err.message?.includes('credits')) setError(err.message + ' — click "+ Add Credits" to top up.');
+        else setError(err.message || 'Validation failed. Please try again.');
+      })
+      .finally(() => setLoading(false));
+  }, []); // eslint-disable-line
 
   async function handleValidate() {
     if (!idea.trim() || idea.trim().length < 20) {

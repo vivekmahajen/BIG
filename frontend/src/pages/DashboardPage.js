@@ -53,6 +53,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showValidator, setShowValidator] = useState(false);
+  const [validatorPrefill, setValidatorPrefill] = useState(null);
 
   const resultsRef = useRef(null);
   const selectedBudgetRef = useRef(selectedBudget);
@@ -547,7 +548,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                 <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
                   ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
                 </button>
-                <button className={styles.validateIdeaBtn} onClick={() => setShowValidator(v => !v)}>
+                <button className={styles.validateIdeaBtn} onClick={() => { setValidatorPrefill(null); setShowValidator(v => !v); }}>
                   {showValidator ? '✕ Close Validator' : '✦ Validate My Idea'} <span className={styles.creditTag}>5 credits</span>
                 </button>
               </div>
@@ -558,6 +559,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   state={selectedStateName || selectedState}
                   zip={selectedZip}
                   onNavigate={onNavigate}
+                  prefill={validatorPrefill}
                 />
               )}
             </>
@@ -621,6 +623,7 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                   state={selectedStateName || selectedState}
                   zip={selectedZip}
                   onNavigate={onNavigate}
+                  prefill={validatorPrefill}
                 />
               )}
               <CardErrorBoundary onReset={() => { setView('list'); setActiveOpp(null); setGenerateError(''); }}>
@@ -671,6 +674,23 @@ export default function DashboardPage({ user, onLogout, onNavigate, preselect = 
                     </button>
                     <button className={styles.blueOceanBtn} onClick={() => handleGenerateIdea(true)}>
                       ◎ Blue Ocean Idea <span className={styles.creditTag}>8 credits</span>
+                    </button>
+                    <button className={styles.validateIdeaBtn} onClick={() => {
+                      const ideaText = [
+                        activeOpp.name,
+                        activeOpp.model ? `Business model: ${activeOpp.model}.` : '',
+                        activeOpp.whyItWorks || '',
+                        activeOpp.revenueYr1 ? `Year 1 revenue target: ${activeOpp.revenueYr1}.` : '',
+                        activeOpp.grossMargin ? `Gross margin: ${activeOpp.grossMargin}.` : '',
+                      ].filter(Boolean).join(' ');
+                      setValidatorPrefill({
+                        idea: ideaText,
+                        targetCustomer: activeOpp.model || '',
+                        pricePoint: activeOpp.startupCost ? `Startup cost: ${activeOpp.startupCost}` : '',
+                      });
+                      setShowValidator(true);
+                    }}>
+                      ✦ Validate This Idea <span className={styles.creditTag}>5 credits</span>
                     </button>
                     <SaveButton
                       cardData={activeOpp}
