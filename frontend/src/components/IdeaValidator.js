@@ -52,7 +52,7 @@ function DimensionRow({ dim }) {
   );
 }
 
-export default function IdeaValidator({ sector, city, state, zip, onNavigate, prefill }) {
+export default function IdeaValidator({ sector, city, state, zip, country, onNavigate, prefill }) {
   const [idea, setIdea] = useState(prefill?.idea || '');
   const [targetCustomer, setTargetCustomer] = useState(prefill?.targetCustomer || '');
   const [geography, setGeography] = useState('');
@@ -64,10 +64,15 @@ export default function IdeaValidator({ sector, city, state, zip, onNavigate, pr
   const [error, setError] = useState('');
   const [savedOpportunityId, setSavedOpportunityId] = useState(null);
 
+  function buildGeoHint(overrideGeo) {
+    if (overrideGeo) return overrideGeo;
+    return [city, state, country && country !== 'US' ? country : ''].filter(Boolean).join(', ');
+  }
+
   // Auto-submit when opened with a prefilled idea (e.g. from generated card)
   useEffect(() => {
     if (!prefill?.idea) return;
-    const geoHint = [city, state].filter(Boolean).join(', ');
+    const geoHint = buildGeoHint();
     api.validateIdea(prefill.idea, prefill.targetCustomer || undefined, geoHint || undefined, prefill.pricePoint || undefined)
       .then(data => {
         if (data.error === 'needs-detail') setNeedsDetail(data);
@@ -92,7 +97,7 @@ export default function IdeaValidator({ sector, city, state, zip, onNavigate, pr
     setSavedOpportunityId(null);
 
     // Pre-fill geography from form if not provided
-    const geoHint = geography || [city, state].filter(Boolean).join(', ');
+    const geoHint = buildGeoHint(geography);
 
     try {
       const data = await api.validateIdea(idea.trim(), targetCustomer || undefined, geoHint || undefined, pricePoint || undefined);
