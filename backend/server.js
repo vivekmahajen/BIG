@@ -386,8 +386,8 @@ app.get('/api/sector-opportunities', auth, async (req, res) => {
     }
 
     const adjusted = opps.map(opp => {
-      const adjustedScore = Math.round((0.6 * opp.score + 0.4 * opp.score * localScore) * 10) / 10;
-      const localWarning = localScore < 0.5
+      const adjustedScore = Math.round(opp.score * localScore * 10) / 10;
+      const localWarning = localScore < 0.6
         ? `Market may be too small for this opportunity in ${city || 'this area'} (${sourceLabel}) — revenue projections assume a larger market`
         : null;
       return {
