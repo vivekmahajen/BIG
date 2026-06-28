@@ -465,7 +465,7 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
             <p className={styles.model}>{o.model}</p>
           </div>
           <div className={styles.heroRight}>
-            <StarBadge score={o.score} />
+            <StarBadge score={o.preValidation ? parseFloat((o.preValidation.score / 10).toFixed(1)) : o.score} />
             <div className={styles.exitVal}>
               <span className={styles.exitLabel}>Projected Exit</span>
               <span className={styles.exitNum}>{o.exitVal}</span>
@@ -494,18 +494,20 @@ export default function OpportunityCard({ opportunity: raw, zip, sector, state, 
           ))}
         </div>
 
-        {o.preValidation && (
+        {o.preValidation?.bearCase && (
           <div style={{
             margin: '0 0 12px',
             padding: '10px 14px',
             borderRadius: 8,
-            background: o.preValidation.score >= 70 ? 'rgba(16,185,129,0.1)' : o.preValidation.score >= 45 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.08)',
-            border: `1px solid ${o.preValidation.score >= 70 ? 'rgba(16,185,129,0.3)' : o.preValidation.score >= 45 ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            fontSize: 13,
-            color: o.preValidation.score >= 70 ? '#10b981' : o.preValidation.score >= 45 ? '#f59e0b' : '#ef4444',
+            background: 'rgba(148,163,184,0.06)',
+            border: '1px solid rgba(148,163,184,0.15)',
+            fontSize: 12,
+            color: '#94a3b8',
           }}>
-            <strong>Pre-validated {o.preValidation.score}/100 — {o.preValidation.verdict}</strong>
-            {o.preValidation.bearCase && <span style={{ color: '#94a3b8', marginLeft: 8 }}>· {o.preValidation.bearCase}</span>}
+            <strong style={{ color: o.preValidation.score >= 70 ? '#10b981' : o.preValidation.score >= 45 ? '#f59e0b' : '#ef4444' }}>
+              {o.preValidation.verdict}
+            </strong>
+            {' · '}{o.preValidation.bearCase}
           </div>
         )}
         {o.opportunityScores && (
